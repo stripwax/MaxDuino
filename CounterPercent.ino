@@ -1,25 +1,4 @@
 
-void lcdSpinner() {
-    if (millis() - timeDiff2 > 1000) {   // check switch every 50ms 
-        timeDiff2 = millis();           // get current millisecond count
-        #ifdef LCDSCREEN16x2          
-          lcd.setCursor(15,0);
-          lcd.print(indicators[spinpos++]);
-        #endif
-        #ifdef OLED1306
-            //sendCharXY(indicators[spinpos++],15,0);
-           setXY(15,0);sendChar(indicators[spinpos++]);                 
-        #endif
-        #ifdef P8544
-          lcd.setCursor(8,3);
-          lcd.print(indicators[spinpos++]);
-        #endif                
-        if (spinpos > 3) {   
-          spinpos = 0;
-        }    
-    } 
-}
-
 void lcdTime() {
     if (millis() - timeDiff2 > 1000) {   // check switch every second 
         timeDiff2 = millis();           // get current millisecond count
@@ -241,4 +220,3 @@ void lcdPercent() {
         //lcdSpinner();
     }
 }
-

@@ -184,7 +184,7 @@ byte oldMotorState = 1;             //Last motor control state
 
 byte start = 0;                     //Currently playing flag
 
-byte pauseOn = 0;                   //Pause state
+bool pauseOn = false;                   //Pause state
 uint16_t currentFile = 0;           //File index (per filesystem) of current file, relative to current directory (pointed to by currentDir)
 uint16_t maxFile = 0;                    //Total number of files in directory
 uint16_t oldMinFile = 0;
@@ -192,7 +192,7 @@ uint16_t oldMaxFile = 0;
 #define fnameLength  5
 char oldMinFileName[fnameLength];
 char oldMaxFileName[fnameLength];
-byte isDir = 0;                     //Is the current file a directory
+bool isDir = false;                     //Is the current file a directory
 unsigned long timeDiff = 0;         //button debounce
 
 #if (SPLASH_SCREEN && TIMEOUT_RESET)
@@ -205,7 +205,7 @@ char PlayBytes[17];
 unsigned long blockOffset[maxblock];
 byte blockID[maxblock];
 
-byte lastbtn=true;
+bool lastbtn=true;
 
 #if (SPLASH_SCREEN && TIMEOUT_RESET)
     void(* resetFunc) (void) = 0;//declare reset function at adress 0
@@ -364,7 +364,7 @@ void setup() {
 } */
 
 void loop(void) {
-  if(start==1)
+  if(start)
   {
     //TZXLoop only runs if a file is playing, and keeps the buffer full.
     uniLoop();
@@ -427,7 +427,7 @@ void loop(void) {
           
         } else {
           //If a file is playing, pause or unpause the file                  
-          if (pauseOn == 0) {
+          if (!pauseOn) {
             printtext2F(PSTR("Paused  "),0);
     /*        #ifdef LCDSCREEN16x2
               lcd.setCursor(0,0); 
@@ -623,7 +623,7 @@ void loop(void) {
 
 #ifdef ONPAUSE_POLCHG
 
-     if(button_root() && start==1 && pauseOn==1 
+     if(button_root() && start==1 && pauseOn
                                                     #ifdef btnRoot_AS_PIVOT   
                                                             && button_stop()
                                                     #endif
@@ -712,14 +712,14 @@ void loop(void) {
         while(button_root() && !lastbtn) {
            //prevent button repeats by waiting until the button is released.
            //delay(50);
-           lastbtn = 1;
+           lastbtn = true;
            checkLastButton();           
         }        
         printtext(PlayBytes,0);
      }
      
      #if defined(LCDSCREEN16x2) && defined(SHOW_BLOCKPOS_LCD)
-       if(button_root() && start==1 && pauseOn==1 && !lastbtn) {                                          // show min-max block
+       if(button_root() && start==1 && pauseOn && !lastbtn) {                                          // show min-max block
         lcd.setCursor(11,0);
          if (TSXCONTROLzxpolarityUEFSWITCHPARITY == 1) lcd.print(F(" %^ON"));
         else lcd.print(F("%^off"));  
@@ -727,7 +727,7 @@ void loop(void) {
         while(button_root() && start==1 && !lastbtn) {
          //prevent button repeats by waiting until the button is released.
          //delay(50);
-         lastbtn = 1;
+         lastbtn = true;
          checkLastButton();           
         }
         //printtextF(PSTR("Help"),0);       
@@ -822,7 +822,7 @@ void loop(void) {
      }
      
 #ifdef BLOCKMODE
-     if(button_up() && start==1 && pauseOn==1
+     if(button_up() && start==1 && pauseOn
                                                   #ifdef btnRoot_AS_PIVOT
                                                             && !button_root()
                                                   #endif
@@ -866,7 +866,7 @@ void loop(void) {
      }
 #endif
 #if defined(BLOCKMODE) && defined(btnRoot_AS_PIVOT)
-     if(button_up() && start==1 && pauseOn==1 && button_root()) {  // up block half-interval search
+     if(button_up() && start==1 && pauseOn && button_root()) {  // up block half-interval search
 
 /*
        bytesRead=11;                     // for tzx skip header(10) + GETID(11)
@@ -923,7 +923,7 @@ void loop(void) {
      }
 #endif
 #if defined(BLOCKMODE) && defined(BLKSJUMPwithROOT)
-     if(button_root() && start==1 && pauseOn==1){      // change blocks to jump 
+     if(button_root() && start==1 && pauseOn){      // change blocks to jump 
       if (jblks==BM_BLKSJUMP) jblks=1; else jblks=BM_BLKSJUMP;
        #ifdef LCDSCREEN16x2
           lcd.setCursor(15,0); if (jblks==BM_BLKSJUMP) lcd.print(F("^")); else lcd.print(F("\'"));
@@ -939,7 +939,7 @@ void loop(void) {
      }
 #endif
 #ifdef BLOCKMODE
-     if(button_down() && start==1 && pauseOn==1
+     if(button_down() && start==1 && pauseOn
                                                       #ifdef btnRoot_AS_PIVOT
                                                             && !button_root()
                                                       #endif
@@ -1028,7 +1028,7 @@ void loop(void) {
      }
 #endif
 #if defined(BLOCKMODE) && defined(btnRoot_AS_PIVOT)
-     if(button_down() && start==1 && pauseOn==1 && button_root()) {     // down block half-interval search
+     if(button_down() && start==1 && pauseOn && button_root()) {     // down block half-interval search
 
 /*
        bytesRead=11;                     // for tzx skip header(10) + GETID(11)
@@ -1088,7 +1088,7 @@ void loop(void) {
      if(start==1 && (oldMotorState!=motorState) && mselectMask==1 ) {  
        //if file is playing and motor control is on then handle current motor state
        //Motor control works by pulling the btnMotor pin to ground to play, and NC to stop
-       if(motorState==1 && pauseOn==0) {
+       if(motorState==1 && !pauseOn) {
          printtext2F(PSTR("PAUSED  "),0);
    /*      #ifdef LCDSCREEN16x2
               lcd.setCursor(0,0);
@@ -1112,9 +1112,9 @@ void loop(void) {
          scrollText(fileName);
          //lcd_clearline(0);
          //lcd.print(F("Paused "));         
-         pauseOn = 1;
+         pauseOn = true;
        } 
-       if(motorState==0 && pauseOn==1) {
+       if(motorState==0 && pauseOn) {
          printtext2F(PSTR("PLAYing "),0);
     /*     #ifdef LCDSCREEN16x2
               lcd.setCursor(0,0);
@@ -1139,7 +1139,7 @@ void loop(void) {
          //lcd_clearline(0);
          //lcd.print(F("Playing"));   
          //delay(2250);
-         pauseOn = 0;
+         pauseOn = false;
        }
        oldMotorState=motorState;
      }
@@ -1234,11 +1234,12 @@ void seekFile() {
   #ifdef AYPLAY
   ayblklen = filesize + 3;  // add 3 file header, data byte and chksum byte to file length
   #endif
-  if(entry.isDir() || !strcmp(fileName, "ROOT")) { isDir=1; } else { isDir=0; }
+  isDir=false;
+  if(entry.isDir() || !strcmp(fileName, "ROOT")) isDir=true;
   entry.close();
 
   PlayBytes[0]='\0'; 
-  if (isDir==1) {
+  if (isDir) {
     if (subdir >0)strcpy(PlayBytes,prevSubDir);
     else strcat_P(PlayBytes,PSTR(VERSION));
 /*
@@ -1282,7 +1283,7 @@ void stopFile() {
 void playFile() {
   //PlayBytes[0]='\0';
   //strcat_P(PlayBytes,PSTR("Playing "));ltoa(filesize,PlayBytes+8,10);strcat_P(PlayBytes,PSTR("B"));  
-  if(isDir==1) {
+  if(isDir) {
     //If selected file is a directory move into directory
     changeDir();
   }
@@ -1308,7 +1309,7 @@ void playFile() {
       //lcd_clearline(0);
       //lcd.print(PlayBytes);      
       scrollPos=0;
-      pauseOn = 0;
+      pauseOn = false;
       scrollText(fileName);
       currpct=100;
       lcdsegs=0;

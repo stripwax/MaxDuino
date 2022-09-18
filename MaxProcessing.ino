@@ -149,7 +149,7 @@ void TZXStop() {
     #error unknown timer
   #endif
   isStopped=true;
-  start=0;
+  start=false;
   entry.close();                              //Close file                                                                                // DEBUGGING Stuff
   //lcd.setCursor(0,1);
   //lcd.print(blkchksum,HEX); lcd.print(F("ck ")); lcd.print(bytesRead); lcd.print(F(" ")); lcd.print(ayblklen);
@@ -169,14 +169,10 @@ void TZXPause() {
 
 void TZXLoop() {   
     noInterrupts();                           //Pause interrupts to prevent var reads and copy values out
-    copybuff = morebuff;
-    morebuff = LOW;
+    if(morebuff) btemppos=0;
+    morebuff = false;
     isStopped = pauseOn;
     interrupts();
-    if(copybuff==HIGH) {
-      btemppos=0;                             //Buffer has swapped, start from the beginning of the new page
-      copybuff=LOW;
-    }
 
     if(btemppos<=buffsize){                    // Keep filling until full
       TZXProcess();                           //generate the next period to add to the buffer
@@ -193,7 +189,7 @@ void TZXLoop() {
       }
     } else {
          //lcdSpinner();
-         if (pauseOn == 0) {
+         if (!pauseOn) {
           #if defined(SHOW_CNTR)
             lcdTime();          
           #endif
@@ -1589,7 +1585,7 @@ void TZXProcess() {
                 }
               } else { 
                 currentTask = GETID;
-                if(EndOfFile==true) currentID=IDEOF;
+                if(EndOfFile) currentID=IDEOF;
               }
           } 
         break;
@@ -1733,7 +1729,7 @@ void StandardBlock() {
         currentBlockTask = READPARAM;
     
       }
-      if(EndOfFile==true) currentID=IDEOF;
+      if(EndOfFile) currentID=IDEOF;
     break;
   }
 }
@@ -2373,7 +2369,6 @@ void wave2() {
   word workingPeriod = word(wbuffer[pos][workingBuffer], wbuffer[pos+1][workingBuffer]);  
   byte pauseFlipBit = false;
   unsigned long newTime=1;
-  intError = false;
 /*  
       if (bitRead(workingPeriod, 14)== 0) {
         pinState = !pinState;
@@ -2391,7 +2386,7 @@ void wave2() {
         {
           pos = 0;
           workingBuffer^=1;
-          morebuff = HIGH;                  //Request more data to fill inactive page
+          morebuff = true;                  //Request more data to fill inactive page
         }
         timer.setPeriod(newTime+4);
 */ 
@@ -2405,12 +2400,12 @@ void wave2() {
         {
           pos = 0;
           workingBuffer^=1;
-          morebuff = HIGH;                  //Request more data to fill inactive page
+          morebuff = true;                  //Request more data to fill inactive page
         }
         timer.setPeriod(newTime+4);
 */        
  
-  if(isStopped==0 && workingPeriod >= 1)
+  if(!isStopped && workingPeriod >= 1)
   {
       if bitRead(workingPeriod, 15)          
       {
@@ -2424,13 +2419,13 @@ void wave2() {
         wasPauseBlock = true;
       } else {
         
-       // if(workingPeriod >= 1 && wasPauseBlock==false) {
+       // if(workingPeriod >= 1 && !wasPauseBlock) {
           //pinState = !pinState;
-       // } else if (wasPauseBlock==true && isPauseBlock==false) {
+       // } else if (wasPauseBlock && !isPauseBlock) {
        //   wasPauseBlock=false;
        // }
         
-            if (wasPauseBlock==true && isPauseBlock==false) wasPauseBlock=false;        
+            if (wasPauseBlock && !isPauseBlock) wasPauseBlock=false;        
       }
       #ifdef DIRECT_RECORDING
       if (bitRead(workingPeriod, 14)== 0) {
@@ -2477,7 +2472,7 @@ void wave2() {
         wbuffer[pos+1][workingBuffer] = workingPeriod  %256;  //reduce pause by 1ms as we've already pause for 1.5ms                 
         pauseFlipBit=false;
       } else {
-        if(isPauseBlock==true) {
+        if(isPauseBlock) {
           newTime = long(workingPeriod)*1000; //Set pause length in microseconds
           //newTime = long(workingPeriod)*1;
           isPauseBlock = false;
@@ -2490,18 +2485,18 @@ void wave2() {
         {
           pos = 0;
           workingBuffer^=1;
-          morebuff = HIGH;                  //Request more data to fill inactive page
+          morebuff = true;                  //Request more data to fill inactive page
         } 
      }
-  //} else if(workingPeriod <= 1 && isStopped==0) {
-  } else if (isStopped==0) {  
+  //} else if(workingPeriod <= 1 && !isStopped) {
+  } else if (!isStopped) {  
     newTime = 1000;                         //Just in case we have a 0 in the buffer
     //pos += 1;
     pos += 2;
     if(pos > buffsize) {
       pos = 0;
       workingBuffer ^= 1;
-      morebuff = HIGH;
+      morebuff = true;
     }
   } else {
     newTime = 50000;                         //Just in case we have a 0 in the buffer    
@@ -2846,9 +2841,8 @@ void FlushBuffer(long newcount) {
     
 }
 void ForcePauseAfter0() {
-    pauseOn=1;
+    pauseOn=true;
     printtext2F(PSTR("PAUSED* "),0);
     forcePause0=0;
     return;  
 }
-

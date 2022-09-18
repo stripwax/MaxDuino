@@ -52,14 +52,13 @@ byte bits[11];
 volatile byte pass = 0;
 volatile byte pos = 0;
 volatile byte wbuffer[buffsize+1][2];
-volatile byte morebuff = HIGH;
+volatile bool morebuff = true;
 volatile byte working=0;
-volatile byte isStopped=false;
+volatile bool isStopped=false;
 
 //Main Variables
 volatile long count = 0;
 byte btemppos = 0;
-byte copybuff = LOW;
 byte input[11];
 unsigned long bytesRead=0;
 byte fileStage=0;
@@ -69,7 +68,7 @@ byte lastByte;
 byte currpct = 100;
 byte newpct = 0;
 //uint8_t SpecialChar [8]= { 0x00, 0x10, 0x08, 0x04, 0x02, 0x01, 0x00, 0x00 };
-byte spinpos = 0;
+
 unsigned long timeDiff2 = 0;
 unsigned int lcdsegs = 0;
 unsigned int offset =2;
@@ -169,7 +168,7 @@ PROGMEM const byte TAPHdr[20] = {0x0,0x0,0x3,'Z','X','A','Y','F','i','l','e',' '
 byte AYPASS = 0;
 byte hdrptr = 0;
 byte blkchksum = 0;
-byte EndOfFile=false;
+bool EndOfFile=false;
 word ayblklen = 0;
 byte casduino = 0;
 #ifdef ID11CDTspeedup
@@ -177,9 +176,8 @@ byte AMScdt = 0;
 #endif
 
 volatile byte pinState=LOW;
-volatile byte isPauseBlock = false;
-volatile byte wasPauseBlock = false;
-volatile byte intError = false;
+volatile bool isPauseBlock = false;
+volatile bool wasPauseBlock = false;
 volatile byte workingBuffer=0;
 byte outByte=0;
 word pauseLength=0;
@@ -307,5 +305,3 @@ byte UEFPASS = 0;
 #define ORICTURBOONEPULSE      60
 //#define ORICTURBOONELOWPULSE   208
 //#define ORICTURBOONEHIGHPULSE  208
-
-

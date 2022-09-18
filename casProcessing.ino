@@ -16,7 +16,7 @@ void casStop()
   #endif
   //noInterrupts();
   isStopped=true;
-  start=0;
+  start=false;
   //interrupts();
   entry.close();
   seekFile();
@@ -31,7 +31,7 @@ void casStop()
 
 void wave()
 {
-  if(isStopped==0)
+  if(!isStopped)
   {
     switch(wbuffer[pos][working]) {
     case 0:
@@ -82,7 +82,7 @@ void wave()
       {
         pos = 0;
         working ^=1;
-        morebuff = HIGH;
+        morebuff = true;
       }
     }
   } else 
@@ -430,15 +430,11 @@ void clearBuffer()
 void casduinoLoop()
 {
   noInterrupts();
-  copybuff = morebuff;
-  morebuff = LOW;
+  if (morebuff) btemppos=0;
+  morebuff = false;
   isStopped=pauseOn;
   interrupts();
 
-  if(copybuff==HIGH) {
-    btemppos=0;
-    copybuff=LOW;
-  }
   if(btemppos<=buffsize - (dragonBuff * dragonMode))
   { 
 #if defined(Use_CAS) && defined(Use_DRAGON)
@@ -472,7 +468,7 @@ void casduinoLoop()
 #endif
     } else {
          //lcdSpinner();
-         if (pauseOn == 0) {      
+         if (!pauseOn) {      
           #if defined(SHOW_CNTR)
             lcdTime();          
           #endif
