@@ -372,16 +372,18 @@ void loop(void) {
   //  digitalWrite(outputPin, LOW);    //Keep output LOW while no file is playing.
     WRITE_LOW;    
   }
+
+  unsigned long now = millis();
   
-  if((millis()>=scrollTime) && start==0 && (strlen(fileName)> SCREENSIZE)) {
+  if((now>=scrollTime) && start==0 && (strlen(fileName)> SCREENSIZE)) {
     //Filename scrolling only runs if no file is playing to prevent I2C writes 
     //conflicting with the playback Interrupt
-    scrollTime = millis()+scrollSpeed;
+    scrollTime = now+scrollSpeed;
     scrollText(fileName);
     scrollPos +=1;
     if(scrollPos>strlen(fileName)) {
       scrollPos=0;
-      scrollTime=millis()+scrollWait;
+      scrollTime=now+scrollWait;
       scrollText(fileName);
     }
   }
@@ -390,9 +392,9 @@ void loop(void) {
   #endif
   
   #if (SPLASH_SCREEN && TIMEOUT_RESET)
-      if (millis() - timeDiff_reset > 1000) //check timeout reset every second
+      if (now - timeDiff_reset > 1000) //check timeout reset every second
       {
-        timeDiff_reset = millis(); // get current millisecond count
+        timeDiff_reset = now; // get current millisecond count
         if (start==0)
         {
           timeout_reset--;
@@ -409,8 +411,8 @@ void loop(void) {
       }
   #endif
     
-  if (millis() - timeDiff > 50) {   // check switch every 50ms 
-     timeDiff = millis();           // get current millisecond count
+  if (now - timeDiff > 50) {   // check switch every 50ms 
+     timeDiff = now;           // get current millisecond count
       
      if(button_play()) {
         //Handle Play/Pause button
@@ -903,7 +905,7 @@ void loop(void) {
             timeout_reset = TIMEOUT_RESET;
        #endif
        //Move up a file in the directory
-       scrollTime=millis()+scrollWait;
+       scrollTime=now+scrollWait;
        scrollPos=0;
        upFile();
        debouncemax(button_up);
@@ -915,7 +917,7 @@ void loop(void) {
             timeout_reset = TIMEOUT_RESET;
        #endif
        //Move up a file in the directory
-       scrollTime=millis()+scrollWait;
+       scrollTime=now+scrollWait;
        scrollPos=0;
        upHalfSearchFile();
        
@@ -1064,7 +1066,7 @@ void loop(void) {
             timeout_reset = TIMEOUT_RESET;
        #endif
        //Move down a file in the directory
-       scrollTime=millis()+scrollWait;
+       scrollTime=now+scrollWait;
        scrollPos=0;
        downFile();
        debouncemax(button_down);
@@ -1076,7 +1078,7 @@ void loop(void) {
             timeout_reset = TIMEOUT_RESET;
        #endif
        //Move down a file in the directory
-       scrollTime=millis()+scrollWait;
+       scrollTime=now+scrollWait;
        scrollPos=0;
        downHalfSearchFile();
        
