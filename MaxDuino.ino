@@ -160,6 +160,17 @@
 #include <EEPROM.h>
 #endif
 
+typedef struct { 
+ bool f0:1; 
+ bool f1:1; 
+ bool f2:1; 
+ bool f3:1; 
+ bool f4:1; 
+ bool f5:1; 
+ bool f6:1; 
+ bool f7:1; 
+} PackedBool;
+
 char fline[17];
 
 SdFat sd;                           //Initialise Sd card 
@@ -182,9 +193,30 @@ byte motorState = 1;                //Current motor control state
 byte oldMotorState = 1;             //Last motor control state
 #endif
 
-byte start = 0;                     //Currently playing flag
+// volatile (used by isr)
+#if defined(__AVR__)
+#define is_paused ( (volatile PackedBool*)(&GPIOR0) )->f0 //Pause state
+#define is_started ( (volatile PackedBool*)(&GPIOR0) )->f1   //Currently playing flag
+#define morebuff ( (volatile PackedBool*)(&GPIOR0) )->f2   //flag indicating buffer full
+#define is_stopped ( (volatile PackedBool*)(&GPIOR0) )->f3   //flag meaning the same as "is_started==false or (is_started==true and is_paused==true)"
+#define isPauseBlock ( (volatile PackedBool*)(&GPIOR0) )->f4
+#define wasPauseBlock ( (volatile PackedBool*)(&GPIOR0) )->f5
+// nonvolatile (but packed anyway, results in smaller code and ram)
+#define lastbtn ( (PackedBool*)(&GPIOR0) )->f6
+#define EndOfFile ( (PackedBool*)(&GPIOR0) )->f7
+#define is_dir ( (PackedBool*)(&GPIOR1) )->f0  //Is the current file a directory
+#else
+volatile bool is_paused; //Pause state
+volatile bool is_started; //Currently playing flag
+volatile bool morebuff; //flag indicating buffer full
+volatile bool is_stopped; //flag meaning the same as "is_started==false or (is_started==true and is_paused==true)"
+volatile bool isPauseBlock;
+volatile bool wasPauseBlock;
+bool lastbtn;
+bool EndOfFile;
+bool is_dir;
+#endif
 
-bool pauseOn = false;                   //Pause state
 uint16_t currentFile = 0;           //File index (per filesystem) of current file, relative to current directory (pointed to by currentDir)
 uint16_t maxFile = 0;                    //Total number of files in directory
 uint16_t oldMinFile = 0;
@@ -192,7 +224,6 @@ uint16_t oldMaxFile = 0;
 #define fnameLength  5
 char oldMinFileName[fnameLength];
 char oldMaxFileName[fnameLength];
-bool isDir = false;                     //Is the current file a directory
 unsigned long timeDiff = 0;         //button debounce
 
 #if (SPLASH_SCREEN && TIMEOUT_RESET)
@@ -204,8 +235,6 @@ char PlayBytes[17];
 
 unsigned long blockOffset[maxblock];
 byte blockID[maxblock];
-
-bool lastbtn=true;
 
 #if (SPLASH_SCREEN && TIMEOUT_RESET)
     void(* resetFunc) (void) = 0;//declare reset function at adress 0
@@ -227,6 +256,17 @@ void setup() {
     setup_usb_storage();
   }
   #endif
+
+  // initialise packed bools
+  is_paused=false;
+  is_started=false;
+  morebuff=true;
+  is_stopped=false;
+  isPauseBlock=false;
+  wasPauseBlock=false;
+  EndOfFile=false;
+  is_dir=false;
+  lastbtn=true;
 
   #ifdef LCDSCREEN16x2
     lcd.init();                     //Initialise LCD (16x2 type)
@@ -364,27 +404,27 @@ void setup() {
 } */
 
 void loop(void) {
-  if(start)
+  if(is_started)
   {
     //TZXLoop only runs if a file is playing, and keeps the buffer full.
     uniLoop();
   } else {
-  //  digitalWrite(outputPin, LOW);    //Keep output LOW while no file is playing.
+    //Keep output LOW while no file is playing.
     WRITE_LOW;    
   }
 
   unsigned long now = millis();
   
-  if((now>=scrollTime) && start==0 && (strlen(fileName)> SCREENSIZE)) {
+  if((now>=scrollTime) && !is_started && (strlen(fileName)> SCREENSIZE)) {
     //Filename scrolling only runs if no file is playing to prevent I2C writes 
     //conflicting with the playback Interrupt
     scrollTime = now+scrollSpeed;
-    scrollText(fileName);
+    scrollText();
     scrollPos +=1;
     if(scrollPos>strlen(fileName)) {
       scrollPos=0;
       scrollTime=now+scrollWait;
-      scrollText(fileName);
+      scrollText();
     }
   }
   #ifndef NO_MOTOR
@@ -395,7 +435,7 @@ void loop(void) {
       if (now - timeDiff_reset > 1000) //check timeout reset every second
       {
         timeDiff_reset = now; // get current millisecond count
-        if (start==0)
+        if (!is_started)
         {
           timeout_reset--;
           if (timeout_reset==0)
@@ -416,11 +456,11 @@ void loop(void) {
       
      if(button_play()) {
         //Handle Play/Pause button
-        if(start==0) {
+        if(!is_started) {
           //If no file is play, start playback
           playFile();
           #ifndef NO_MOTOR
-          if (mselectMask == 1){  
+          if (mselectMask){  
             //oldMotorState = !motorState;  //Start in pause if Motor Control is selected
             oldMotorState = 0;
           }
@@ -429,7 +469,7 @@ void loop(void) {
           
         } else {
           //If a file is playing, pause or unpause the file                  
-          if (!pauseOn) {
+          if (!is_paused) {
             printtext2F(PSTR("Paused  "),0);
     /*        #ifdef LCDSCREEN16x2
               lcd.setCursor(0,0); 
@@ -452,8 +492,10 @@ void loop(void) {
             #ifdef P8544
             #endif
            */
-            jblks =1; 
-            firstBlockPause = true;
+            #ifdef BLOCKMODE
+              jblks =1; 
+              firstBlockPause = true;
+            #endif
           } else  {
             printtext2F(PSTR("Playing      "),0);
             currpct=100;
@@ -477,8 +519,10 @@ void loop(void) {
             #endif
             #ifdef P8544
             #endif 
-           */            
-            firstBlockPause = false;      
+           */
+            #ifdef BLOCKMODE
+              firstBlockPause = false;      
+            #endif
           }
 /*                         
           #ifdef LCDSCREEN16x2            
@@ -615,9 +659,9 @@ void loop(void) {
           #endif
             
           //scrollPos=0;
-          //scrollText(fileName);   
+          //scrollText();   
 */                                              
-          pauseOn = !pauseOn;
+          is_paused = !is_paused;
        }
        
        debounce(button_play);
@@ -625,7 +669,7 @@ void loop(void) {
 
 #ifdef ONPAUSE_POLCHG
 
-     if(button_root() && start==1 && pauseOn
+     if(button_root() && is_started && is_paused
                                                     #ifdef btnRoot_AS_PIVOT   
                                                             && button_stop()
                                                     #endif
@@ -642,7 +686,7 @@ void loop(void) {
 
 #ifdef btnRoot_AS_PIVOT
      lastbtn=false;     
-     if(button_root() && start==0 && !lastbtn) {                                          // show min-max dir
+     if(button_root() && !is_started && !lastbtn) {                                          // show min-max dir
        
        #ifdef SHOW_DIRPOS
         #if defined(LCDSCREEN16x2) && !defined(SHOW_STATUS_LCD) && !defined(SHOW_DIRNAMES)
@@ -660,10 +704,10 @@ void loop(void) {
            lcd.setCursor(0,0);
            lcd.print(BAUDRATE);
            lcd.print(' ');
-           if(mselectMask==1) lcd.print(F(" M:ON"));
+           if(mselectMask) lcd.print(F(" M:ON"));
            else lcd.print(F("m:off"));
            lcd.print(' ');
-           if (TSXCONTROLzxpolarityUEFSWITCHPARITY == 1) lcd.print(F(" %^ON"));
+           if (TSXCONTROLzxpolarityUEFSWITCHPARITY) lcd.print(F(" %^ON"));
            else lcd.print(F("%^off"));         
         #endif 
         #if defined(LCDSCREEN16x2) && defined(SHOW_DIRNAMES)
@@ -721,12 +765,12 @@ void loop(void) {
      }
      
      #if defined(LCDSCREEN16x2) && defined(SHOW_BLOCKPOS_LCD)
-       if(button_root() && start==1 && pauseOn && !lastbtn) {                                          // show min-max block
+       if(button_root() && is_started && is_paused && !lastbtn) {                                          // show min-max block
         lcd.setCursor(11,0);
-         if (TSXCONTROLzxpolarityUEFSWITCHPARITY == 1) lcd.print(F(" %^ON"));
+         if (TSXCONTROLzxpolarityUEFSWITCHPARITY) lcd.print(F(" %^ON"));
         else lcd.print(F("%^off"));  
                
-        while(button_root() && start==1 && !lastbtn) {
+        while(button_root() && is_started && !lastbtn) {
          //prevent button repeats by waiting until the button is released.
          //delay(50);
          lastbtn = true;
@@ -742,7 +786,7 @@ void loop(void) {
       #endif
 #endif
 
-     if(button_root() && start==0
+     if(button_root() && !is_started
                                         #ifdef btnRoot_AS_PIVOT
                                               && button_stop()
                                         #endif        
@@ -773,7 +817,7 @@ void loop(void) {
           #endif      
          
           scrollPos=0;
-          scrollText(fileName);
+          scrollText();
      /*     #ifdef OLED1306 
             OledStatusLine();
           #endif */
@@ -803,7 +847,7 @@ void loop(void) {
        debounce(button_root);
      }
 
-     if(button_stop() && start==1
+     if(button_stop() && is_started
                                         #ifdef btnRoot_AS_PIVOT
                                                 && !button_root()
                                         #endif
@@ -814,7 +858,7 @@ void loop(void) {
        debounce(button_stop);
      }
 
-     if(button_stop() && start==0 && subdir >0) {               // back subdir
+     if(button_stop() && !is_started && subdir >0) {               // back subdir
        #if (SPLASH_SCREEN && TIMEOUT_RESET)
             timeout_reset = TIMEOUT_RESET;
        #endif     
@@ -824,7 +868,7 @@ void loop(void) {
      }
      
 #ifdef BLOCKMODE
-     if(button_up() && start==1 && pauseOn
+     if(button_up() && is_started && is_paused
                                                   #ifdef btnRoot_AS_PIVOT
                                                             && !button_root()
                                                   #endif
@@ -868,7 +912,7 @@ void loop(void) {
      }
 #endif
 #if defined(BLOCKMODE) && defined(btnRoot_AS_PIVOT)
-     if(button_up() && start==1 && pauseOn && button_root()) {  // up block half-interval search
+     if(button_up() && is_started && is_paused && button_root()) {  // up block half-interval search
 
 /*
        bytesRead=11;                     // for tzx skip header(10) + GETID(11)
@@ -895,7 +939,7 @@ void loop(void) {
      }
 #endif
 
-     if(button_up() && start==0
+     if(button_up() && !is_started
                                       #ifdef btnRoot_AS_PIVOT
                                             && !button_root()
                                       #endif
@@ -912,7 +956,7 @@ void loop(void) {
      }
 
 #ifdef btnRoot_AS_PIVOT
-     if(button_up() && start==0 && button_root()) {      // up dir half-interval search
+     if(button_up() && !is_started && button_root()) {      // up dir half-interval search
        #if (SPLASH_SCREEN && TIMEOUT_RESET)
             timeout_reset = TIMEOUT_RESET;
        #endif
@@ -925,7 +969,7 @@ void loop(void) {
      }
 #endif
 #if defined(BLOCKMODE) && defined(BLKSJUMPwithROOT)
-     if(button_root() && start==1 && pauseOn){      // change blocks to jump 
+     if(button_root() && is_started && is_paused){      // change blocks to jump 
       if (jblks==BM_BLKSJUMP) jblks=1; else jblks=BM_BLKSJUMP;
        #ifdef LCDSCREEN16x2
           lcd.setCursor(15,0); if (jblks==BM_BLKSJUMP) lcd.print(F("^")); else lcd.print(F("\'"));
@@ -941,7 +985,7 @@ void loop(void) {
      }
 #endif
 #ifdef BLOCKMODE
-     if(button_down() && start==1 && pauseOn
+     if(button_down() && is_started && is_paused
                                                       #ifdef btnRoot_AS_PIVOT
                                                             && !button_root()
                                                       #endif
@@ -1030,7 +1074,7 @@ void loop(void) {
      }
 #endif
 #if defined(BLOCKMODE) && defined(btnRoot_AS_PIVOT)
-     if(button_down() && start==1 && pauseOn && button_root()) {     // down block half-interval search
+     if(button_down() && is_started && is_paused && button_root()) {     // down block half-interval search
 
 /*
        bytesRead=11;                     // for tzx skip header(10) + GETID(11)
@@ -1056,7 +1100,7 @@ void loop(void) {
      }
 #endif
 
-     if(button_down() && start==0
+     if(button_down() && !is_started
                                         #ifdef btnRoot_AS_PIVOT
                                                 && !button_root()
                                         #endif
@@ -1073,7 +1117,7 @@ void loop(void) {
      }
 
 #ifdef btnRoot_AS_PIVOT
-     if(button_down() && start==0 && button_root()) {              // down dir half-interval search
+     if(button_down() && !is_started && button_root()) {              // down dir half-interval search
        #if (SPLASH_SCREEN && TIMEOUT_RESET)
             timeout_reset = TIMEOUT_RESET;
        #endif
@@ -1087,10 +1131,10 @@ void loop(void) {
 #endif
 
      #ifndef NO_MOTOR
-     if(start==1 && (oldMotorState!=motorState) && mselectMask==1 ) {  
+     if(is_started && (oldMotorState!=motorState) && mselectMask) {  
        //if file is playing and motor control is on then handle current motor state
        //Motor control works by pulling the btnMotor pin to ground to play, and NC to stop
-       if(motorState==1 && !pauseOn) {
+       if(motorState==1 && !is_paused) {
          printtext2F(PSTR("PAUSED  "),0);
    /*      #ifdef LCDSCREEN16x2
               lcd.setCursor(0,0);
@@ -1111,12 +1155,12 @@ void loop(void) {
          #endif 
         */                
          scrollPos=0;
-         scrollText(fileName);
+         scrollText();
          //lcd_clearline(0);
          //lcd.print(F("Paused "));         
-         pauseOn = true;
+         is_paused = true;
        } 
-       if(motorState==0 && pauseOn) {
+       if(motorState==0 && is_paused) {
          printtext2F(PSTR("PLAYing "),0);
     /*     #ifdef LCDSCREEN16x2
               lcd.setCursor(0,0);
@@ -1137,11 +1181,11 @@ void loop(void) {
          #endif
         */            
          scrollPos=0;
-         scrollText(fileName);
+         scrollText();
          //lcd_clearline(0);
          //lcd.print(F("Playing"));   
          //delay(2250);
-         pauseOn = false;
+         is_paused = false;
        }
        oldMotorState=motorState;
      }
@@ -1236,12 +1280,12 @@ void seekFile() {
   #ifdef AYPLAY
   ayblklen = filesize + 3;  // add 3 file header, data byte and chksum byte to file length
   #endif
-  isDir=false;
-  if(entry.isDir() || !strcmp(fileName, "ROOT")) isDir=true;
+  is_dir=false;
+  if(entry.isDir() || !strcmp(fileName, "ROOT")) is_dir=true;
   entry.close();
 
   PlayBytes[0]='\0'; 
-  if (isDir) {
+  if (is_dir) {
     if (subdir >0)strcpy(PlayBytes,prevSubDir);
     else strcat_P(PlayBytes,PSTR(VERSION));
 /*
@@ -1264,13 +1308,13 @@ void seekFile() {
   printtext(PlayBytes,0);
   
   scrollPos=0;
-  scrollText(fileName);
+  scrollText();
 }
 
 void stopFile() {
   //TZXStop();
   TZXStop();
-  if(start==1){
+  if(is_started){
     printtextF(PSTR("Stopped"),0);
     //lcd_clearline(0);
     //lcd.print(F("Stopped"));
@@ -1278,14 +1322,14 @@ void stopFile() {
       lcd.gotoRc(3,38);
       lcd.bitmap(Stop, 1, 6);
     #endif
-    start=0;
+    is_started=false;
   }
 }
 
 void playFile() {
   //PlayBytes[0]='\0';
   //strcat_P(PlayBytes,PSTR("Playing "));ltoa(filesize,PlayBytes+8,10);strcat_P(PlayBytes,PSTR("B"));  
-  if(isDir) {
+  if(is_dir) {
     //If selected file is a directory move into directory
     changeDir();
   }
@@ -1311,8 +1355,8 @@ void playFile() {
       //lcd_clearline(0);
       //lcd.print(PlayBytes);      
       scrollPos=0;
-      pauseOn = false;
-      scrollText(fileName);
+      is_paused = false;
+      scrollText();
       currpct=100;
       lcdsegs=0;
       UniPlay();
@@ -1320,7 +1364,7 @@ void playFile() {
           lcd.gotoRc(3,38);
           lcd.bitmap(Play, 1, 6);
         #endif      
-      start=1;       
+      is_started=true;
     }    
 }
 
@@ -1402,12 +1446,13 @@ void changeDirRoot()
   currentDir.open("/", O_RDONLY);                    //set SD to root directory
 }
 
-void scrollText(char* text){
+void scrollText(){
+  char* text = fileName;
   #ifdef LCDSCREEN16x2
   //Text scrolling routine.  Setup for 16x2 screen so will only display 16 chars
   if(scrollPos<0) scrollPos=0;
   char outtext[17];
-  if(isDir) { outtext[0]= 0x3E; 
+  if(is_dir) { outtext[0]= 0x3E; 
     for(int i=1;i<16;i++)
     {
       int p=i+scrollPos-1;
@@ -1440,7 +1485,7 @@ void scrollText(char* text){
   //Text scrolling routine.  Setup for 16x2 screen so will only display 16 chars
   if(scrollPos<0) scrollPos=0;
   char outtext[17];
-  if(isDir) { outtext[0]= 0x3E; 
+  if(is_dir) { outtext[0]= 0x3E; 
     for(int i=1;i<16;i++)
     {
       int p=i+scrollPos-1;
@@ -1473,7 +1518,7 @@ void scrollText(char* text){
   //Text scrolling routine.  Setup for 16x2 screen so will only display 16 chars
   if(scrollPos<0) scrollPos=0;
   char outtext[15];
-  if(isDir) { outtext[0]= 0x3E; 
+  if(is_dir) { outtext[0]= 0x3E; 
     for(int i=1;i<14;i++)
     {
       int p=i+scrollPos-1;
@@ -1911,7 +1956,7 @@ void SetPlayBlock()
   if (!casduino) {
     currentBlockTask = READPARAM;               //First block task is to read in parameters
 //    clearBuffer2();                               // chick sound with CASDUINO clearBuffer()
-//    isStopped=false;
+//    is_stopped=false;
 //    pinState=LOW;                               //Always Start on a LOW output for simplicity
 //    count = 255;                                //End of file buffer flush
 //    EndOfFile=false;
@@ -1928,7 +1973,7 @@ void SetPlayBlock()
 
    
 /*
-       isStopped=false;
+       is_stopped=false;
        pinState=LOW;                               //Always Start on a LOW output for simplicity
        count = 255;                                //End of file buffer flush
        EndOfFile=false;
@@ -1936,6 +1981,7 @@ void SetPlayBlock()
 */   
 }
 
+#ifdef BLOCKMODE
 void GetAndPlayBlock()
 {
    #ifdef BLOCKID_INTO_MEM
@@ -2064,6 +2110,7 @@ void GetAndPlayBlock()
    
    SetPlayBlock(); 
 }
+#endif
 
 void str4cpy (char *dest, char *src)
 {

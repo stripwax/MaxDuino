@@ -1,7 +1,7 @@
 void casPause()
 {
   noInterrupts();
-  isStopped=pauseOn;
+  is_stopped=is_paused;
   interrupts();
 }
 
@@ -15,8 +15,8 @@ void casStop()
     #error unknown timer
   #endif
   //noInterrupts();
-  isStopped=true;
-  start=false;
+  is_stopped=true;
+  is_started=false;
   //interrupts();
   entry.close();
   seekFile();
@@ -31,7 +31,7 @@ void casStop()
 
 void wave()
 {
-  if(!isStopped)
+  if(!is_stopped)
   {
     switch(wbuffer[pos][working]) {
     case 0:
@@ -432,7 +432,7 @@ void casduinoLoop()
   noInterrupts();
   if (morebuff) btemppos=0;
   morebuff = false;
-  isStopped=pauseOn;
+  is_stopped=is_paused;
   interrupts();
 
   if(btemppos<=buffsize - (dragonBuff * dragonMode))
@@ -468,7 +468,7 @@ void casduinoLoop()
 #endif
     } else {
          //lcdSpinner();
-         if (!pauseOn) {      
+         if (!is_paused) {      
           #if defined(SHOW_CNTR)
             lcdTime();          
           #endif

@@ -52,9 +52,7 @@ byte bits[11];
 volatile byte pass = 0;
 volatile byte pos = 0;
 volatile byte wbuffer[buffsize+1][2];
-volatile bool morebuff = true;
 volatile byte working=0;
-volatile bool isStopped=false;
 
 //Main Variables
 volatile long count = 0;
@@ -168,7 +166,6 @@ PROGMEM const byte TAPHdr[20] = {0x0,0x0,0x3,'Z','X','A','Y','F','i','l','e',' '
 byte AYPASS = 0;
 byte hdrptr = 0;
 byte blkchksum = 0;
-bool EndOfFile=false;
 word ayblklen = 0;
 byte casduino = 0;
 #ifdef ID11CDTspeedup
@@ -176,8 +173,6 @@ byte AMScdt = 0;
 #endif
 
 volatile byte pinState=LOW;
-volatile bool isPauseBlock = false;
-volatile bool wasPauseBlock = false;
 volatile byte workingBuffer=0;
 byte outByte=0;
 word pauseLength=0;
@@ -212,23 +207,24 @@ word loopCount=0;
 byte seqPulses=0;
 word temppause=0;
 byte forcePause0=0;
-byte firstBlockPause = false;
 unsigned long loopStart=0;
 volatile byte currentChar=0;
 volatile byte currentByte=0;
 
-#ifdef BLKBIGSIZE
-  word block = 0;
-#else
-  byte block = 0;
-#endif
-
+#ifdef BLOCKMODE
+bool firstBlockPause = false;
 byte jblks = 1;
 byte oldMinBlock = 0;
 #ifdef BLOCK_EEPROM_PUT
   byte oldMaxBlock = 99;
 #else
   byte oldMaxBlock = 19;
+#endif
+#ifdef BLKBIGSIZE
+  word block = 0;
+#else
+  byte block = 0;
+#endif
 #endif
 
 PROGMEM const char UEFFile[9] = {'U','E','F',' ','F','i','l','e','!'};
@@ -284,13 +280,14 @@ PROGMEM const char UEFFile[9] = {'U','E','F',' ','F','i','l','e','!'};
 #endif
 
 #define DEBUG 0
-unsigned long debugCount=0;
 
 word chunkID = 0;
-// Set uefTurboMode to 0 if the default is 1200 baud. Set to 1 if the default is turbo speed. Holding doown 'ROOT' button on poweron, toggles this
-byte uefTurboMode=0;
-float outFloat;
-byte UEFPASS = 0;
+#ifdef Use_UEF
+  byte UEFPASS = 0;
+  #if defined(Use_hqUEF) && defined(Use_c116)
+  float outFloat;
+  #endif
+#endif
 
 //#define ORICZEROPULSE     416
 #define ORICZEROLOWPULSE  208

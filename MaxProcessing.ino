@@ -51,7 +51,7 @@ void UniPlay(){
   if (!casduino) {
     currentBlockTask = READPARAM;               //First block task is to read in parameters
     clearBuffer2();                               // chick sound with CASDUINO clearBuffer()
-    isStopped=false;
+    is_stopped=false;
     count = 255;                                //End of file buffer flush 
     EndOfFile=false;
     passforZero=2;
@@ -77,7 +77,7 @@ void UniPlay(){
     bytesRead=0;currentType=typeNothing;currentTask=lookHeader;fileStage=0;
     //noInterrupts();
     clearBuffer();
-    isStopped=false;
+    is_stopped=false;
     //interrupts();       
     #if defined(__AVR__) || defined(__SAMD21__)
       Timer1.initialize(period);
@@ -94,7 +94,7 @@ void UniPlay(){
 #else
     currentBlockTask = READPARAM;               //First block task is to read in parameters
     clearBuffer2();                               // chick sound with CASDUINO clearBuffer()
-    isStopped=false;
+    is_stopped=false;
     count = 255;                                //End of file buffer flush 
     EndOfFile=false;
     passforZero=2;
@@ -131,7 +131,7 @@ void UniPlay(char *filename) {
   checkForEXT (filename);
   currentBlockTask = READPARAM;               //First block task is to read in parameters
   clearBuffer();
-  isStopped=false;
+  is_stopped=false;
   pinState=LOW;                               //Always Start on a LOW output for simplicity
   count = 255;                                //End of file buffer flush
   EndOfFile=false;
@@ -148,8 +148,8 @@ void TZXStop() {
   #else
     #error unknown timer
   #endif
-  isStopped=true;
-  start=false;
+  is_stopped=true;
+  is_started=false;
   entry.close();                              //Close file                                                                                // DEBUGGING Stuff
   //lcd.setCursor(0,1);
   //lcd.print(blkchksum,HEX); lcd.print(F("ck ")); lcd.print(bytesRead); lcd.print(F(" ")); lcd.print(ayblklen);
@@ -164,14 +164,14 @@ void TZXStop() {
 }
 
 void TZXPause() {
-  isStopped=pauseOn;
+  is_stopped=is_paused;
 }
 
 void TZXLoop() {   
     noInterrupts();                           //Pause interrupts to prevent var reads and copy values out
     if(morebuff) btemppos=0;
     morebuff = false;
-    isStopped = pauseOn;
+    is_stopped = is_paused;
     interrupts();
 
     if(btemppos<=buffsize){                    // Keep filling until full
@@ -189,7 +189,7 @@ void TZXLoop() {
       }
     } else {
          //lcdSpinner();
-         if (!pauseOn) {
+         if (!is_paused) {
           #if defined(SHOW_CNTR)
             lcdTime();          
           #endif
@@ -2405,7 +2405,7 @@ void wave2() {
         timer.setPeriod(newTime+4);
 */        
  
-  if(!isStopped && workingPeriod >= 1)
+  if(!is_stopped && workingPeriod >= 1)
   {
       if bitRead(workingPeriod, 15)          
       {
@@ -2488,8 +2488,8 @@ void wave2() {
           morebuff = true;                  //Request more data to fill inactive page
         } 
      }
-  //} else if(workingPeriod <= 1 && !isStopped) {
-  } else if (!isStopped) {  
+  //} else if(workingPeriod <= 1 && !is_stopped) {
+  } else if (!is_stopped) {  
     newTime = 1000;                         //Just in case we have a 0 in the buffer
     //pos += 1;
     pos += 2;
@@ -2587,7 +2587,7 @@ void UniSetup()
   clearBuffer();
   pinMode(outputPin, OUTPUT);
   digitalWrite(outputPin, LOW);
-  isStopped=true;
+  is_stopped=true;
   pinState=LOW;
 }
 */
@@ -2597,7 +2597,7 @@ void UniSetup() {
  
     //digitalWrite(outputPin, LOW);             //Start output LOW
     WRITE_LOW;    
-    isStopped=true;
+    is_stopped=true;
     pinState=LOW;
  //   Timer1.initialize(100000);                //100ms pause prevents anything bad happening before we're ready
  //   Timer1.attachInterrupt(wave2);
@@ -2841,7 +2841,7 @@ void FlushBuffer(long newcount) {
     
 }
 void ForcePauseAfter0() {
-    pauseOn=true;
+    is_paused=true;
     printtext2F(PSTR("PAUSED* "),0);
     forcePause0=0;
     return;  
