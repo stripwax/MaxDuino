@@ -1,3 +1,6 @@
+DUMMY CHANGE
+
+
 const char P_PRODUCT_NAME[] PROGMEM = "new MaxDuino";
 
 #include "version.h"
