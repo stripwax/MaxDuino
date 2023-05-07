@@ -102,7 +102,6 @@ word currentPeriod=1;
 #define ZXO                 0xFC    //ZX80 O file
 #define ZXP                 0xFD    //ZX81 P File
 #define TAP                 0xFE    //Tap File Mode
-#define IDEOF               0xFF    //End of file
 
 enum class TASK : byte
 {
@@ -110,6 +109,8 @@ enum class TASK : byte
   GETFILEHEADER,
   GETID,
   PROCESSID,
+
+  //TZX File Tasks for AY
   GETAYHEADER,
 
   //TZX File Tasks for UEF
@@ -127,6 +128,8 @@ enum class TASK : byte
   CAS_wNameFileBlk,   //
   CAS_lookLeader,
   CAS_wNewLeader,
+
+  REACHED_EOF,
 };
 
 enum class BLOCKTASK : byte
@@ -145,6 +148,12 @@ enum class BLOCKTASK : byte
   GAP,
   SYNCLAST,
   NAME00,
+
+  // TZX tasks for AY
+  AY_WRITE_HEADER,
+  AY_WRITE_DATA_FLAG,
+  AY_WRITE_DATA,
+  AY_WRITE_CHECKSUM,
 };
 
 //Keep track of which ID, Task, and Block Task we're dealing with
