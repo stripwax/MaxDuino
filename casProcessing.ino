@@ -11,7 +11,7 @@ void wave()
 {
   if(isStopped==0)
   {
-    switch(wbuffer[pos][working]) {
+    switch(BUFFER_READ_PEEK) {
       case 0:
         if(pass == 0 || pass == 1) {
           if (out == LOW) WRITE_LOW;    
@@ -47,13 +47,7 @@ void wave()
     if(pass == 4) 
     {
       pass=0;
-      pos += 1;
-      if(pos >= buffsize) 
-      {
-        pos = 0;
-        working ^=1;
-        morebuff = true;
-      }
+      BUFFER_READ_ADVANCE;
     }
   } else {
     WRITE_LOW;
@@ -382,22 +376,16 @@ void processDragon()
 
 void casduinoLoop()
 {
-  noInterrupts();
-  copybuff = morebuff;
-  morebuff = false;
   isStopped=pauseOn;
-  interrupts();
 
-  if(copybuff) {
-    btemppos=0;
-    copybuff=false;
-  }
-
-  if(btemppos<buffsize)
-  { 
+  // casduino isn't just true/false - it's the number of bits (8 or 11)
+  // each bit is one entry in wbuffer
+  // make sure we can fit this many bytes in wbuffer
+  if(BUFFER_CAN_ACCEPT((byte)casduino))
+  {
 #if defined(Use_DRAGON)
     if(casduino == CASDUINO_FILETYPE::DRAGONMODE) {
-      processDragon();
+        processDragon();
     }
     else
 #endif
@@ -405,15 +393,10 @@ void casduinoLoop()
       process();      
     }
 
-    if(btemppos<buffsize)
+    for(int t=0; t<(byte)casduino; t++)
     {
-      // casduino isn't just true/false - it's the number of bits (8 or 11)
-      for(int t=0; t<(byte)casduino; t++)
-      {
-        wbuffer[btemppos][working ^ 1] = bits[t];
-        btemppos+=1;         
-      }        
-    }
+      BUFFER_WRITE_PUSH(bits[t]);
+    }        
   } else {
     if (!pauseOn) {      
     #if defined(SHOW_CNTR)
