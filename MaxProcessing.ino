@@ -2090,21 +2090,13 @@ void writeHeader2() {
 
 void clearBuffer()
 {
-#ifdef Use_CAS
-  const byte fill = (casduino==CASDUINO_FILETYPE::NONE)?0:2;
-#else
-  const byte fill = 0;
-#endif
-
   noInterrupts();
   for(byte i=0;i<buffsize;i++)
   {
-    wbuffer[0][i]=fill;
-    wbuffer[1][i]=fill;
+    wbuffer[0][i]=0;
+    wbuffer[1][i]=0;
   }
-
   pass=0;
-  cas_pass=0;
   interrupts();
 }
 
