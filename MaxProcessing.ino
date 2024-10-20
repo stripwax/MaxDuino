@@ -2015,7 +2015,7 @@ void wave2() {
       goto _set_period;  // skips the part where we move readpos += 2 because we're using the same readpos now
 
     } else {
-      newTime = long(workingPeriod)*1000; //Set pause length in microseconds
+      newTime = ((unsigned long)workingPeriod)*1000ul; //Set pause length in microseconds
       isPauseBlock=false;
       wasPauseBlock=true;
     }
