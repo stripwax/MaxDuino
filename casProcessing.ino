@@ -238,12 +238,12 @@ void processDragon()
   #if defined(Use_Dragon_sLeader) && not defined(Expand_All)
     if(currentTask==TASK::GETFILEHEADER) {
       if(filebuffer[0] == 0x55) {
-       writeByte(0x55); 
-       bytesRead+=1;
-       count--;
+        writeByte(0x55);
+        bytesRead+=1;
+        if(count) count--;
       } else {
        //currentTask=TASK::CAS_wHeader;
-        if(count>=0) {
+        if(count) {
           writeByte(0x55);
           count--;
         } else {    
@@ -254,30 +254,16 @@ void processDragon()
           }
         }       
       }
-/*
-    } else if(currentTask==TASK::CAS_wHeader) {
-        if(count>=0) {
-          writeByte(0x55);
-          count--;
-        } else {    
-          if (fileStage > 0) currentTask=TASK::CAS_wData;
-          else {
-            count =19;
-            currentTask=TASK::CAS_wNameFileBlk;
-          }
-        }
-*/
     } else if(currentTask==TASK::CAS_wNameFileBlk) {
-//        if(!count==0) {
-        if(count) {
-            writeByte(filebuffer[0]);
-            bytesRead+=1;
-            count--;            
-        } else {            
-            fileStage=1;
-            currentTask=TASK::GETFILEHEADER;
-            count=255;
-        }
+      if(count) {
+        writeByte(filebuffer[0]);
+        bytesRead+=1;
+        count--;            
+      } else {            
+        fileStage=1;
+        currentTask=TASK::GETFILEHEADER;
+        count=255;
+      }
     } else {        
   #endif
     
@@ -285,12 +271,12 @@ void processDragon()
 
     if(currentTask==TASK::GETFILEHEADER) {
       if(filebuffer[0] == 0x55) {
-       writeByte(0x55); 
-       bytesRead+=1;
-       count--;
+        writeByte(0x55); 
+        bytesRead+=1;
+        if(count) count--;
       } else {
        //currentTask=TASK::CAS_wHeader;
-        if(count>=0) {
+        if(count) {
           writeByte(0x55);
           count--;
         } else {
@@ -299,17 +285,6 @@ void processDragon()
           currentTask=TASK::CAS_wSync;
         }       
       }
-/*
-    } else if(currentTask==TASK::CAS_wHeader) {
-      if(count>=0) {
-        writeByte(0x55);
-        count--;
-      } else {
-        //count= 119;
-        count = 2;      
-        currentTask=TASK::CAS_wSync;
-      }
-*/
     } else if(currentTask==TASK::CAS_wSync) { 
 //      if(!count==0) {
       if(count) {
@@ -340,10 +315,10 @@ void processDragon()
       if(filebuffer[0] == 0x55) {
         writeByte(0x55); 
         bytesRead+=1;
-        count--;
+        if(count) count--;
       } else {
         //currentTask=TASK::CAS_wNewLeader;
-        if(count>=0) {
+        if(count) {
           writeByte(0x55);
           count--;
         } else {   
@@ -351,15 +326,6 @@ void processDragon()
         }
         
       }
-/*
-    } else if(currentTask==TASK::CAS_wNewLeader) {
-      if(count>=0) {
-        writeByte(0x55);
-        count--;
-      } else {   
-        currentTask=TASK::CAS_wData;
-      }
-*/                  
     } else {              // data block
 
   #endif
