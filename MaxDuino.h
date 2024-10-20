@@ -4,11 +4,8 @@
 #define SHORT_HEADER        200
 #define LONG_HEADER         800
 
-/* Buffer overflow detected by David Hooper
-   buffsize must be both a multiple of 11 (for MSX processing) and a multiple of 8 (for Dragon processing)
-   it also needs to be a mutiple of 2 (for TZX processing) but being a multiple of 8, it will already be a multple of 2.
-   We used to have special logic for handling Dragon (and only using the first 8*N bytes of the buffer) but 176 is convenient
-   as a buffersize because it is a multiple of 8 and a multiple of 11...
+/* With latest casprocessing logic, buffsize can be any multiple of 2.
+   No longer limited to multiples of 8 and 11.
 */
 
 #ifdef LARGEBUFFER
@@ -33,7 +30,7 @@ const byte CAS_ASCII = 0xEA;
 const byte CAS_BINF = 0xD0;
 const byte CAS_BASIC = 0xD3;
 
-byte bits[11];
+word bitword;
 byte fileStage=0;
 enum class CASDUINO_FILETYPE : byte {
   NONE = 0,
@@ -58,7 +55,6 @@ CAS_TYPE cas_currentType = CAS_TYPE::Nothing;
 
 
 //ISR Variables
-volatile byte cas_pass = 0;
 byte readpos = 0; // only used within the ISR, never accessed outside, so doesn't need to be volatile
 volatile byte wbuffer[2][buffsize];
 volatile bool morebuff = true;
