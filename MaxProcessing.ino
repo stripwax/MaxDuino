@@ -180,12 +180,12 @@ void TZXProcess() {
           #endif
         } else {
           currentTask = TASK::PROCESSID;
-          currentID =IDEOF;
+          currentID = BLOCKID::IDEOF;
           return;            
         }
       } else {
         currentTask = TASK::PROCESSID;
-        currentID =IDEOF;
+        currentID = BLOCKID::IDEOF;
         return;      
       }
 
@@ -315,7 +315,7 @@ void TZXProcess() {
               
               if (outWord>0) {
                 temppause = outWord;
-                currentID = IDPAUSE;
+                currentID = BLOCKID::IDPAUSE;
                 currentPeriod = temppause;
                 bitSet(currentPeriod, 15);
                 currentTask = TASK::GETCHUNKID;
@@ -357,7 +357,7 @@ void TZXProcess() {
       if(ReadByte()) {
         currentID = outByte;
       } else {
-        currentID = IDEOF;
+        currentID = BLOCKID::IDEOF;
       }
       //reset data block values
       currentBit=0;
@@ -370,7 +370,7 @@ void TZXProcess() {
     case TASK::PROCESSID:
       //ID Processing
       switch(currentID) {
-        case ID10:
+        case BLOCKID::ID10:
           //Process ID10 - Standard Block
           switch (currentBlockTask) {
             case BLOCKTASK::READPARAM:
@@ -404,7 +404,7 @@ void TZXProcess() {
           }
           break;
       
-        case ID11:
+        case BLOCKID::ID11:
           //Process ID11 - Turbo Tape Block
           switch (currentBlockTask) {
             case BLOCKTASK::READPARAM:
@@ -492,7 +492,7 @@ void TZXProcess() {
           }
           break; // case ID11
 
-        case ID12:
+        case BLOCKID::ID12:
           //Process ID12 - Pure Tone Block      
           if(currentBlockTask==BLOCKTASK::READPARAM){
             if(ReadWord()) {
@@ -508,7 +508,7 @@ void TZXProcess() {
           }
           break;
 
-        case ID13:
+        case BLOCKID::ID13:
           //Process ID13 - Sequence of Pulses                 
           if(currentBlockTask==BLOCKTASK::READPARAM) {  
             if(ReadByte()) {
@@ -520,7 +520,7 @@ void TZXProcess() {
           }
           break;
 
-        case ID14:
+        case BLOCKID::ID14:
           //process ID14 - Pure Data Block             
           if(currentBlockTask==BLOCKTASK::READPARAM) {
             if(ReadWord()) {
@@ -545,7 +545,7 @@ void TZXProcess() {
           break;
 
       #ifdef DIRECT_RECORDING
-        case ID15:
+        case BLOCKID::ID15:
           //process ID15 - Direct Recording          
           if(currentBlockTask==BLOCKTASK::READPARAM) {
             currentBit = 0;
@@ -564,7 +564,7 @@ void TZXProcess() {
               // Length of samples' data
               bytesToRead = outLong+1;
               // Uncomment next line for testing to force id error
-              //currentID=0x9A;
+              //currentID=BLOCKID::UNKNOWN;
             }            
             currentBlockTask=BLOCKTASK::ID15_TDATA;
 
@@ -581,14 +581,14 @@ void TZXProcess() {
 
           } else if(currentBlockTask==BLOCKTASK::PAUSE) {
             temppause = pauseLength;
-            currentID = IDPAUSE;                     
+            currentID = BLOCKID::IDPAUSE;                     
           } else {
             writeDataDirect();
           }
           break;
       #endif
 
-        case ID19:
+        case BLOCKID::ID19:
           //Process ID19 - Generalized data block
           switch (currentBlockTask) {
             case BLOCKTASK::READPARAM:
@@ -626,7 +626,7 @@ void TZXProcess() {
           }  
           break; // case ID19
 
-        case ID20:
+        case BLOCKID::ID20:
           //process ID20 - Pause Block          
           if(ReadWord()) {
             if(outWord>0) {
@@ -635,11 +635,11 @@ void TZXProcess() {
             } else {                    // If Pause duration is 0 ms then Stop The Tape
               forcePause0=true;          // pause0 TRUE
             }
-            currentID = IDPAUSE;         
+            currentID = BLOCKID::IDPAUSE;         
           }
           break;
 
-        case ID21:
+        case BLOCKID::ID21:
           //Process ID21 - Group Start
           #if defined(BLOCKID21_IN)
             block_mem_oled();
@@ -651,12 +651,12 @@ void TZXProcess() {
           currentTask = TASK::GETID;
           break;
 
-        case ID22:
+        case BLOCKID::ID22:
           //Process ID22 - Group End          
           currentTask = TASK::GETID;
           break;
 
-        case ID24:
+        case BLOCKID::ID24:
           //Process ID24 - Loop Start          
           if(ReadWord()) {
             loopCount = outWord;
@@ -665,7 +665,7 @@ void TZXProcess() {
           currentTask = TASK::GETID;
           break;
 
-        case ID25:
+        case BLOCKID::ID25:
           //Process ID25 - Loop End          
           loopCount += -1;
           if(loopCount!=0) {
@@ -674,23 +674,23 @@ void TZXProcess() {
           currentTask = TASK::GETID;
           break;
 
-        case ID2A:
+        case BLOCKID::ID2A:
           //Skip//        
           bytesRead+=4;
           if (skip2A) currentTask = TASK::GETID;
           else {
             forcePause0 = true;
-            currentID = IDPAUSE;
+            currentID = BLOCKID::IDPAUSE;
           }        
           break;
 
-        case ID2B:
+        case BLOCKID::ID2B:
           //Skip//           
           bytesRead+=5;
           currentTask = TASK::GETID;
           break;
         
-        case ID30:
+        case BLOCKID::ID30:
           //Process ID30 - Text Description         
           if(ReadByte()) {
             //Show info on screen - removed until bigger screen used
@@ -705,7 +705,7 @@ void TZXProcess() {
           currentTask = TASK::GETID;
           break;
 
-        case ID31:
+        case BLOCKID::ID31:
           //Process ID31 - Message block         
           if(ReadByte()) {
             // dispayTime = outByte;
@@ -716,7 +716,7 @@ void TZXProcess() {
           currentTask = TASK::GETID;
           break;
 
-        case ID32:
+        case BLOCKID::ID32:
           //Process ID32 - Archive Info
           //Block Skipped until larger screen used          
           if(ReadWord()) {
@@ -725,7 +725,7 @@ void TZXProcess() {
           currentTask = TASK::GETID;
           break;
 
-        case ID33:
+        case BLOCKID::ID33:
           //Process ID33 - Machine Info
           //Block Skipped until larger screen used         
           if(ReadByte()) {
@@ -734,7 +734,7 @@ void TZXProcess() {
           currentTask = TASK::GETID;
           break;       
 
-        case ID35:
+        case BLOCKID::ID35:
           //Process ID35 - Custom Info Block
           //Block Skipped          
           bytesRead += 0x10;
@@ -744,7 +744,7 @@ void TZXProcess() {
           currentTask = TASK::GETID;
           break;
         
-        case ID4B:
+        case BLOCKID::ID4B:
           //Process ID4B - Kansas City Block (MSX specific implementation only)
           switch(currentBlockTask) {
             case BLOCKTASK::READPARAM:
@@ -841,18 +841,18 @@ void TZXProcess() {
             case BLOCKTASK::PAUSE:
               //Close block with a pause
               temppause = pauseLength;
-              currentID = IDPAUSE;
+              currentID = BLOCKID::IDPAUSE;
               break;
           }
           break; // Case_ID4B
 
-        case ID5A:
+        case BLOCKID::ID5A:
           // Glue block; nothing to do (skip it)
           bytesRead += 9;
           currentTask = TASK::GETID;
           break;
         
-        case TAP:
+        case BLOCKID::TAP:
           //Pure Tap file block
           switch(currentBlockTask) {
             case BLOCKTASK::READPARAM:
@@ -887,7 +887,7 @@ void TZXProcess() {
           }
           break; // Case TAP
 
-        case ZXP:
+        case BLOCKID::ZXP:
           switch(currentBlockTask) {
             case BLOCKTASK::READPARAM:
               currentChar=0;
@@ -907,7 +907,7 @@ void TZXProcess() {
           }
           break; // Case ZXP
         
-        case ZXO:
+        case BLOCKID::ZXO:
           switch(currentBlockTask) {
             case BLOCKTASK::READPARAM:
               currentChar=0;
@@ -924,7 +924,7 @@ void TZXProcess() {
           break; // Case ZXO
         
       #ifdef AYPLAY
-        case AYO:                           //AY File - Pure AY file block - no header, must emulate it
+        case BLOCKID::AYO:                           //AY File - Pure AY file block - no header, must emulate it
           switch(currentBlockTask) {
             case BLOCKTASK::READPARAM:
               pauseLength = PAUSELENGTH;  // Standard 1 sec pause
@@ -960,7 +960,7 @@ void TZXProcess() {
       #endif
 
       #ifdef tapORIC
-        case ORIC:
+        case BLOCKID::ORIC:
           switch(currentBlockTask) {            
             case BLOCKTASK::READPARAM: // currentBit = 0 y count = 255
             case BLOCKTASK::SYNC1:
@@ -1094,7 +1094,7 @@ void TZXProcess() {
 
       #endif // tapORIC
                 
-        case IDPAUSE:
+        case BLOCKID::IDPAUSE:
           if(temppause>0) {
             if(temppause > MAXPAUSE_PERIOD) {
               currentPeriod = MAXPAUSE_PERIOD;
@@ -1116,12 +1116,12 @@ void TZXProcess() {
               }
             } else { 
               currentTask = TASK::GETID;
-              if(EndOfFile) currentID=IDEOF;
+              if(EndOfFile) currentID=BLOCKID::IDEOF;
             }
           } 
           break;
     
-        case IDEOF:
+        case BLOCKID::IDEOF:
           //Handle end of file
           if(!count==0) {
             currentPeriod = 10;
@@ -1276,7 +1276,7 @@ void StandardBlock() {
     case BLOCKTASK::TDATA:
       //Data Playback
 #ifdef AYPLAY
-      if (currentID==AYO && AYPASS_hdrptr <= AYPASS_STEP::HDREND)
+      if (currentID==BLOCKID::AYO && AYPASS_hdrptr <= AYPASS_STEP::HDREND)
       {
         writeHeader2(); // write TAP Header data from String Vector
       }
@@ -1291,16 +1291,16 @@ void StandardBlock() {
     
     case BLOCKTASK::PAUSE:
       //Close block with a pause
-      if((currentID!=TAP)&&(currentID!=AYO)) {                  // Check if we have !=AYO too
+      if((currentID!=BLOCKID::TAP)&&(currentID!=BLOCKID::AYO)) {                  // Check if we have !=AYO too
         temppause = pauseLength;
-        currentID = IDPAUSE;
+        currentID = BLOCKID::IDPAUSE;
       } else {
         currentPeriod = pauseLength;
         bitSet(currentPeriod, 15);
         currentBlockTask = BLOCKTASK::READPARAM;
       }
 
-      if(EndOfFile) currentID=IDEOF;
+      if(EndOfFile) currentID=BLOCKID::IDEOF;
       break;
   }
 }
@@ -1346,7 +1346,7 @@ void PureDataBlock() {
     
     case BLOCKTASK::PAUSE:
       temppause = pauseLength;
-      currentID = IDPAUSE;
+      currentID = BLOCKID::IDPAUSE;
     break;
   }
 }
@@ -1373,7 +1373,7 @@ void KCSBlock() {
     case BLOCKTASK::PAUSE:
       //Close block with a pause
       temppause = pauseLength;
-      currentID = IDPAUSE;
+      currentID = BLOCKID::IDPAUSE;
       break;
     
   }
@@ -1428,7 +1428,7 @@ void writeData4B() {
       pass = 0;
     } else {
       //End of file
-      currentID=IDEOF;
+      currentID=BLOCKID::IDEOF;
       return;
     }
   }
@@ -1461,10 +1461,10 @@ void ZX8081DataBlock() {
       currentByte = outByte;
     #ifdef BLOCKID19_IN        
       bytesToRead += -1;
-      if((bytesToRead == -1) && (currentID == ID19)) {    
+      if((bytesToRead == -1) && (currentID == BLOCKID::ID19)) {    
         bytesRead += -1;                      //rewind a byte if we've reached the end
         temppause = PAUSELENGTH;
-        currentID = IDPAUSE;
+        currentID = BLOCKID::IDPAUSE;
       }                   
     #endif 
           
@@ -1472,7 +1472,7 @@ void ZX8081DataBlock() {
       EndOfFile=true;
       //temppause = pauseLength;
       temppause = PAUSELENGTH;
-      currentID = IDPAUSE;
+      currentID = BLOCKID::IDPAUSE;
       return;
     }
     currentBit=9;
