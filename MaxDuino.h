@@ -67,7 +67,7 @@ volatile byte * readBuffer=wbuffer[1];
 volatile byte isStopped=false;
 
 //Main Variables
-volatile long count = 0;
+volatile unsigned long count = 0;
 byte writepos = 0;
 byte input[7]; // only used for temporary string manipulation, sized for the longest string operation (which is concatenating "1200 *" for displaying selected baud) 
 byte filebuffer[10]; // used for small reads from files (readfile, ReadByte, etc use this), sizes for the largest ready of bytes (= TZX or MSX HEADER read)
