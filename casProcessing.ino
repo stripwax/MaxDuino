@@ -7,30 +7,6 @@ void casPause()
   interrupts();
 }
 
-void wave()
-{
-  if(isStopped==0)
-  {
-    if (readBuffer[readpos])
-      WRITE_HIGH;
-    else
-      WRITE_LOW;
-  
-    readpos += 1;
-    if(readpos >= buffsize) 
-    {
-      readpos = 0;
-      // swap read and write buffers
-      volatile byte * tmp = readBuffer;
-      readBuffer = writeBuffer;
-      writeBuffer = tmp;
-      morebuff = true;
-    }
-  } else {
-    WRITE_LOW;
-  }
-}
-
 void bits_to_pulses()
 {
   // converts from a packed representation of bits to output (bitword)
@@ -92,7 +68,32 @@ void bits_to_pulses()
         break;
     }
   }
-  writeBuffer[writepos++] = val;
+
+  if(writepos==0)
+  {
+    // first time (or once per buffer-fill), set sample period.
+    const word _currentPeriod = period | 0x6000;
+    const byte _b1 = _currentPeriod /256;
+    const byte _b2 = _currentPeriod %256;
+    volatile byte * _wb = writeBuffer+writepos;
+    noInterrupts();                       //Pause interrupts while we add a period to the buffer
+    *_wb = _b1;
+    *(_wb+1) = _b2;
+    interrupts();
+    writepos+=2;
+    return;
+  }
+  else
+  {
+    const byte _b2 = val?128:0; // just one bit
+    volatile byte * _wb = writeBuffer+writepos;
+    noInterrupts();                       //Pause interrupts while we add a period to the buffer
+    *_wb = 0x40; // = (1<<14)>>8;
+    *(_wb+1) = _b2;
+    interrupts();
+    writepos+=2;
+  }
+
   pass++;
   if(pass == 4) 
   {

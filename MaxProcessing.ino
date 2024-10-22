@@ -28,26 +28,19 @@ void UniPlay(){
   
   clearBuffer();
 
-#ifdef Use_CAS 
-  if (casduino!=CASDUINO_FILETYPE::NONE) { // CAS or DRAGON
-    cas_currentType=CAS_TYPE::Nothing;
-    currentTask=TASK::GETFILEHEADER;
-    fileStage=0;
-    Timer.initialize(period);
-    Timer.attachInterrupt(wave);
-  }
-  else 
-#endif
-  {
-    currentBlockTask = BLOCKTASK::READPARAM;               //First block task is to read in parameters
-    count = 255;                                //End of file buffer flush 
-    EndOfFile=false;
-    passforZero=2;
-    passforOne=4;
-    reset_output_state();
-    Timer.initialize(100000); //100ms pause prevents anything bad happening before we're ready
-    Timer.attachInterrupt(wave2);
-  }
+  // for CAS/DRAGON:
+  cas_currentType=CAS_TYPE::Nothing;
+  fileStage=0;
+  // for TZX/UEF/etc:
+  currentBlockTask = BLOCKTASK::READPARAM;    //First block task is to read in parameters
+  count = 255;                                //End of file buffer flush 
+  EndOfFile=false;
+  passforZero=2;
+  passforOne=4;
+
+  reset_output_state();
+  Timer.initialize(100000); //100ms pause prevents anything bad happening before we're ready
+  Timer.attachInterrupt(wave2);
 }
 
 void reset_output_state() {
