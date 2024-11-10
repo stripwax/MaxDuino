@@ -41,4 +41,5 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            .pio/build/**/firmware*.*
+            .pio/build/**/*.hex
+            .pio/build/**/*.bin
