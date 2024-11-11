@@ -25,6 +25,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: make release folder
+        shell: bash
+        run: mkdir for_release
           
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
@@ -32,14 +36,17 @@ jobs:
       - name: Build PlatformIO Project
         run: pio run -v
 
+      - name: move releaseable files for each platform
+        shell: bash
+        run: find . -regextype posix-basic -regex './pio/\(.*\)/.*\.\(hex\|bin\)$' -print | sed s':\(./pio/\)\([^/]*\)/\(.*\):cp .pio/\2/\3 for_release/\2_\3:'
+
       # create release bundle but only if this commit was in master branch
       - uses: "marvinpinto/action-automatic-releases@latest"
-        if: ${{ github.ref_name == 'master' }}
+#        if: ${{ github.ref_name == 'master' }}
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: true
           title: "Development Build"
           files: |
-            .pio/build/**/*.hex
-            .pio/build/**/*.bin
+            for_release/*
