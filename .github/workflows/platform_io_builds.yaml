@@ -38,7 +38,7 @@ jobs:
 
       - name: move releaseable files for each platform
         shell: bash
-        run: find . -regextype posix-basic -regex './pio/\(.*\)/.*\.\(hex\|bin\)$' -print | sed s':\(./pio/\)\([^/]*\)/\(.*\):cp .pio/\2/\3 for_release/\2_\3:'
+        run: find . -regextype posix-basic -regex './pio/build/\(.*\)/.*\.\(hex\|bin\)$' -print | sed s':\(./pio/\)\([^/]*\)/\(.*\):cp .pio/build/\2/\3 for_release/\2_\3:'
 
       # create release bundle but only if this commit was in master branch
       - uses: "marvinpinto/action-automatic-releases@latest"
