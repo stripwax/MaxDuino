@@ -10,6 +10,10 @@
 timerCallback isrCallback = NULL;
 
 #if defined(__arm__) && defined(__STM32F1__)
+
+#define TIMERCOUNTER_RESOLUTION 65536UL  // Timer is 16 bit
+#define LARGEST_PRESCALE_DIVIDER 512UL
+
 //clase derivada
 class HwTimerCounter:public HardwareTimer
 {
@@ -17,76 +21,76 @@ class HwTimerCounter:public HardwareTimer
     HwTimerCounter(uint8 timerNum) : HardwareTimer(timerNum) {};
     void setSTM32Period(unsigned long microseconds) __attribute__((always_inline)) {
       
-/*    if (microseconds < 65536/36) {
+/*    if (microseconds < TIMERCOUNTER_RESOLUTION/36) {
       this->setPrescaleFactor(F_CPU/1000000/36);
       this->setOverflow(microseconds*36);
     }else
-    if (microseconds < 65536/18) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION/18) {
       this->setPrescaleFactor(F_CPU/1000000/18);
       this->setOverflow(microseconds*18);
     }else */
-    if (microseconds < 65536/24) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION/24) {
       this->setPrescaleFactor(F_CPU/1000000/24);
       this->setOverflow(microseconds*24);
     }else    
-/*    if (microseconds < 65536/16) {
+/*    if (microseconds < TIMERCOUNTER_RESOLUTION/16) {
       this->setPrescaleFactor(F_CPU/1000000/16);
       this->setOverflow(microseconds*16);
     }else */
-    if (microseconds < 65536/8) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION/8) {
       this->setPrescaleFactor(F_CPU/1000000/8);
       this->setOverflow(microseconds*8);
     }else
-    if (microseconds < 65536/4) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION/4) {
       this->setPrescaleFactor(F_CPU/1000000/4);
       this->setOverflow(microseconds*4);
     }else
-    if (microseconds < 65536/2) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION/2) {
       this->setPrescaleFactor(F_CPU/1000000/2);
       this->setOverflow(microseconds*2);
     }else
-    if (microseconds < 65536) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION) {
       this->setPrescaleFactor(F_CPU/1000000);
       this->setOverflow(microseconds);
     }else
-    if (microseconds < 65536*2) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION*2) {
       this->setPrescaleFactor(F_CPU/1000000*2);
       this->setOverflow(microseconds/2);
     }else
-    if (microseconds < 65536*4) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION*4) {
       this->setPrescaleFactor(F_CPU/1000000*4);
       this->setOverflow(microseconds/4);
     }else
-    if (microseconds < 65536*8) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION*8) {
       this->setPrescaleFactor(F_CPU/1000000*8);
       this->setOverflow(microseconds/8);
     }else
-/*    if (microseconds < 65536*16) {
+/*    if (microseconds < TIMERCOUNTER_RESOLUTION*16) {
       this->setPrescaleFactor(F_CPU/1000000*16);
       this->setOverflow(microseconds/16);
     }else
-    if (microseconds < 65536*32) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION*32) {
       this->setPrescaleFactor(F_CPU/1000000*32);
       this->setOverflow(microseconds/32);
     }else */
-    if (microseconds < 65536*64) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION*64) {
       this->setPrescaleFactor(F_CPU/1000000*64);
       this->setOverflow(microseconds/64);
     }else
-/*    if (microseconds < 65536*128) {
+/*    if (microseconds < TIMERCOUNTER_RESOLUTION*128) {
       this->setPrescaleFactor(F_CPU/1000000*128);
       this->setOverflow(microseconds/128);
     }else
-    if (microseconds < 65536*256) {
+    if (microseconds < TIMERCOUNTER_RESOLUTION*256) {
       this->setPrescaleFactor(F_CPU/1000000*256);
       this->setOverflow(microseconds/256);
     }else */
-    if (microseconds < 65536*512) {                                    
+    if (microseconds < TIMERCOUNTER_RESOLUTION*512) {                                    
       this->setPrescaleFactor(F_CPU/1000000*512);
       this->setOverflow(microseconds/512);
     }else {                           
       this->setPrescaleFactor(F_CPU/1000000*512);
-      this->setOverflow(65535);      
+      this->setOverflow(TIMERCOUNTER_RESOLUTION-1);      
     }
     this->refresh();
   }
@@ -122,7 +126,8 @@ void TimerCounter::attachInterrupt(timerCallback isr)
 
 #elif defined(__AVR_ATmega4809__) || defined(__AVR_ATmega4808__)
 
-#define TIMER1_RESOLUTION 65536UL  // Timer1 is 16 bit
+#define TIMERCOUNTER_RESOLUTION 65536UL  // Timer1 is 16 bit
+#define LARGEST_PRESCALE_DIVIDER 1024UL // DIV1024
 
 unsigned long _current_microseconds;
 TimerCounter::TimerCounter()
@@ -140,13 +145,6 @@ void TimerCounter::initialize(unsigned long microseconds) {
     TCA0.SINGLE.CTRLESET = TCA_SINGLE_CMD_RESTART_gc;
 
     TCA0.SINGLE.CTRLB = TCA_SINGLE_WGMODE_NORMAL_gc; // set mode as NORMAL, stop the timer
-    //TCA0.SINGLE.CTRLB = TCA_SINGLE_WGMODE_DSBOTTOM_gc;        // set mode as DSBOTTOM, stop the timer
-
-    //TCA0.SINGLE.CTRLB = TCA_SINGLE_WGMODE_SINGLESLOPE_gc;        // set mode as SINGLESLOPE, stop the timer
-    //TCA0.SINGLE.CTRLA |= (TCA_SINGLE_CLKSEL_DIV64_gc) | (TCA_SINGLE_ENABLE_bm);
-    //TCA0.SINGLE.CTRLA &= ~(TCA_SINGLE_ENABLE_bm);     //stop the timer   
-    /* disable event counting */
-    //TCA0.SINGLE.EVCTRL &= ~(TCA_SINGLE_CNTEI_bm);
     setPeriod(microseconds);
 }
 
@@ -164,84 +162,56 @@ void TimerCounter::setPeriod(unsigned long microseconds) {
 
     _current_microseconds = microseconds;
 
-    //DSBOTTOM: the counter runs backwards after TOP, interrupt is at BOTTOM so divide microseconds by 2
-    //const unsigned long cycles = (F_CPU / 1000000) * microseconds;
-
     //NORMAL: the counter runs to TOP, interrupt is at TOP
     const unsigned long cycles = (F_CPU / 1000000) * microseconds;
 
-    /*
-    if (cycles < TIMER1_RESOLUTION * 1) {
-        clockSelectBits = TCA_SINGLE_CLKSEL_DIV1_gc;    
-        pwmPeriod = cycles / 1;
-    } else {
-        clockSelectBits = TCA_SINGLE_CLKSEL_DIV64_gc;    
-        pwmPeriod = TIMER1_RESOLUTION - 1;
-    }
-    */  
-
-    if (cycles < TIMER1_RESOLUTION) {
-    //clockSelectBits = _BV(CS10);
+    if (cycles < TIMERCOUNTER_RESOLUTION) {
     clockSelectBits = TCA_SINGLE_CLKSEL_DIV1_gc;
     pwmPeriod = cycles;
     } else
-    if (cycles < TIMER1_RESOLUTION * 2) {
-    //clockSelectBits = _BV(CS10);
+    if (cycles < TIMERCOUNTER_RESOLUTION * 2) {
     clockSelectBits = TCA_SINGLE_CLKSEL_DIV2_gc;
     pwmPeriod = cycles / 2;
     } else 
-    if (cycles < TIMER1_RESOLUTION * 4) {
-    //clockSelectBits = _BV(CS10);
+    if (cycles < TIMERCOUNTER_RESOLUTION * 4) {
     clockSelectBits = TCA_SINGLE_CLKSEL_DIV4_gc;
     pwmPeriod = cycles / 4;
     } else  
-    if (cycles < TIMER1_RESOLUTION * 8) {
-    //clockSelectBits = _BV(CS11);
+    if (cycles < TIMERCOUNTER_RESOLUTION * 8) {
     clockSelectBits = TCA_SINGLE_CLKSEL_DIV8_gc;
     pwmPeriod = cycles / 8;
     } else
-    if (cycles < TIMER1_RESOLUTION * 16) {
-    //clockSelectBits = _BV(CS10);
+    if (cycles < TIMERCOUNTER_RESOLUTION * 16) {
     clockSelectBits = TCA_SINGLE_CLKSEL_DIV16_gc;
     pwmPeriod = cycles / 16;
     } else
-    if (cycles < TIMER1_RESOLUTION * 64) {
-    //clockSelectBits = _BV(CS11) | _BV(CS10);
+    if (cycles < TIMERCOUNTER_RESOLUTION * 64) {
     clockSelectBits = TCA_SINGLE_CLKSEL_DIV64_gc;    
     pwmPeriod = cycles / 64;
     } else
-    if (cycles < TIMER1_RESOLUTION * 256) {
-    //clockSelectBits = _BV(CS12);
+    if (cycles < TIMERCOUNTER_RESOLUTION * 256) {
     clockSelectBits = TCA_SINGLE_CLKSEL_DIV256_gc;   
     pwmPeriod = cycles / 256;
     } else
-    if (cycles < TIMER1_RESOLUTION * 1024) {
-    //clockSelectBits = _BV(CS12) | _BV(CS10);
+    if (cycles < TIMERCOUNTER_RESOLUTION * 1024) {
     clockSelectBits = TCA_SINGLE_CLKSEL_DIV1024_gc;
     pwmPeriod = cycles / 1024;
     } else {
-    //clockSelectBits = _BV(CS12) | _BV(CS10);
     clockSelectBits = TCA_SINGLE_CLKSEL_DIV1024_gc;    
-    pwmPeriod = TIMER1_RESOLUTION - 1;
+    pwmPeriod = TIMERCOUNTER_RESOLUTION - 1;
     }
 
-    //ICR1 = pwmPeriod;
     TCA0.SINGLE.PER = pwmPeriod;
-    //TCA0.SINGLE.PER = cycles / 64;
-                                        // set clock source and start timer
+    // set clock source and start timer
     TCA0.SINGLE.CTRLA = clockSelectBits | TCA_SINGLE_ENABLE_bm;
 }
 
 void TimerCounter::stop() {
-    //TCCR1B = _BV(WGM13);
-    //TCA0.SINGLE.CTRLB=TCA_SINGLE_WGMODE_NORMAL_gc;
-    //TCA0.SINGLE.CTRLA =0;
     TCA0.SINGLE.CTRLA &= ~(TCA_SINGLE_ENABLE_bm);
 }
 
 void TimerCounter::attachInterrupt(timerCallback isr) {
     isrCallback = isr;
-    //TIMSK1 = _BV(TOIE1);
     /* enable overflow interrupt */
     TCA0.SINGLE.INTCTRL |= TCA_SINGLE_OVF_bm;
 }
@@ -256,7 +226,8 @@ ISR(TCA0_OVF_vect)
 
 #elif defined(__AVR_ATmega328P__) || defined ( __AVR_ATmega2560__) || defined(__AVR_ATmega32U4__)
 
-#define TIMER1_RESOLUTION 65536UL  // Timer1 is 16 bit
+#define TIMERCOUNTER_RESOLUTION 65536UL  // Timer1 is 16 bit
+#define LARGEST_PRESCALE_DIVIDER 1024UL  // DIV1024
 
 TimerCounter::TimerCounter(){};
 
@@ -271,28 +242,28 @@ void TimerCounter::setPeriod(unsigned long microseconds) {
     unsigned short pwmPeriod;
     unsigned char clockSelectBits;
 
-    if (cycles < TIMER1_RESOLUTION) {
+    if (cycles < TIMERCOUNTER_RESOLUTION) {
     clockSelectBits = _BV(CS10);
     pwmPeriod = cycles;
     } else
-    if (cycles < TIMER1_RESOLUTION * 8) {
+    if (cycles < TIMERCOUNTER_RESOLUTION * 8) {
     clockSelectBits = _BV(CS11);
     pwmPeriod = cycles / 8;
     } else
-    if (cycles < TIMER1_RESOLUTION * 64) {
+    if (cycles < TIMERCOUNTER_RESOLUTION * 64) {
     clockSelectBits = _BV(CS11) | _BV(CS10);
     pwmPeriod = cycles / 64;
     } else
-    if (cycles < TIMER1_RESOLUTION * 256) {
+    if (cycles < TIMERCOUNTER_RESOLUTION * 256) {
     clockSelectBits = _BV(CS12);
     pwmPeriod = cycles / 256;
     } else
-    if (cycles < TIMER1_RESOLUTION * 1024) {
+    if (cycles < TIMERCOUNTER_RESOLUTION * 1024) {
     clockSelectBits = _BV(CS12) | _BV(CS10);
     pwmPeriod = cycles / 1024;
     } else {
     clockSelectBits = _BV(CS12) | _BV(CS10);
-    pwmPeriod = TIMER1_RESOLUTION - 1;
+    pwmPeriod = TIMERCOUNTER_RESOLUTION - 1;
     }
     ICR1 = pwmPeriod;
     TCCR1B = _BV(WGM13) | clockSelectBits; // starts the timer
@@ -324,7 +295,10 @@ ISR(TIMER1_OVF_vect)
   // As an aside, the TimerTC3 library also has the same bugs (as well as one or two others), as it is derived from
   // the same logic as SAMD_TimerInterrupt, and therefore also cannot be used by this project...
   
-  static timerCallback TC3_callback;
+#define TIMERCOUNTER_RESOLUTION 65536UL  // Timer is 16 bit
+#define LARGEST_PRESCALE_DIVIDER 1024UL // DIV1024
+
+static timerCallback TC3_callback;
   
   void TC3_Handler()
   {
@@ -550,6 +524,8 @@ void TimerCounter::attachInterrupt(timerCallback isr)
 
 #elif defined(ESP32)
 
+#define MAXPAUSE_PERIOD_IS_CONSTANT 1000 // millis
+
 timerCallback ESPTimerCallback;
 
 void ARDUINO_ISR_ATTR onTimer(){
@@ -595,6 +571,8 @@ void TimerCounter::attachInterrupt(timerCallback isr)
 }
 
 #elif defined(ESP8266)
+
+#define MAXPAUSE_PERIOD_IS_CONSTANT 1000 // millis
 
 timerCallback ESPTimerCallback;
 
@@ -642,6 +620,15 @@ void TimerCounter::attachInterrupt(void (*isr)())
 
 #else
 #error Missing definition of TimerCounter / unsupported device
+#endif
+
+#ifdef MAXPAUSE_PERIOD_IS_CONSTANT
+const unsigned long TimerCounter::MAXPAUSE_PERIOD = MAXPAUSE_PERIOD_IS_CONSTANT;
+#else
+// compute MAXPAUSE_PERIOD at compile-time, dependent on F_CPU
+// (1/F_CPU) * (TIMERCOUNTER_RESOLUTION-1) * LARGEST_PRESCALE_DIVIDER in seconds, multiply by 1000 to get in millis
+// For example: (1/48000000) * 65535 * 1024 * 1000 = 1398
+const unsigned long TimerCounter::MAXPAUSE_PERIOD = (((TIMERCOUNTER_RESOLUTION-1) * LARGEST_PRESCALE_DIVIDER * 1000)/F_CPU);
 #endif
 
 static class TimerCounter _TimerInstance;

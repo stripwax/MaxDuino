@@ -80,7 +80,6 @@
 // #define SHOW_PCT
 
 #define CNTRBASE 100                // 100 for sss, 60 for m:ss (sorry, no space for separator)
-#define MAXPAUSE_PERIOD   1000 // millis
 //#define ONPAUSE_POLCHG
 #define BLOCKMODE                   // REW or FF a block when in pause and Play to select it
 #define BLKSJUMPwithROOT            // use menu button in pause mode to switch blocks to jump
