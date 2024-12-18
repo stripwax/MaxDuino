@@ -921,9 +921,9 @@ void TZXProcess() {
                 
         case BLOCKID::IDPAUSE:
           if(temppause>0) {
-            if(temppause > MAXPAUSE_PERIOD) {
-              currentPeriod = MAXPAUSE_PERIOD;
-              temppause += -MAXPAUSE_PERIOD;    
+            if(temppause > Timer.MAXPAUSE_PERIOD) {
+              currentPeriod = Timer.MAXPAUSE_PERIOD;
+              temppause += -Timer.MAXPAUSE_PERIOD;    
             } else {
               currentPeriod = temppause;
               temppause = 0;
