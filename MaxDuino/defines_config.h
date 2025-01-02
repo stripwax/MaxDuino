@@ -46,4 +46,9 @@
 #define _CONFIG_FILE_DEFAULT_WEMOS_D1MINI_ESP8266 NO_SUFFIX
 #endif
 
+#if defined(STM32F1xx) && !defined(__STM32F1__)
+// Using stm32 core, __STM32F1__ is not defined, but it's handy to not have to use two different #defines
+#define __STM32F1__
+#endif
+
 #endif // DEFINES_CONFIG_H_INCLUDED

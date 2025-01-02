@@ -10,11 +10,22 @@
 timerCallback isrCallback = NULL;
 
 #if defined(__arm__) && defined(__STM32F1__)
+
+#ifdef __MAPLE__
+typedef uint8 timer_arg;
+const timer_arg TIMER_INSTANCE=2;
+#else
+typedef TIM_TypeDef* timer_arg;
+const timer_arg TIMER_INSTANCE=TIM2; // timer 2
+#endif
+const uint32_t TIMER_CHANNEL=2; // channel 2
+
 //clase derivada
 class HwTimerCounter:public HardwareTimer
 {
   public:
-    HwTimerCounter(uint8 timerNum) : HardwareTimer(timerNum) {};
+    //HwTimerCounter(byte timerNum) : HardwareTimer(timerNum) {};
+    HwTimerCounter(timer_arg instance) : HardwareTimer(instance) {};
     void setSTM32Period(unsigned long microseconds) __attribute__((always_inline)) {
       
 /*    if (microseconds < 65536/36) {
@@ -93,8 +104,7 @@ class HwTimerCounter:public HardwareTimer
 
 };
 
-#define TIMER_CHANNEL 2 // channel 2
-HwTimerCounter timer_instance(TIMER_CHANNEL);
+HwTimerCounter timer_instance(TIMER_INSTANCE);
 
 TimerCounter::TimerCounter() {};
 void TimerCounter::stop()

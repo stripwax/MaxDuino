@@ -2,6 +2,7 @@
 #define PINSETUP_H_INCLUDED
 
 #include "Arduino.h"
+#include "configs.h"
 
 #ifdef __AVR_ATmega2560__
 #define outputPin           23 
@@ -40,7 +41,6 @@
   #define WRITE_HIGH              digitalWrite(outputPin,HIGH)
   //#define WRITE_HIGH              GPIOA->regs->ODR |=  0b0000001000000000
   //#define WRITE_HIGH              gpio_write_bit(GPIOA, 9, HIGH)
-
 #elif defined(__AVR_ATmega32U4__) 
 #define outputPin           7    // this pin is 5V tolerant and PWM output capable
 //#define INIT_OUTPORT            pinMode(outputPin,OUTPUT)

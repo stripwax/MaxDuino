@@ -1,4 +1,5 @@
 #include "Arduino.h"
+#include "configs.h"
 #include "pinSetup.h"
 
 void pinsetup()
@@ -109,7 +110,6 @@ void pinsetup()
   VPORTA.OUT |=  PIN5_bm;
   
 #elif defined(__arm__) && defined(__STM32F1__)
-
   //General Pin settings
   //Setup buttons with internal pullup 
   pinMode(btnPlay,INPUT_PULLUP);
