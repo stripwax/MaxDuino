@@ -15,11 +15,10 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*   OPTION TO HAVE ALL CONFIG PARAMETERS DEFINED ENTIRELY VIA -D / platformio.ini                                      */
-#if defined(CONFIGFILE) && CONFIGFILE == -1
-
+#if (defined(CONFIGFILE)) && (CONFIGFILE == -1)
   #include "userconfig_blank.h"
-
 #else
+
   #if defined(__AVR_ATmega2560__)
     #ifndef CONFIGFILE
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_ATMEGA2560
@@ -50,16 +49,16 @@
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_WEMOS_D1MINI_ESP8266
     #endif
     #define CONFIG_PATH userARDUINO_ESP8266_WEMOS_D1MINI
-  #else //__AVR_ATmega328P__
-    #include "userconfig.h" // legacy
+  #elif define(__AVR_ATmega328P__)
     #ifndef CONFIGFILE
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_ATMEGA328P
     #endif
-    #define CONFIG_PATH userconfig
+    #define CONFIG_PATH userNANO328Pconfig
+  #else
+    #error Unknown platform!
   #endif
 
   #include CONFIG_header(CONFIG_PATH, CONFIGFILE)
-
 #endif
 
 #endif // CONFIGS_H_INCLUDED

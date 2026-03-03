@@ -1,5 +1,52 @@
 #ifndef HWCONFIG_H_INCLUDED
 #define HWCONFIG_H_INCLUDED
 
+#include "defines_config.h"
+
+#if defined(__AVR_ATmega2560__)
+  #ifndef HARDWAREPROFILE
+  #define HARDWAREPROFILE _HW_PROFILE_DEFAULT_ATMEGA2560
+  #endif
+  #define HARDWARE_PATH hwMAXconfig
+#elif defined(__AVR_ATmega4809__)
+  #ifndef HARDWAREPROFILE
+  #define HARDWAREPROFILE _HW_PROFILE_DEFAULT_EVERY_4809
+  #endif
+  #define HARDWARE_PATH hwEVERY4809config
+#elif defined(__AVR_ATmega4808__)
+  #ifndef HARDWAREPROFILE
+  #define HARDWAREPROFILE _HW_PROFILE_DEFAULT_EVERY_4808
+  #endif
+  #define HARDWARE_PATH hwEVERY4808config
+#elif defined(__arm__) && defined(__STM32F1__)
+  #ifndef HARDWAREPROFILE
+  #define HARDWAREPROFILE _HW_PROFILE_DEFAULT_STM32
+  #endif
+  #define HARDWARE_PATH hwSTM32config
+#elif defined(SEEED_XIAO_M0)
+  #ifndef HARDWAREPROFILE
+  #define HARDWAREPROFILE _HW_PROFILE_DEFAULT_XIAO_M0
+  #endif
+  #define HARDWARE_PATH hwXIAOM0config
+#elif defined(ARDUINO_XIAO_ESP32C3)
+  #ifndef HARDWAREPROFILE
+  #define HARDWAREPROFILE _HW_PROFILE_DEFAULT_XIAO_ESP32C3
+  #endif
+  #define HARDWARE_PATH hwXIAOESP32C3config
+#elif defined(ARDUINO_ESP8266_WEMOS_D1MINI)
+  #ifndef HARDWAREPROFILE
+  #define HARDWAREPROFILE _HW_PROFILE_DEFAULT_ESP8266_WEMOS_D1MINI
+  #endif
+  #define HARDWARE_PATH hwESP8266WEMOSD1MINIconfig
+#elif define(__AVR_ATmega328P__)
+  #ifndef HARDWAREPROFILE
+  #define HARDWAREPROFILE _HW_PROFILE_DEFAULT_NANO328P
+  #endif
+  #define HARDWARE_PATH hwNANO328Pconfig
+#else
+  #error Unknown platform!
+#endif
+
+#include CONFIG_header(HARDWARE_PATH, HARDWAREPROFILE)
 
 #endif // HWCONFIG_H_INCLUDED
