@@ -49,7 +49,7 @@
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_WEMOS_D1MINI_ESP8266
     #endif
     #define CONFIG_PATH userARDUINO_ESP8266_WEMOS_D1MINI
-  #elif define(__AVR_ATmega328P__)
+  #elif defined(__AVR_ATmega328P__)
     #ifndef CONFIGFILE
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_ATMEGA328P
     #endif
