@@ -56,6 +56,7 @@ void updateEEPROM()
     #endif
 
     EEPROM_put(EEPROM_CONFIG_BYTEPOS, settings);
+    EEPROM_commit();
     #ifdef Use_CAS
     setCASBaud();
     #endif
