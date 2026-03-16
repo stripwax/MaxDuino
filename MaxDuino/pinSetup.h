@@ -2,6 +2,7 @@
 #define PINSETUP_H_INCLUDED
 
 #include "Arduino.h"
+#include "configs.h"
 
 #ifdef __AVR_ATmega2560__
 #define outputPin           23 
@@ -30,7 +31,7 @@
   //#define WRITE_HIGH            digitalWrite(outputPin,HIGH)
   #define WRITE_HIGH           VPORTA.OUT |=  PIN7_bm         // El pin9 es PA7
 
-#elif defined(__arm__) && defined(__STM32F1__)
+#elif defined(__arm__) && defined(STM32F1)
   #define outputPin           PA9    // this pin is 5V tolerant and PWM output capable
   #define INIT_OUTPORT            pinMode(outputPin,OUTPUT)
   //#define INIT_OUTPORT            pinMode(outputPin,OUTPUT); GPIOA->regs->CRH |=  0x00000030  
@@ -126,7 +127,7 @@
   // #define btnDelete     A5         //Not implemented this button is for an optional function
   #define btnMotor      6             //Motor Sense (connect pin to gnd to play, NC for pause)
 
-#elif defined(__arm__) && defined(__STM32F1__)
+#elif defined(__arm__) && defined(STM32F1)
 //
 // Pin definition for Blue Pill boards
 //

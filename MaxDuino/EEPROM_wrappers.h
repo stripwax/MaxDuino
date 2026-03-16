@@ -5,7 +5,7 @@
 
 #include "Arduino.h"
 
-#if defined(__AVR__)
+#if defined(__AVR__) || defined(STM32CORE)
   #include <EEPROM.h>
   #define EEPROM_put EEPROM.put
   #define EEPROM_get EEPROM.get

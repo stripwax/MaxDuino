@@ -30,7 +30,7 @@
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_EVERY
     #endif
     #define CONFIG_PATH userEVERYconfig
-  #elif defined(__arm__) && defined(__STM32F1__)
+  #elif defined(__arm__) && defined(STM32F1)
     #ifndef CONFIGFILE
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_STM32
     #endif

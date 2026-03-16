@@ -1,6 +1,6 @@
 #include "EEPROM_wrappers.h"
 
-#if defined(__arm__) && defined(__STM32F1__)
+#if defined(__arm__) && defined(STM32F1) && !defined(STM32CORE)
   #include <EEPROM.h>
   void EEPROM_init(void)
   {

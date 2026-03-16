@@ -9,7 +9,7 @@
 
 timerCallback isrCallback = NULL;
 
-#if defined(__arm__) && defined(__STM32F1__)
+#if defined(__arm__) && defined(__STM32F1__) && !defined(STM32CORE)
 //clase derivada
 class HwTimerCounter:public HardwareTimer
 {
@@ -135,6 +135,34 @@ void TimerCounter::attachInterrupt(timerCallback isr)
 {
   // behaviour of other timers is to attach interrupt and resume
   timer_instance.attachInterrupt(TIMER_CHANNEL, isr);
+  timer_instance.resume();
+}
+
+#elif defined(__arm__) && defined(STM32F1) && defined(STM32CORE)
+
+HardwareTimer timer_instance(TIM2);
+
+TimerCounter::TimerCounter() {};
+void TimerCounter::stop()
+{
+  timer_instance.pause();
+}
+
+void TimerCounter::initialize(unsigned long period)
+{
+  // behaviour of other timers is to set period
+  setPeriod(period);  
+}
+
+void TimerCounter::setPeriod(unsigned long period)
+{
+  timer_instance.setOverflow(period, MICROSEC_FORMAT);
+}
+
+void TimerCounter::attachInterrupt(timerCallback isr)
+{
+  // behaviour of other timers is to attach interrupt and resume
+  timer_instance.attachInterrupt(isr);
   timer_instance.resume();
 }
 

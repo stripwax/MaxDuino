@@ -135,7 +135,7 @@ void pinsetup()
     PORTF.PIN5CTRL = PORT_ISC_INPUT_DISABLE_gc;
   #endif
   
-#elif defined(__arm__) && defined(__STM32F1__)
+#elif defined(__arm__) && defined(STM32F1)
 
   //General Pin settings
   //Setup buttons with internal pullup 
