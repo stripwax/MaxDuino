@@ -2,6 +2,7 @@
 #define DISPLAY_H_INCLUDED
 
 #include "configs.h"
+#include "Arduino.h"  // for types
 
 #ifdef LCDSCREEN16x2
   #define SCREENSIZE 16  
@@ -13,9 +14,9 @@
   void sendcommand(unsigned char com);
   void SendByte(unsigned char data);
   void sendChar(unsigned char data);
-  void setXY(unsigned char col,unsigned char row);
+  void setXY(byte col, byte row);
   void sendStr(const char *string);
-  void sendStrXY(const char *string, int X, int Y);
+  void sendStrXY(const char *string, byte X, byte Y);
   void reset_display(void);
   void displayOn(void);
   void displayOff(void);
@@ -64,9 +65,9 @@
 void scrollText(char* text, bool is_dir);
 void scrollText(char* text, bool is_dir, byte scroll_pos);
 void scrollTextReset();
-void printtext2F(const char* text, int l);
-void printtextF(const char* text, int l);
-void printtext(char* text, int l);
+void printtext2F(const char* text, byte l);
+void printtextF(const char* text, byte l);
+void printtext(char* text, byte l);
 
 #if defined(OLED1306)
 void OledStatusLine();

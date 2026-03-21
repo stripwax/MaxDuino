@@ -57,7 +57,7 @@
   {
     mx_i2c_start(OLED_address);
     mx_i2c_write(0x40);
-    for(int i=0;i<8;i++) {
+    for(byte i=0;i<8;i++) {
       mx_i2c_write(pgm_read_byte(myFont[data-0x20]+i));
     }
     mx_i2c_end();
@@ -90,156 +90,85 @@
   // Prints a string regardless the cursor position.
   void sendStr(const char *string)
   {
-    unsigned char i=0;
     while(*string)
     {
-      for(i=0;i<8;i++) {
-        SendByte(pgm_read_byte(myFont[*string-0x20]+i));
-      }
-      string++;
+      sendChar(*string++);
     }
- 
- /*
-      const char *stringC=string;
-      
-      while(*stringC) {
-        mx_i2c_start(OLED_address);
-        mx_i2c_write(0x40);
-        for(int i=0;i<8;i++){
-          mx_i2c_write(pgm_read_byte(myFont[*stringC-0x20]+i));
-        }
-        mx_i2c_end();
-        stringC++;
-      } 
- */   
-  }
+   }
 
   //==========================================================//
   // Prints a string in coordinates X Y, being multiples of 8.
   // This means we have 16 COLS (0-15) and 8 ROWS (0-7).
-  void sendStrXY(const char *string, int X, int Y)
+  void sendStrXY(const char *string, byte X, byte Y)
   {
-    #ifdef XY
+    #if defined(XY)
       setXY(X,Y);
-      unsigned char i=0;
       while(*string)
       {
         #ifdef OLED1306_128_64
-          for(i=0;i<8;i++)  SendByte(pgm_read_byte(myFont[*string-0x20]+i));
+          sendChar(*string++);
         #else
-          for(i=0;i<4;i++)  SendByte(pgm_read_byte(myFont[*string-0x20]+i));    
+          for(byte i=0;i<4;i++)  SendByte(pgm_read_byte(myFont[*string-0x20]+i));    
+          string++;
         #endif
-        string++;
       }
-    #endif
-  
-    #if defined(XY2) && not defined(DoubleFont)
-      int Xh=X, Xl=X;
-      const char *stringL=string, *stringH=string;
+    #elif defined(XY2) && not defined(DoubleFont)
+      const char *string_p=string;
 
-      setXY(Xl,Y);
-      while(*stringL) {
+      setXY(X,Y);
+      while(*string_p) {
         mx_i2c_start(OLED_address);
         mx_i2c_write(0x40);
 
-        for(int i=0;i<8;i++){
-          int ril=(pgm_read_byte(myFont[*stringL-0x20]+i));
-          //int il=(pgm_read_byte(&DFONT[ril & 0x0F]));
-      //    int il=DFONT[ril %16];
-          int il=pgm_read_byte(DFONT+(ril %16));
- /*
-          for(int ib=0;ib<4;ib++){
-            if (bitRead (ril,ib)){
-              il |= (1 << ib*2);
-              il |= (1 << (ib*2)+1);
-            }
-          }
-*/
-/*
-          if (bitRead(ril,0)) il|= 1+2;
-          if (bitRead(ril,1)) il|= 4+8;
-          if (bitRead(ril,2)) il|= 16+32;
-          if (bitRead(ril,3)) il|= 64+128;
-*/
-
-          //mx_i2c_start(OLED_address);
-          //mx_i2c_write(0x40);
+        for(byte i=0;i<8;i++){
+          byte ril=(pgm_read_byte(myFont[*string_p-0x20]+i));
+          byte il=pgm_read_byte(DFONT+(ril %16));
           mx_i2c_write(il);
-          //mx_i2c_end();
         }
 
         mx_i2c_end();
-        Xl++;    
-        stringL++;
+        string_p++;
       }
     
-      setXY(Xh,Y+1);
-      while(*stringH){      
+      setXY(X,Y+1);
+      string_p = string;
+      while(*string_p){      
         mx_i2c_start(OLED_address);
         mx_i2c_write(0x40);           
         
-        for(int i=0;i<8;i++){
-          int rih=(pgm_read_byte(myFont[*stringH-0x20]+i));
-          //int ih=(pgm_read_byte(&DFONT[rih >>4]));
-       //   int ih=DFONT[rih / 16];
-          int ih=pgm_read_byte(DFONT+(rih / 16));       
-/*
-          for(int ic=4;ic<8;ic++){
-            if (bitRead (rih,ic)) {
-              ih |= (1 << (ic-4)*2);
-              ih |= (1 << ((ic-4)*2)+1);
-            }   
-          }
-*/
-/*
-          if (bitRead(rih,4)) ih|= 1+2;
-          if (bitRead(rih,5)) ih|= 4+8;
-          if (bitRead(rih,6)) ih|= 16+32;
-          if (bitRead(rih,7)) ih|= 64+128;
-*/
-          //mx_i2c_start(OLED_address);
-          //mx_i2c_write(0x40);  
+        for(byte i=0;i<8;i++){
+          byte rih=(pgm_read_byte(myFont[*string_p-0x20]+i));
+          byte ih=pgm_read_byte(DFONT+(rih / 16));       
           mx_i2c_write(ih);
-          //mx_i2c_end();          
         }
 
         mx_i2c_end();
-        Xh++;    
-        stringH++;
+        string_p++;
       }
     
-    #endif // defined(XY2) && not defined(DoubleFont)
-
-  #if defined(XY2) && defined(DoubleFont)
-    int Xh=X, Xl=X;
-    const char *stringL=string, *stringH=string;
+    #elif defined(XY2) && defined(DoubleFont)
+    const char *string_p=string;
   
-    setXY(Xl,Y);
-    while(*stringL) {
-      mx_i2c_start(OLED_address);
-      mx_i2c_write(0x40); 
-    
-      for(int i=0;i<8;i++){
-        int ril=(pgm_read_byte(myFont[*stringL-0x20]+i));
-        mx_i2c_write(ril);
-      }
-      mx_i2c_end();
-      Xl++;    
-      stringL++;
+    setXY(X,Y);
+    while(*string_p) {
+      sendChar(*string_p++);
     }
   
-    setXY (Xh,Y+1);
-    while(*stringH) {
+    setXY(X,Y+1);
+    string_p = string;
+    while(*string_p) {
       mx_i2c_start(OLED_address);
       mx_i2c_write(0x40); 
-      for(int i=0;i<8;i++){
-        int rih=(pgm_read_byte(myFont[*stringH-0x20]+i+8));
+      for(byte i=0;i<8;i++){
+        byte rih=(pgm_read_byte(myFont[*string_p-0x20]+i+8));
         mx_i2c_write(rih);
       }
       mx_i2c_end();
-      Xh++;    
-      stringH++;
+      string_p++;
     }
+
+    #else
+    #error Need to define either XY or XY2
   
     #endif // defined(XY2) && defined(DoubleFont)
   }
@@ -450,10 +379,10 @@
     #endif
 
     byte t;
-    for(int j=0; j<J; j++)
+    for(byte j=0; j<J; j++)
     {
       setXY(0,j);
-      for(int i=0; i<128; i++)
+      for(byte i=0; i<128; i++)
       {
         t = pgm_read_byte(logo+j*128+i);
         #ifdef LOAD_MEM_LOGO
@@ -622,7 +551,7 @@ void scrollText(char* text, bool is_dir, byte scroll_pos) {
 
 char fline[17];
 
-void printtext2F(const char* text, int l) {  //Print text to screen. 
+void printtext2F(const char* text, byte l) {  //Print text to screen. 
   
   #ifdef SERIALSCREEN
   Serial.println(reinterpret_cast <const __FlashStringHelper *> (text));
@@ -661,7 +590,7 @@ void printtext2F(const char* text, int l) {  //Print text to screen.
    
 }
 
-void printtextF(const char* text, int l) {  //Print text to screen. 
+void printtextF(const char* text, byte l) {  //Print text to screen. 
   
   #ifdef SERIALSCREEN
     Serial.println(reinterpret_cast <const __FlashStringHelper *> (text));
@@ -682,7 +611,7 @@ void printtextF(const char* text, int l) {  //Print text to screen.
   #ifdef OLED1306
     #ifdef XY2
       strncpy_P(fline, text, 16);
-      for(int i=strlen(fline);i<16;i++) {
+      for(byte i=strlen(fline);i<16;i++) {
         fline[i]=0x20;
       }
       sendStrXY(fline,0,l);
@@ -703,7 +632,7 @@ void printtextF(const char* text, int l) {  //Print text to screen.
 
   #ifdef P8544
     strncpy_P(fline, text, 14);
-    for(int i=strlen(fline);i<14;i++) {
+    for(byte i=strlen(fline);i<14;i++) {
       fline[i]=0x20;
     }
     lcd.setCursor(0,l);
@@ -712,7 +641,7 @@ void printtextF(const char* text, int l) {  //Print text to screen.
    
 }
 
-void printtext(char* text, int l) {  //Print text to screen. 
+void printtext(char* text, byte l) {  //Print text to screen. 
   
   #ifdef SERIALSCREEN
     Serial.println(text);
