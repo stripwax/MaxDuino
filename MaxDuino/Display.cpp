@@ -433,8 +433,8 @@
               EEPROM_get(j*64+i/2, t);
             #endif
           }
-          SendByte(t);
         #endif   
+        SendByte(t);
       }  
     }    
   }
