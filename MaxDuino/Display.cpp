@@ -41,13 +41,18 @@ char fline[17];
     mx_i2c_end(); // stop transmitting
   }
 
+  static void _begin_data_mode()
+  {
+    mx_i2c_start(OLED_address); //begin transmitting
+    mx_i2c_write(0x40); //data mode
+  }
+
   //==========================================================//
   // Actually this sends a byte, not a char to draw in the display.
   // Display's chars uses 8 byte font
   void SendByte(unsigned char data)
   {
-    mx_i2c_start(OLED_address); //begin transmitting
-    mx_i2c_write(0x40); //data mode
+    _begin_data_mode();
     mx_i2c_write(data);
     mx_i2c_end(); // stop transmitting
   }
@@ -58,8 +63,7 @@ char fline[17];
   // and 8 ROWS (0-7).
   void sendChar(unsigned char data)
   {
-    mx_i2c_start(OLED_address);
-    mx_i2c_write(0x40);
+    _begin_data_mode();
     for(byte i=0;i<8;i++) {
       mx_i2c_write(pgm_read_byte(myFont[data-0x20]+i));
     }
@@ -137,13 +141,11 @@ char fline[17];
     #endif
   
     #if defined(XY2) && not defined(DoubleFont)
-      byte Xh=X, Xl=X;
       const char *stringL=string, *stringH=string;
 
-      setXY(Xl,Y);
+      setXY(X,Y);
       while(*stringL) {
-        mx_i2c_start(OLED_address);
-        mx_i2c_write(0x40);
+        _begin_data_mode();
 
         for(byte i=0;i<8;i++){
           byte ril=(pgm_read_byte(myFont[*stringL-0x20]+i));
@@ -172,14 +174,12 @@ char fline[17];
         }
 
         mx_i2c_end();
-        Xl++;    
         stringL++;
       }
     
-      setXY(Xh,Y+1);
+      setXY(X,Y+1);
       while(*stringH){      
-        mx_i2c_start(OLED_address);
-        mx_i2c_write(0x40);           
+        _begin_data_mode();
         
         for(byte i=0;i<8;i++){
           byte rih=(pgm_read_byte(myFont[*stringH-0x20]+i));
@@ -207,40 +207,33 @@ char fline[17];
         }
 
         mx_i2c_end();
-        Xh++;    
         stringH++;
       }
     
     #endif // defined(XY2) && not defined(DoubleFont)
 
   #if defined(XY2) && defined(DoubleFont)
-    byte Xh=X, Xl=X;
     const char *stringL=string, *stringH=string;
   
-    setXY(Xl,Y);
+    setXY(X,Y);
     while(*stringL) {
-      mx_i2c_start(OLED_address);
-      mx_i2c_write(0x40); 
-    
+      _begin_data_mode();
       for(byte i=0;i<8;i++){
         byte ril=(pgm_read_byte(myFont[*stringL-0x20]+i));
         mx_i2c_write(ril);
       }
       mx_i2c_end();
-      Xl++;    
       stringL++;
     }
   
-    setXY (Xh,Y+1);
+    setXY(X,Y+1);
     while(*stringH) {
-      mx_i2c_start(OLED_address);
-      mx_i2c_write(0x40); 
+      _begin_data_mode();
       for(byte i=0;i<8;i++){
         byte rih=(pgm_read_byte(myFont[*stringH-0x20]+i+8));
         mx_i2c_write(rih);
       }
       mx_i2c_end();
-      Xh++;    
       stringH++;
     }
   
