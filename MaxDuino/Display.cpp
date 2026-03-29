@@ -520,7 +520,6 @@ void scrollText(char* text, bool is_dir){
 
   #ifdef LCDSCREEN16x2
   //Text scrolling routine.  Setup for 16x2 screen so will only display 16 chars
-  if(scrollPos<0) scrollPos=0;
   char outtext[17];
   byte i=0;
   byte p=scrollPos;
@@ -543,7 +542,6 @@ void scrollText(char* text, bool is_dir){
 
   #ifdef OLED1306
   //Text scrolling routine.  Setup for 16x2 screen so will only display 16 chars
-  if(scrollPos<0) scrollPos=0;
   char outtext[17];
   byte i=0;
   byte p=scrollPos;
@@ -566,7 +564,6 @@ void scrollText(char* text, bool is_dir){
 
   #ifdef P8544
   //Text scrolling routine.  Setup for P8544 screen so will only display 14 chars
-  if(scrollPos<0) scrollPos=0;
   char outtext[15];
   byte i=0;
   byte p=scrollPos;
