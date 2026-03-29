@@ -12,6 +12,9 @@
 #include "EEPROM_wrappers.h"
 #endif
 
+// general text-printing buffer shared by most routines, it's long enough for one line of text plus one NUL terminator
+char fline[17];
+
 #ifdef LCDSCREEN16x2
 
   LiquidCrystal_I2C lcd(LCD_I2C_ADDR,16,2); // set the LCD address, and configure for a 16 chars and 2 line display
@@ -520,68 +523,65 @@ void scrollText(char* text, bool is_dir){
 
   #ifdef LCDSCREEN16x2
   //Text scrolling routine.  Setup for 16x2 screen so will only display 16 chars
-  char outtext[17];
   byte i=0;
   byte p=scrollPos;
   if(is_dir) {
-    outtext[0]='>';
+    fline[0]='>';
     i++;
   }
   for(;i<16;i++,p++)
   {
     if(p<strlen(text)) 
     {
-      outtext[i]=text[p];
+      fline[i]=text[p];
     } else {
-      outtext[i]='\0';
+      fline[i]='\0';
     }
   }
-  outtext[16]='\0';
-  printtext(outtext,1);
+  fline[16]='\0';
+  printtext(fline,1);
   #endif
 
   #ifdef OLED1306
   //Text scrolling routine.  Setup for 16x2 screen so will only display 16 chars
-  char outtext[17];
   byte i=0;
   byte p=scrollPos;
   if(is_dir) {
-    outtext[0]='>';
+    fline[0]='>';
     i++;
   }
   for(;i<16;i++,p++)
   {
     if(p<strlen(text)) 
     {
-      outtext[i]=text[p];
+      fline[i]=text[p];
     } else {
-      outtext[i]='\0';
+      fline[i]='\0';
     }
   }
-  outtext[16]='\0';
-  printtext(outtext,lineaxy);
+  fline[16]='\0';
+  printtext(fline,lineaxy);
   #endif
 
   #ifdef P8544
   //Text scrolling routine.  Setup for P8544 screen so will only display 14 chars
-  char outtext[15];
   byte i=0;
   byte p=scrollPos;
   if(is_dir) {
-    outtext[0]='>';
+    fline[0]='>';
     i++;
   }
   for(;i<14;i++,p++)
   {
     if(p<strlen(text)) 
     {
-      outtext[i]=text[p];
+      fline[i]=text[p];
     } else {
-      outtext[i]='\0';
+      fline[i]='\0';
     }
   }
-  outtext[14]='\0';
-  printtext(outtext,1);
+  fline[14]='\0';
+  printtext(fline,1);
   #endif
 
   scrollTime = millis();
@@ -595,8 +595,6 @@ void scrollText(char* text, bool is_dir, byte scroll_pos) {
   scrollTime = 0;
   scrollText(text, is_dir);
 }
-
-char fline[17];
 
 void printtext2F(const char* text, byte l) {  //Print text to screen. 
   
@@ -765,8 +763,8 @@ void OledStatusLine() {
     sendStr("ID:   BLK:");
     #ifdef OLED1306_128_64
       setXY(0,7);
-      ultoa(BAUDRATE,(char *)fline,10);
-      sendStr((char *)fline);
+      ultoa(BAUDRATE,fline,10);
+      sendStr(fline);
 
       #ifndef NO_MOTOR       
         setXY(5,7);
@@ -785,9 +783,10 @@ void OledStatusLine() {
       }
 
     #else // OLED1306_128_64 not defined
-
       setXY(0,3);
-      ultoa(BAUDRATE,(char *)fline,10);sendStr((char *)fline);
+      ultoa(BAUDRATE,fline,10);
+      sendStr(fline);
+
       #ifndef NO_MOTOR        
         setXY(5,3);
         if(mselectMask) {
@@ -808,8 +807,8 @@ void OledStatusLine() {
   #ifdef XY2                        // Y with double value
     #ifdef OLED1306_128_64          // 8 rows supported
       sendStrXY("ID:   BLK:",4,4);        
-      ultoa(BAUDRATE,(char *)fline,10);
-      sendStrXY((char *)fline,0,6);
+      ultoa(BAUDRATE,fline,10);
+      sendStrXY(fline,0,6);
       #ifndef NO_MOTOR       
         if(mselectMask) {
           sendStrXY(" M:ON",5,6);
