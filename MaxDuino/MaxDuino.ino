@@ -380,7 +380,7 @@ void loop(void) {
   }
 #endif
   
-  #ifdef REC_TZX
+  #ifdef RECORD
     if(start==0 && !is_recording() && (strlen(fileName)> SCREENSIZE)) {
       //Filename scrolling only runs if no file is playing to prevent I2C writes
       //conflicting with the playback Interrupt
@@ -398,7 +398,7 @@ void loop(void) {
     motorState=digitalRead(btnMotor);
   #endif
 
-  #ifdef REC_TZX
+  #ifdef RECORD
     if (is_recording()) {
       // Drain completed record pages as soon as possible so the ISR keeps a
       // free page available even if SD writes occasionally stall.
@@ -429,7 +429,7 @@ void loop(void) {
   if (millis() - timeDiff > 50) {   // check switch every 50ms 
     timeDiff = millis();           // get current millisecond count
 
-    #ifdef REC_TZX
+    #ifdef RECORD
       if (is_recording()) {
         #ifndef NO_MOTOR
           if (mselectMask) {
@@ -514,7 +514,7 @@ void loop(void) {
       debounce(button_play);
     }
 
-    #ifdef REC_TZX
+    #ifdef RECORD
       // Record button (D8 on Nano 4808/4809): only when not playing.
       if (button_rec() && start==0) {
         if (start_recording()) {

@@ -13,7 +13,23 @@
 #endif
 
 word BAUDRATE = DEFAULT_BAUDRATE;
-RecordFormat recordFormat = RecordFormat::TZX_ID15;
+
+static RecordFormat defaultRecordFormat()
+{
+  #if defined(RECORD) && defined(RECORD_TZX_ID15)
+    return RecordFormat::TZX_ID15;
+  #elif defined(RECORD) && defined(RECORD_ZX_SPECTRUM)
+    return RecordFormat::ZX_SPECTRUM;
+  #elif defined(RECORD) && defined(RECORD_CAS_MSX) && defined(Use_CAS)
+    return RecordFormat::CAS_MSX;
+  #elif defined(RECORD) && defined(RECORD_SHARP_MZF)
+    return RecordFormat::SHARP_MZF;
+  #else
+    return RecordFormat::TZX_ID15;
+  #endif
+}
+
+RecordFormat recordFormat = defaultRecordFormat();
 // TODO really the following should only be defined ifndef NO_MOTOR
 // but the order of #includes is wrong and we only define NO_MOTOR later :-/
 bool mselectMask = DEFAULT_MSELECTMASK;
@@ -51,21 +67,25 @@ static bool isRecordFormatSupported(const RecordFormat format)
 {
   switch (format) {
     case RecordFormat::TZX_ID15:
-      return true;
+      #if defined(RECORD) && defined(RECORD_TZX_ID15)
+        return true;
+      #else
+        return false;
+      #endif
     case RecordFormat::CAS_MSX:
-      #if defined(REC_TZX) && defined(REC_CAS_MSX) && defined(Use_CAS)
+      #if defined(RECORD) && defined(RECORD_CAS_MSX) && defined(Use_CAS)
         return true;
       #else
         return false;
       #endif
     case RecordFormat::ZX_SPECTRUM:
-      #ifdef REC_TZX
+      #if defined(RECORD) && defined(RECORD_ZX_SPECTRUM)
         return true;
       #else
         return false;
       #endif
     case RecordFormat::SHARP_MZF:
-      #if defined(REC_TZX) && defined(Use_MZF)
+      #if defined(RECORD) && defined(RECORD_SHARP_MZF)
         return true;
       #else
         return false;
@@ -344,6 +364,10 @@ void loadEEPROM()
         loadedWeakZXRecordMode &&
         isRecordFormatSupported(RecordFormat::ZX_SPECTRUM)) {
       recordFormat = RecordFormat::ZX_SPECTRUM;
+    }
+
+    if (!isRecordFormatSupported(recordFormat)) {
+      recordFormat = defaultRecordFormat();
     }
 
     #if defined(Use_CAS) && !defined(MAXDUINO_ESP32_SETTINGS)

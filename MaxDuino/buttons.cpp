@@ -109,7 +109,7 @@ bool button_up()
   return (readDecodedButtonADC() == ADCButtonId::Up);
 }
 
-#ifdef REC_TZX
+#ifdef RECORD
 bool button_rec()
 {
   // Record is a dedicated digital pin even when the rest of the UI uses ADC buttons.
@@ -156,7 +156,7 @@ bool button_up() {
   return(digitalRead(btnUp) == LOW);
 }
 
-#ifdef REC_TZX
+#ifdef RECORD
 bool button_rec() {
   #ifdef btnRec
     return (digitalRead(btnRec) == LOW);

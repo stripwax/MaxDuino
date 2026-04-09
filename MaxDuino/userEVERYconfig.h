@@ -7,10 +7,13 @@
 #define AYPLAY
 #define MenuBLK2A
 #define ID11CDTspeedup
-#define REC_TZX                         // enable recording; without this, neither TZX nor CAS recording is built
-#define REC_CAS_MSX                    // add the optional MSX .cas recording mode alongside TZX ID15 recording
+#define RECORD                         // master switch for all recording support
+    #define RECORD_TZX_ID15                // generic TZX direct-recording (ID15)
+    #define RECORD_ZX_SPECTRUM             // Spectrum-tuned TZX recording
+    #define RECORD_CAS_MSX                 // native MSX .cas recording
+    #define RECORD_SHARP_MZF               // native Sharp MZ .mzf recording
 #define ZX81SPEEDUP
-#define Use_MZF
+#define Use_MZF                        // .mzf playback support
 #define Use_MTX
 #define Use_CAQ
 #define Use_c64                         // Commodore C64/C16 .tap files with native C64-TAPE-RAW/C16-TAPE-RAW headers

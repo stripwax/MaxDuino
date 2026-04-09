@@ -238,8 +238,8 @@
   #define btnRoot       7             //Return to SD card root
 
   // Dedicated record button (requested: D8 on Nano 4808/4809).
-  // Only enabled when REC_TZX is set in userconfig.
-  #if defined(REC_TZX) && (defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__))
+  // Only enabled when RECORD is set in userconfig.
+  #if defined(RECORD) && (defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__))
     #define btnRec      8
   #endif
 #endif

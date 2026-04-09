@@ -3,15 +3,14 @@
 
 #include <Arduino.h>
 
-// The recorder defaults to TZX Direct Recording (ID15).
-// When the MSX CAS recorder engine is compiled in, the runtime menu can switch
-// recording between TZX ID15 and MSX .cas capture.
+// The recorder supports multiple runtime-selectable formats.
+// Compile-time feature flags decide which record types appear in the menu.
 
 // NOTE:
-// The rest of MaxDuino can be built with REC_TZX disabled.
+// The rest of MaxDuino can be built with RECORD disabled.
 // Provide stubs in that case to avoid undefined references at link time.
 
-#ifdef REC_TZX
+#ifdef RECORD
 
 // Returns true when recording is active.
 bool is_recording();
@@ -29,7 +28,7 @@ bool is_recording_paused();
 void pause_recording();
 void resume_recording();
 
-// Stop recording, finalize the TZX header/block and close the file.
+// Stop recording, finalize the active file format and close the file.
 void stop_recording();
 
 #else

@@ -34,7 +34,7 @@
 enum MenuItems{
   VERSION,
   BAUD_RATE,
-#ifdef REC_TZX
+#ifdef RECORD
   RECORD_TYPE,
 #endif
 #ifndef NO_MOTOR
@@ -49,7 +49,7 @@ enum MenuItems{
 
 const char MENU_ITEM_VERSION[] PROGMEM = "Version...";
 const char MENU_ITEM_BAUD_RATE[] PROGMEM = "Baud Rate ?";
-#ifdef REC_TZX
+#ifdef RECORD
 const char MENU_ITEM_RECORD_TYPE[] PROGMEM = "Record Type ?";
 #endif
 #ifndef NO_MOTOR
@@ -62,7 +62,7 @@ const char MENU_ITEM_BLK2A[] PROGMEM = "Skip BLK:2A ?";
 const char* const MENU_ITEMS[] PROGMEM = {
   MENU_ITEM_VERSION,
   MENU_ITEM_BAUD_RATE,
-#ifdef REC_TZX
+#ifdef RECORD
   MENU_ITEM_RECORD_TYPE,
 #endif
 #ifndef NO_MOTOR
@@ -76,41 +76,54 @@ const char* const MENU_ITEMS[] PROGMEM = {
 
 const word BAUDRATES[] PROGMEM = {1200, 2400, 3150, 3600, 3850};
 
-#ifdef REC_TZX
+#ifdef RECORD
 static byte recordTypeIndexFromFormat(const RecordFormat format)
 {
-  switch (format) {
-    case RecordFormat::ZX_SPECTRUM:
-      return 1;
-    case RecordFormat::CAS_MSX:
-      #if defined(REC_CAS_MSX) && defined(Use_CAS)
-        return 2;
-      #else
-        return 0;
-      #endif
-    case RecordFormat::SHARP_MZF:
-      #if defined(Use_MZF)
-        #if defined(REC_CAS_MSX) && defined(Use_CAS)
-          return 3;
-        #else
-          return 2;
-        #endif
-      #else
-        return 0;
-      #endif
-    case RecordFormat::TZX_ID15:
-    default:
-      return 0;
-  }
+  byte index = 0;
+
+  #if defined(RECORD_TZX_ID15)
+    if (format == RecordFormat::TZX_ID15) {
+      return index;
+    }
+    index++;
+  #endif
+
+  #if defined(RECORD_ZX_SPECTRUM)
+    if (format == RecordFormat::ZX_SPECTRUM) {
+      return index;
+    }
+    index++;
+  #endif
+
+  #if defined(RECORD_CAS_MSX) && defined(Use_CAS)
+    if (format == RecordFormat::CAS_MSX) {
+      return index;
+    }
+    index++;
+  #endif
+
+  #if defined(RECORD_SHARP_MZF)
+    if (format == RecordFormat::SHARP_MZF) {
+      return index;
+    }
+  #endif
+
+  return 0;
 }
 
 static byte recordTypeCount()
 {
-  byte count = 2;
-  #if defined(REC_CAS_MSX) && defined(Use_CAS)
+  byte count = 0;
+  #if defined(RECORD_TZX_ID15)
     count++;
   #endif
-  #if defined(Use_MZF)
+  #if defined(RECORD_ZX_SPECTRUM)
+    count++;
+  #endif
+  #if defined(RECORD_CAS_MSX) && defined(Use_CAS)
+    count++;
+  #endif
+  #if defined(RECORD_SHARP_MZF)
     count++;
   #endif
   return count;
@@ -118,27 +131,46 @@ static byte recordTypeCount()
 
 static RecordFormat recordTypeFormatFromIndex(const byte index)
 {
-  if (index == 0) {
-    return RecordFormat::TZX_ID15;
-  }
-  if (index == 1) {
-    return RecordFormat::ZX_SPECTRUM;
-  }
+  byte next = 0;
 
-  byte next = 2;
-  #if defined(REC_CAS_MSX) && defined(Use_CAS)
+  #if defined(RECORD_TZX_ID15)
+    if (index == next) {
+      return RecordFormat::TZX_ID15;
+    }
+    next++;
+  #endif
+
+  #if defined(RECORD_ZX_SPECTRUM)
+    if (index == next) {
+      return RecordFormat::ZX_SPECTRUM;
+    }
+    next++;
+  #endif
+
+  #if defined(RECORD_CAS_MSX) && defined(Use_CAS)
     if (index == next) {
       return RecordFormat::CAS_MSX;
     }
     next++;
   #endif
-  #if defined(Use_MZF)
+
+  #if defined(RECORD_SHARP_MZF)
     if (index == next) {
       return RecordFormat::SHARP_MZF;
     }
   #endif
 
-  return RecordFormat::TZX_ID15;
+  #if defined(RECORD_TZX_ID15)
+    return RecordFormat::TZX_ID15;
+  #elif defined(RECORD_ZX_SPECTRUM)
+    return RecordFormat::ZX_SPECTRUM;
+  #elif defined(RECORD_CAS_MSX) && defined(Use_CAS)
+    return RecordFormat::CAS_MSX;
+  #elif defined(RECORD_SHARP_MZF)
+    return RecordFormat::SHARP_MZF;
+  #else
+    return RecordFormat::TZX_ID15;
+  #endif
 }
 
 static void doRecordTypeSubmenu()
@@ -301,7 +333,7 @@ void menuMode()
           }
         break;
 
-        #ifdef REC_TZX
+        #ifdef RECORD
           case MenuItems::RECORD_TYPE:
             doRecordTypeSubmenu();
             break;

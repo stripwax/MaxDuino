@@ -2,10 +2,10 @@
 
 #include "record.h"
 
-#ifdef REC_TZX
+#ifdef RECORD
 
-#if defined(REC_CAS_MSX) && !defined(Use_CAS)
-#error REC_CAS_MSX requires Use_CAS
+#if defined(RECORD_CAS_MSX) && !defined(Use_CAS)
+#error RECORD_CAS_MSX requires Use_CAS
 #endif
 
 #include <Arduino.h>
@@ -16,7 +16,7 @@
 #include "file_utils.h"
 #include "current_settings.h"
 
-#if defined(REC_CAS_MSX) && defined(Use_CAS)
+#if defined(RECORD_CAS_MSX) && defined(Use_CAS)
 #include "casProcessing.h"
 #endif
 
@@ -44,7 +44,7 @@ static uint32_t dataBytesWritten = 0;
 
 static inline bool active_recording_is_cas()
 {
-  #if defined(REC_CAS_MSX) && defined(Use_CAS)
+  #if defined(RECORD_CAS_MSX) && defined(Use_CAS)
     return gActiveRecordFormat == static_cast<byte>(RecordFormat::CAS_MSX);
   #else
     return false;
@@ -53,7 +53,7 @@ static inline bool active_recording_is_cas()
 
 static inline bool active_recording_is_mzf()
 {
-  #if defined(Use_MZF)
+  #if defined(RECORD_SHARP_MZF)
     return gActiveRecordFormat == static_cast<byte>(RecordFormat::SHARP_MZF);
   #else
     return false;
@@ -62,25 +62,62 @@ static inline bool active_recording_is_mzf()
 
 static inline bool active_recording_is_zx_spectrum()
 {
-  return gActiveRecordFormat == static_cast<byte>(RecordFormat::ZX_SPECTRUM);
+  #if defined(RECORD_ZX_SPECTRUM)
+    return gActiveRecordFormat == static_cast<byte>(RecordFormat::ZX_SPECTRUM);
+  #else
+    return false;
+  #endif
+}
+
+static bool is_record_format_enabled(const RecordFormat format)
+{
+  switch (format) {
+    case RecordFormat::TZX_ID15:
+      #if defined(RECORD_TZX_ID15)
+        return true;
+      #else
+        return false;
+      #endif
+    case RecordFormat::CAS_MSX:
+      #if defined(RECORD_CAS_MSX) && defined(Use_CAS)
+        return true;
+      #else
+        return false;
+      #endif
+    case RecordFormat::ZX_SPECTRUM:
+      #if defined(RECORD_ZX_SPECTRUM)
+        return true;
+      #else
+        return false;
+      #endif
+    case RecordFormat::SHARP_MZF:
+      #if defined(RECORD_SHARP_MZF)
+        return true;
+      #else
+        return false;
+      #endif
+  }
+
+  return false;
 }
 
 static RecordFormat select_record_format()
 {
-  #if defined(REC_CAS_MSX) && defined(Use_CAS)
-    if (recordFormat == RecordFormat::CAS_MSX) {
-      return RecordFormat::CAS_MSX;
-    }
-  #endif
-  #if defined(Use_MZF)
-    if (recordFormat == RecordFormat::SHARP_MZF) {
-      return RecordFormat::SHARP_MZF;
-    }
-  #endif
-  if (recordFormat == RecordFormat::ZX_SPECTRUM) {
-    return RecordFormat::ZX_SPECTRUM;
+  if (is_record_format_enabled(recordFormat)) {
+    return recordFormat;
   }
-  return RecordFormat::TZX_ID15;
+
+  #if defined(RECORD_TZX_ID15)
+    return RecordFormat::TZX_ID15;
+  #elif defined(RECORD_ZX_SPECTRUM)
+    return RecordFormat::ZX_SPECTRUM;
+  #elif defined(RECORD_CAS_MSX) && defined(Use_CAS)
+    return RecordFormat::CAS_MSX;
+  #elif defined(RECORD_SHARP_MZF)
+    return RecordFormat::SHARP_MZF;
+  #else
+    return RecordFormat::TZX_ID15;
+  #endif
 }
 
 static void drawRecordingScreenOnce(const char* filename, RecordFormat format)
@@ -263,7 +300,7 @@ static constexpr uint8_t kWeakZxCenterTrackShift = 3;
 static constexpr uint8_t kWeakZxMinHysteresis = 2;
 static constexpr uint8_t kWeakZxMaxHysteresis = 8;
 #endif
-#if defined(REC_CAS_MSX) && defined(Use_CAS)
+#if defined(RECORD_CAS_MSX) && defined(Use_CAS)
 
 static constexpr uint8_t kMsxRecordCenterTrackShift = 6;
 static constexpr uint8_t kMsxRecordHysteresis = 4;
@@ -517,7 +554,7 @@ static inline void msx_process_cycle(uint8_t cycleSamples) {
 }
 #endif
 
-#if defined(Use_MZF)
+#if defined(RECORD_SHARP_MZF)
 static constexpr uint16_t kMzfSampleRate = 50000;
 static constexpr uint8_t kMzfMinAcceptedEdgeSamples = 6;
 static constexpr uint8_t kMzfResetSilenceSamples = 120;
@@ -949,7 +986,7 @@ ISR(REC_TCB_INT_vect) {
 
   if (!gRecording) return;
 
-#if defined(Use_MZF)
+#if defined(RECORD_SHARP_MZF)
   if (active_recording_is_mzf()) {
     const uint16_t sample = ADC0.RES;
     const uint8_t level = (sample >= 512) ? 1 : 0;
@@ -982,7 +1019,7 @@ ISR(REC_TCB_INT_vect) {
   }
 #endif
 
-#if defined(REC_CAS_MSX) && defined(Use_CAS)
+#if defined(RECORD_CAS_MSX) && defined(Use_CAS)
   if (active_recording_is_cas()) {
     const uint16_t sample = ADC0.RES;
     int16_t center = (int16_t)msxRecordCenter;
@@ -1185,11 +1222,11 @@ bool start_recording() {
   droppedBytes = 0;
   gActiveRecordFormat = static_cast<byte>(activeFormat);
   if (activeCas) {
-    #if defined(REC_CAS_MSX) && defined(Use_CAS)
+    #if defined(RECORD_CAS_MSX) && defined(Use_CAS)
     msx_reset_capture_state();
     #endif
   } else if (activeMzf) {
-    #if defined(Use_MZF)
+    #if defined(RECORD_SHARP_MZF)
     mzf_reset_capture_state();
     #endif
   } else {
@@ -1221,7 +1258,7 @@ bool start_recording() {
 }
 
 static void service_record_output() {
-  #if defined(Use_MZF)
+  #if defined(RECORD_SHARP_MZF)
     if (active_recording_is_mzf()) {
       mzf_flush_pending_header();
     }
@@ -1306,7 +1343,7 @@ void stop_recording() {
   printtext(gRecName, lineaxy);
 }
 
-#endif // REC_TZX
+#endif // RECORD
 
 
 

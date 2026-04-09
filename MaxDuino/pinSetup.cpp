@@ -83,7 +83,7 @@ void pinsetup()
   //VPORTD.OUT |= _BV(btnRoot); 
   //PORTD |= _BV(btnRoot);
 
-  #if defined(REC_TZX) && defined(btnRec)
+  #if defined(RECORD) && defined(btnRec)
     pinMode(btnRec, INPUT_PULLUP);
 
     // Reduce noise on the recording ADC pin.
@@ -130,7 +130,7 @@ void pinsetup()
   PORTA.PIN5CTRL |=PORT_PULLUPEN_bm; /* Enable the internal pullup */
   VPORTA.OUT |=  PIN5_bm;
 
-  #if defined(REC_TZX) && defined(btnRec)
+  #if defined(RECORD) && defined(btnRec)
     pinMode(btnRec, INPUT_PULLUP);
 
     // Reduce noise on the recording ADC pin (ATmega4808 Nano: A7 = PF5 = AIN15)

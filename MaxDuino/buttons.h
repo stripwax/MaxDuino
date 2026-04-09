@@ -11,7 +11,7 @@ bool button_down();
 bool button_menu();
 bool button_root();
 
-#ifdef REC_TZX
+#ifdef RECORD
 // Dedicated record button (e.g. D8 on megaAVR boards)
 bool button_rec();
 #endif
