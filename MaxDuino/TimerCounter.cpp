@@ -2,6 +2,13 @@
 #include "Arduino.h"
 #include "TimerCounter.h"
 
+#if defined(ESP32)
+  #include "driver/timer.h"
+  #if defined(ARDUINO_D1_MINI32)
+    #include "xtensa/xtruntime.h"
+  #endif
+#endif
+
 /*
  *  Interrupt and PWM utilities for 16 bit Timer1 on ATmega168/328
  *  Original code by Jesse Tane for http://labs.ideo.com August 2008
@@ -95,8 +102,11 @@ class HwTimerCounter:public HardwareTimer
 
 #define TIMER_CHANNEL 2 // channel 2
 HwTimerCounter timer_instance(TIMER_CHANNEL);
+static unsigned long currentMicroseconds;
 
-TimerCounter::TimerCounter() {};
+TimerCounter::TimerCounter() {
+  currentMicroseconds = 0;
+};
 void TimerCounter::stop()
 {
   timer_instance.pause();
@@ -105,11 +115,17 @@ void TimerCounter::stop()
 void TimerCounter::initialize(unsigned long period)
 {
   // behaviour of other timers is to set period
+  currentMicroseconds = 0;
   setPeriod(period);  
 }
 
 void TimerCounter::setPeriod(unsigned long period)
 {
+  if (currentMicroseconds == period) {
+    return;
+  }
+
+  currentMicroseconds = period;
   timer_instance.setSTM32Period(period);
 }
 
@@ -258,15 +274,27 @@ ISR(TCA0_OVF_vect)
 
 #define TIMER1_RESOLUTION 65536UL  // Timer1 is 16 bit
 
-TimerCounter::TimerCounter(){};
+static unsigned long currentMicroseconds;
+
+TimerCounter::TimerCounter(){
+    currentMicroseconds = 0;
+}
 
 void TimerCounter::initialize(unsigned long microseconds) {
     TCCR1B = _BV(WGM13);        // set mode as phase and frequency correct pwm, stop the timer
     TCCR1A = 0;                 // clear control register A 
+    currentMicroseconds = 0;
     setPeriod(microseconds);
 }
 
 void TimerCounter::setPeriod(unsigned long microseconds) {
+    if (currentMicroseconds == microseconds) {
+        // Direct-recording paths repeatedly request the same short period.
+        // Timer1 will keep retriggering without being reprogrammed.
+        return;
+    }
+
+    currentMicroseconds = microseconds;
     const unsigned long cycles = (F_CPU / 2000000) * microseconds;
     unsigned short pwmPeriod;
     unsigned char clockSelectBits;
@@ -550,10 +578,20 @@ void TimerCounter::attachInterrupt(timerCallback isr)
 
 #elif defined(ESP32)
 
+namespace {
+static unsigned long currentMicroseconds;
+}
+
 void ARDUINO_ISR_ATTR onTimer(){
-  // just call the callback
-  if (isrCallback)
+  if (isrCallback) {
+    #if defined(ARDUINO_D1_MINI32)
+      const unsigned savedInterruptLevel = XTOS_DISABLE_ALL_INTERRUPTS;
+    #endif
     (*isrCallback)();
+    #if defined(ARDUINO_D1_MINI32)
+      XTOS_RESTORE_INTLEVEL(savedInterruptLevel);
+    #endif
+  }
 }
 
 hw_timer_t * timer = NULL;
@@ -565,25 +603,26 @@ TimerCounter::TimerCounter()
 
 void TimerCounter::initialize(unsigned long microseconds=1000000)
 {
-  isrCallback = NULL;
+  currentMicroseconds = 0;
   if (timer==NULL)
   {
-    // count microseconds - so divide CPU freq in Hz by 1e6
-    timer = timerBegin(0, F_CPU/1000000, true);
-    timerAttachInterrupt(timer, &onTimer, true);
-    timerAlarmWrite(timer, microseconds, true);
+    timer = timerBegin(0, getApbFrequency() / 1000000, true);
+    timerAttachInterruptFlag(timer, &onTimer, true, ARDUINO_ISR_FLAG);
   }
+  setPeriod(microseconds);
 }
 
 void TimerCounter::setPeriod(unsigned long microseconds)
 {
-  timerAlarmWrite(timer, microseconds, true);
+  currentMicroseconds = microseconds;
+  timerAlarmWrite(timer, currentMicroseconds, true);
 }
 
 void TimerCounter::stop()
 {
-  if(timer!=NULL)
-    timerAlarmDisable(timer);
+  if (timer == NULL)
+    return;
+  timerAlarmDisable(timer);
 }
 
 void TimerCounter::attachInterrupt(timerCallback isr)
@@ -600,14 +639,18 @@ void IRAM_ATTR onTimer(){
     (*isrCallback)();
 }
 
+static unsigned long currentMicroseconds;
+
 TimerCounter::TimerCounter()
 {
   isrCallback = NULL;
+  currentMicroseconds = 0;
 }
 
 void TimerCounter::initialize(unsigned long microseconds=1000000)
 {
   isrCallback = NULL;
+  currentMicroseconds = 0;
   // Divide CPU freq in Hz (e.g. 80000000) by 1e6 (=> 80) to determine how many ticks per microsecond
   // DIV16 to reduce this by a factor of 16
   // ESP8266 timer1 is only 23 bits
@@ -615,12 +658,17 @@ void TimerCounter::initialize(unsigned long microseconds=1000000)
   // (which is less than 2^23 i.e. 8338608)
   timer1_isr_init();
   timer1_attachInterrupt(onTimer);
-  timer1_write(microseconds*((F_CPU/1000000)/16));
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
+  setPeriod(microseconds);
 }
 
 void TimerCounter::setPeriod(unsigned long microseconds)
 {
+  if (currentMicroseconds == microseconds) {
+    return;
+  }
+
+  currentMicroseconds = microseconds;
   timer1_write(microseconds*((F_CPU/1000000)/16));
   // timer1_write also (re)enables edge interrupts
 }
@@ -636,9 +684,101 @@ void TimerCounter::attachInterrupt(void (*isr)())
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 }
 
+#elif defined(MAXDUINO_RP2040)
+
+#include <hardware/timer.h>
+#include <pico/time.h>
+
+static int rp2040_alarm_num = -1;
+static unsigned long rp2040_current_microseconds = 0;
+static volatile uint64_t rp2040_next_target_us = 0;
+static volatile bool rp2040_in_callback = false;
+
+static void __not_in_flash_func(rp2040_timer_callback)(uint alarm_num)
+{
+  (void)alarm_num;
+  if (isrCallback) {
+    rp2040_in_callback = true;
+    (*isrCallback)();
+    rp2040_in_callback = false;
+  }
+}
+
+TimerCounter::TimerCounter()
+{
+  isrCallback = NULL;
+}
+
+void TimerCounter::initialize(unsigned long microseconds)
+{
+  if (rp2040_alarm_num < 0) {
+    rp2040_alarm_num = hardware_alarm_claim_unused(true);
+    hardware_alarm_set_callback(rp2040_alarm_num, rp2040_timer_callback);
+  }
+
+  rp2040_current_microseconds = microseconds ? microseconds : 1;
+  rp2040_next_target_us = 0;
+  rp2040_in_callback = false;
+  hardware_alarm_cancel(rp2040_alarm_num);
+}
+
+void TimerCounter::setPeriod(unsigned long microseconds)
+{
+  if (rp2040_alarm_num < 0) {
+    initialize(microseconds);
+  }
+
+  rp2040_current_microseconds = microseconds ? microseconds : 1;
+
+  if (isrCallback) {
+    const uint64_t now_us = to_us_since_boot(get_absolute_time());
+    uint64_t next_target_us;
+
+    if (rp2040_in_callback && rp2040_next_target_us != 0) {
+      next_target_us = rp2040_next_target_us + rp2040_current_microseconds;
+      if (next_target_us <= now_us + 1) {
+        next_target_us = now_us + rp2040_current_microseconds;
+      }
+    } else {
+      next_target_us = now_us + rp2040_current_microseconds;
+    }
+
+    rp2040_next_target_us = next_target_us;
+    hardware_alarm_set_target(
+      rp2040_alarm_num,
+      from_us_since_boot(rp2040_next_target_us)
+    );
+  }
+}
+
+void TimerCounter::stop()
+{
+  if (rp2040_alarm_num >= 0)
+    hardware_alarm_cancel(rp2040_alarm_num);
+  rp2040_next_target_us = 0;
+  rp2040_in_callback = false;
+}
+
+void TimerCounter::attachInterrupt(timerCallback isr)
+{
+  isrCallback = isr;
+
+  if (rp2040_alarm_num < 0) {
+    initialize(rp2040_current_microseconds ? rp2040_current_microseconds : 1000);
+  }
+
+  rp2040_next_target_us = to_us_since_boot(delayed_by_us(get_absolute_time(), rp2040_current_microseconds));
+  rp2040_in_callback = false;
+  hardware_alarm_set_target(
+    rp2040_alarm_num,
+    from_us_since_boot(rp2040_next_target_us)
+  );
+}
 #else
 #error Missing definition of TimerCounter / unsupported device
 #endif
 
 static class TimerCounter _TimerInstance;
 class TimerCounter &Timer = _TimerInstance;
+
+

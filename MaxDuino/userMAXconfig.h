@@ -6,13 +6,15 @@
 #define AYPLAY
 #define MenuBLK2A
 #define ID11CDTspeedup
-#define DIRECT_RECORDING
+//#define REC_TZX  for atmega 4808/4809
 #define ZX81SPEEDUP
 #define Use_MZF
+#define Use_MTX
 #define Use_CAQ
 #define tapORIC
     #define ORICSPEEDUP
 #define Use_CAS                           // .cas files playback on MSX / Dragon / CoCo Tandy computers
+    //#define Use_TRS80                   // TRS-80 .cas files playback
     #define Use_DRAGON
         #define Use_Dragon_sLeader        // short Leader of 0x55 allowed for loading TOSEC files
             #define Expand_All            // Expand short Leaders in ALL file header blocks.         

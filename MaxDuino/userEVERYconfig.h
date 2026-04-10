@@ -3,16 +3,22 @@
 /*                 Add // at the beginning of lines to comment and remove selected option                                */
 //**************************************  OPTIONAL USE TO SAVE SPACE  ***************************************************//
 #define Use_MENU                          // removing menu saves space
+#define FAT16_32_Only
 #define AYPLAY
 #define MenuBLK2A
 #define ID11CDTspeedup
-#define DIRECT_RECORDING
+#define REC_TZX                         // enable recording; without this, neither TZX nor CAS recording is built
+#define REC_CAS_MSX                    // add the optional MSX .cas recording mode alongside TZX ID15 recording
 #define ZX81SPEEDUP
 #define Use_MZF
+#define Use_MTX
 #define Use_CAQ
+#define Use_c64                         // Commodore C64/C16 .tap files with native C64-TAPE-RAW/C16-TAPE-RAW headers
+#define c64_invert                    // invert Commodore C64/C16 .tap playback pulse polarity
 #define tapORIC
     #define ORICSPEEDUP
 #define Use_CAS                           // .cas files playback on MSX / Dragon / CoCo Tandy computers
+    #define Use_TRS80                   // TRS-80 .cas files playback
     #define Use_DRAGON
         #define Use_Dragon_sLeader        // short Leader of 0x55 allowed for loading TOSEC files
             #define Expand_All            // Expand short Leaders in ALL file header blocks.        
@@ -110,14 +116,14 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //#define COMPRESS_REPEAT_ROW
-#define EEPROM_LOGO_COMPRESS
+//#define EEPROM_LOGO_COMPRESS
 #define LOAD_MEM_LOGO             // legacy, logo is not in EEPROM then wasting memory.
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
 //#define LOAD_EEPROM_LOGO 
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO
-#define LOGO_128_64 trs80
+#define LOGO_128_64 ultimate
 #define LOGO_128_32 LOGOMAXDUINO2
 #define LOGO_84_48 LOGOMAXDUINO2
 

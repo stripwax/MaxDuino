@@ -49,14 +49,14 @@ static uint16_t mzf_hdr_cksum = 0;
 static uint16_t mzf_file_cksum = 0;
 
 // counters for current stage
-static uint32_t mzf_pulses_left = 0;       // for gaps
+static uint16_t mzf_pulses_left = 0;       // for gaps
 static uint16_t mzf_file_left = 0;         // for file body bytes remaining
 static uint8_t mzf_tm_left = 0;            // for tapemark pulse counts
 
 // byte writer state
 enum class BYTE_SRC : uint8_t { HDR, FILE, CHK };
 static BYTE_SRC mzf_src = BYTE_SRC::HDR;
-static uint16_t mzf_hdr_idx = 0;
+static uint8_t mzf_hdr_idx = 0;
 static byte mzf_cur_byte = 0;
 static bool mzf_have_byte = false;
 static bool mzf_leader_done = false;
@@ -101,7 +101,7 @@ static void mzf_next_stage(MZF_STAGE s) {
   mzf_chk_byte_idx = 0;
 }
 
-void mzf_init() {
+__attribute__((noinline)) void mzf_init() {
   // Read and cache 128-byte tape header from file
   mzf_stage = MZF_STAGE::DONE;
   mzf_half = 0;
@@ -122,7 +122,7 @@ void mzf_init() {
 
   // Pre-compute header checksum.
   mzf_hdr_cksum = 0;
-  for (uint16_t i = 0; i < 128; ++i) {
+  for (uint8_t i = 0; i < 128; ++i) {
     mzf_hdr_cksum = mzf_cksum_add(mzf_hdr_cksum, mzf_hdr[i]);
   }
 
@@ -172,9 +172,7 @@ static void mzf_reset_byte_writer_for_src(BYTE_SRC src) {
   mzf_chk_byte_idx = 0;
 }
 
-static void mzf_process_bytes(uint16_t totalBytesForHDR /*ignored for FILE/CHK*/) {
-  (void)totalBytesForHDR;
-
+static void mzf_process_bytes() {
   // Ensure a current byte is loaded, unless we're finished for this stage.
   if (!mzf_have_byte) {
     if (!mzf_load_next_byte()) {
@@ -204,133 +202,83 @@ static void mzf_process_bytes(uint16_t totalBytesForHDR /*ignored for FILE/CHK*/
   }
 }
 
-void mzf_process() {
+__attribute__((noinline)) void mzf_process() {
   switch (mzf_stage) {
     case MZF_STAGE::LGAP1:
-      // LGAP: short pulses
-      if (mzf_emit_pulse(false)) {
-        if (--mzf_pulses_left == 0) {
-          mzf_tm_left = MZF_LTM_LONGS;
-          mzf_next_stage(MZF_STAGE::LTM_LONG);
-        }
+    case MZF_STAGE::SGAP:
+      if (mzf_emit_pulse(false) && (--mzf_pulses_left == 0)) {
+        mzf_tm_left = (mzf_stage == MZF_STAGE::LGAP1) ? MZF_LTM_LONGS : MZF_STM_LONGS;
+        mzf_next_stage((mzf_stage == MZF_STAGE::LGAP1) ? MZF_STAGE::LTM_LONG : MZF_STAGE::STM_LONG);
       }
       return;
 
     case MZF_STAGE::LTM_LONG:
-      if (mzf_emit_pulse(true)) {
-        if (--mzf_tm_left == 0) {
-          mzf_tm_left = MZF_LTM_SHORTS;
-          mzf_next_stage(MZF_STAGE::LTM_SHORT);
-        }
+    case MZF_STAGE::STM_LONG:
+      if (mzf_emit_pulse(true) && (--mzf_tm_left == 0)) {
+        mzf_tm_left = (mzf_stage == MZF_STAGE::LTM_LONG) ? MZF_LTM_SHORTS : MZF_STM_SHORTS;
+        mzf_next_stage((mzf_stage == MZF_STAGE::LTM_LONG) ? MZF_STAGE::LTM_SHORT : MZF_STAGE::STM_SHORT);
       }
       return;
 
     case MZF_STAGE::LTM_SHORT:
-      if (mzf_emit_pulse(false)) {
-        if (--mzf_tm_left == 0) {
-          mzf_next_stage(MZF_STAGE::LTM_ENDLONG);
-        }
+    case MZF_STAGE::STM_SHORT:
+      if (mzf_emit_pulse(false) && (--mzf_tm_left == 0)) {
+        mzf_next_stage((mzf_stage == MZF_STAGE::LTM_SHORT) ? MZF_STAGE::LTM_ENDLONG : MZF_STAGE::STM_ENDLONG);
       }
       return;
 
     case MZF_STAGE::LTM_ENDLONG:
+    case MZF_STAGE::STM_ENDLONG:
       if (mzf_emit_pulse(true)) {
-        // header 1
-        mzf_hdr_idx = 0;
-        mzf_reset_byte_writer_for_src(BYTE_SRC::HDR);
-        mzf_next_stage(MZF_STAGE::HDR1);
+        if (mzf_stage == MZF_STAGE::LTM_ENDLONG) {
+          mzf_hdr_idx = 0;
+          mzf_reset_byte_writer_for_src(BYTE_SRC::HDR);
+          mzf_next_stage(MZF_STAGE::HDR1);
+        } else {
+          bytesRead = 128;
+          mzf_file_left = mzf_file_len;
+          mzf_file_cksum = 0;
+          mzf_reset_byte_writer_for_src(BYTE_SRC::FILE);
+          mzf_next_stage(MZF_STAGE::FILE1);
+        }
       }
       return;
 
     case MZF_STAGE::HDR1:
-      mzf_process_bytes(128);
+    case MZF_STAGE::HDR2:
+    case MZF_STAGE::FILE1:
+      mzf_process_bytes();
       if (currentPeriod == 0) {
-        // checksum of header
         mzf_reset_byte_writer_for_src(BYTE_SRC::CHK);
-        mzf_next_stage(MZF_STAGE::CHKH1);
+        if (mzf_stage == MZF_STAGE::HDR1) {
+          mzf_next_stage(MZF_STAGE::CHKH1);
+        } else if (mzf_stage == MZF_STAGE::HDR2) {
+          mzf_next_stage(MZF_STAGE::CHKH2);
+        } else {
+          mzf_next_stage(MZF_STAGE::CHKF1);
+        }
       }
       return;
 
     case MZF_STAGE::CHKH1:
-      mzf_process_bytes(2);
-      if (currentPeriod == 0) {
-        // header copy
-        mzf_hdr_idx = 0;
-        mzf_reset_byte_writer_for_src(BYTE_SRC::HDR);
-        mzf_next_stage(MZF_STAGE::HDR2);
-      }
-      return;
-
-    case MZF_STAGE::HDR2:
-      mzf_process_bytes(128);
-      if (currentPeriod == 0) {
-        mzf_reset_byte_writer_for_src(BYTE_SRC::CHK);
-        mzf_next_stage(MZF_STAGE::CHKH2);
-      }
-      return;
-
     case MZF_STAGE::CHKH2:
-      mzf_process_bytes(2);
-      if (currentPeriod == 0) {
-        // SGAP
-        mzf_pulses_left = MZF_SGAP_PULSES;
-        mzf_next_stage(MZF_STAGE::SGAP);
-      }
-      return;
-
-    case MZF_STAGE::SGAP:
-      if (mzf_emit_pulse(false)) {
-        if (--mzf_pulses_left == 0) {
-          mzf_tm_left = MZF_STM_LONGS;
-          mzf_next_stage(MZF_STAGE::STM_LONG);
-        }
-      }
-      return;
-
-    case MZF_STAGE::STM_LONG:
-      if (mzf_emit_pulse(true)) {
-        if (--mzf_tm_left == 0) {
-          mzf_tm_left = MZF_STM_SHORTS;
-          mzf_next_stage(MZF_STAGE::STM_SHORT);
-        }
-      }
-      return;
-
-    case MZF_STAGE::STM_SHORT:
-      if (mzf_emit_pulse(false)) {
-        if (--mzf_tm_left == 0) {
-          mzf_next_stage(MZF_STAGE::STM_ENDLONG);
-        }
-      }
-      return;
-
-    case MZF_STAGE::STM_ENDLONG:
-      if (mzf_emit_pulse(true)) {
-        // file body (copy 1)
-        bytesRead = 128;
-        mzf_file_left = mzf_file_len;
-        mzf_file_cksum = 0;
-        mzf_reset_byte_writer_for_src(BYTE_SRC::FILE);
-        mzf_next_stage(MZF_STAGE::FILE1);
-      }
-      return;
-
-    case MZF_STAGE::FILE1:
-      mzf_process_bytes(0);
-      if (currentPeriod == 0) {
-        mzf_reset_byte_writer_for_src(BYTE_SRC::CHK);
-        mzf_next_stage(MZF_STAGE::CHKF1);
-      }
-      return;
-
     case MZF_STAGE::CHKF1:
-      mzf_process_bytes(2);
+      mzf_process_bytes();
       if (currentPeriod == 0) {
-        // Many Sharp MZ loaders will successfully load from the first payload copy.
-        // MaxDuino's progress indicator is based on file length, so emitting the
-        // conventional second copy makes playback appear to "start again".
-        // For better UX, stop after the first FILE+CHK block and return to menu.
-        mzf_next_stage(MZF_STAGE::DONE);
+        if (mzf_stage == MZF_STAGE::CHKH1) {
+          mzf_hdr_idx = 0;
+          mzf_reset_byte_writer_for_src(BYTE_SRC::HDR);
+          mzf_next_stage(MZF_STAGE::HDR2);
+        } else if (mzf_stage == MZF_STAGE::CHKH2) {
+          mzf_pulses_left = MZF_SGAP_PULSES;
+          mzf_next_stage(MZF_STAGE::SGAP);
+        } else {
+          // Many Sharp MZ loaders will successfully load from the first payload copy.
+          // MaxDuino's progress indicator is based on file length, so emitting the
+          // conventional second copy makes playback appear to "start again".
+          // For better UX, stop after the first FILE+CHK block and return to menu.
+          mzf_next_stage(MZF_STAGE::DONE);
+        }
       }
       return;
 

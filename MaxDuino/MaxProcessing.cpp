@@ -7,6 +7,9 @@
 #include "file_utils.h"
 #include "isr.h"
 #include "casProcessing.h"
+#ifdef Use_TRS80
+#include "trs80cas.h"
+#endif
 #include "buffer.h"
 #include "TimerCounter.h"
 #include "processing_state.h"
@@ -27,8 +30,14 @@
 #ifdef Use_MZF
   #include "mzf.h"
 #endif
+#ifdef Use_MTX
+  #include "mtx.h"
+#endif
 #ifdef Use_CAQ
   #include "caq.h"
+#endif
+#ifdef Use_c64
+  #include "c64tap.h"
 #endif
 
 //Temporarily store for a pulse period before loading it into the buffer.
@@ -82,6 +91,7 @@ void UniPlay(){
   if(!entry.open(currentDir, currentFile, O_RDONLY)) {
   //  printtextF(PSTR("Error Opening File"),0);
   }
+  resetFileReadCache();
 
 #ifdef ID11CDTspeedup
   AMScdt = false;
@@ -93,6 +103,8 @@ void UniPlay(){
   const char * filenameExt = strrchr(fileName,'.') + 1;
   checkForEXT(filenameExt);
   isStopped=false;
+  useOTLAFileOptimizations = false;
+  setOTLABufferMode(false);
   
   clearBuffer();
 
@@ -119,6 +131,9 @@ void UniStop() {
   Timer.stop();
   isStopped=true;
   start=0;
+  useOTLAFileOptimizations = false;
+  setOTLABufferMode(false);
+  resetFileReadCache();
   entry.close();                              //Close file
   seekFile(); 
   bytesRead=0;                                // reset read bytes PlayBytes
@@ -303,7 +318,6 @@ void PureDataBlock() {
   }
 }
 
-#ifdef DIRECT_RECORDING
 void writeDataDirect() {
   // Push byte from file into the buffer, with minimal processing.
   // One byte (8 bits) from file turns directly into one entry in the buffer
@@ -372,7 +386,7 @@ void writeDataDirect16() {
     writepos+=2;
   }
 }
-#endif
+
 
 void ForcePauseAfter0() {
   pauseOn=true;
@@ -451,7 +465,7 @@ void TZXProcess() {
       tzx_process_taskid_uef_processchunkid();
       break;
 #endif // Use_UEF
-    
+
     case TASK::GETID:
       //grab 1 byte ID
       if(ReadByte()) {
@@ -644,10 +658,11 @@ void TZXProcess() {
           }
           break;
 
-    #ifdef DIRECT_RECORDING
       case BLOCKID::ID15:
         //process ID15 - Direct Recording          
         if(currentBlockTask==BLOCKTASK::READPARAM) {
+          useOTLAFileOptimizations = true;
+          setOTLABufferMode(true);
           block_mem_oled();
           currentBit = 0;
           unsigned long SampleLength=0;
@@ -688,7 +703,7 @@ void TZXProcess() {
             writeDataDirect();
           }
           break;
-      #endif
+
 
         case BLOCKID::ID19:
           //Process ID19 - Generalized data block
@@ -865,6 +880,24 @@ void TZXProcess() {
       #ifdef Use_MZF
         case BLOCKID::MZF:
           mzf_process();
+          break;
+      #endif
+
+      #ifdef Use_MTX
+        case BLOCKID::MTX:
+          mtx_process();
+          break;
+      #endif
+
+      #if defined(Use_CAS) && defined(Use_TRS80)
+        case BLOCKID::TRS80CAS:
+          trs80cas_process();
+          break;
+      #endif
+
+      #ifdef Use_c64
+        case BLOCKID::C64TAP:
+          c64tap_process();
           break;
       #endif
 
@@ -1108,7 +1141,7 @@ void TZXProcess() {
 }
 
 void TZXLoop() {   
-  if(currentBlockTask == BLOCKTASK::ID15_TDATA && writepos+16<=buffsize && bytesToRead>=16)
+  if(currentBlockTask == BLOCKTASK::ID15_TDATA && writepos+16<=getBufferSize() && bytesToRead>=16)
   {
     // shortcut for ID15 handler for performance
     // write 8 input bytes (=16 output bytes to buffer)
@@ -1117,7 +1150,7 @@ void TZXLoop() {
     return;
   }
 
-  if(writepos<buffsize){                    // Keep filling until full
+  if(writepos<getBufferSize()){                    // Keep filling until full
     TZXProcess();                           //generate the next period to add to the buffer
     if(currentPeriod>0) {
       //add period to the buffer
@@ -1131,6 +1164,10 @@ void TZXLoop() {
       writepos+=2;
     }
   } else {
+    #if defined(ARDUINO_D1_MINI32)
+      if (useOTLAFileOptimizations && currentBlockTask == BLOCKTASK::ID15_TDATA)
+        return;
+    #endif
     if (!pauseOn) {
     #if defined(SHOW_CNTR)
       lcdTime();          

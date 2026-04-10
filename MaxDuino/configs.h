@@ -50,6 +50,16 @@
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_WEMOS_D1MINI_ESP8266
     #endif
     #define CONFIG_PATH userARDUINO_ESP8266_WEMOS_D1MINI
+  #elif defined(ARDUINO_D1_MINI32)
+    #ifndef CONFIGFILE
+    #define CONFIGFILE _CONFIG_FILE_DEFAULT_WEMOS_D1_MINI32_ESP32
+    #endif
+    #define CONFIG_PATH userARDUINO_D1_MINI32
+  #elif defined(MAXDUINO_RP2040)
+    #ifndef CONFIGFILE
+    #define CONFIGFILE _CONFIG_FILE_DEFAULT_RP2040
+    #endif
+    #define CONFIG_PATH userRPI_PICOconfig
   #else //__AVR_ATmega328P__
     #include "userconfig.h" // legacy
     #ifndef CONFIGFILE
@@ -60,6 +70,18 @@
 
   #include CONFIG_header(CONFIG_PATH, CONFIGFILE)
 
+#endif
+
+// Legacy compatibility: the MSX CAS recorder is no longer experimental.
+// Keep the old symbol working for older configs, but use REC_CAS_MSX in code.
+#if defined(REC_MSX_EXPERIMENTAL) && !defined(REC_CAS_MSX)
+  #define REC_CAS_MSX
+#endif
+
+// Legacy compatibility: the recorder feature flag is now REC_TZX.
+// Keep the old symbol working for older configs, but use REC_TZX in code.
+#if defined(Use_Rec) && !defined(REC_TZX)
+  #define REC_TZX
 #endif
 
 #endif // CONFIGS_H_INCLUDED

@@ -3,7 +3,11 @@
 
 #include "Arduino.h"
 
+#if defined(ESP32)
+void ARDUINO_ISR_ATTR wave2();
+#else
 void wave2();
+#endif
 
 //ISR Variables
 extern volatile byte isStopped;

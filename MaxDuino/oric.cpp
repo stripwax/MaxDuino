@@ -7,76 +7,57 @@
 #include "file_utils.h"
 
 #ifdef tapORIC
+namespace {
+
+static inline bool oric_turbo_enabled() {
+  #ifdef ORICSPEEDUP
+    return BAUDRATE > 2400;
+  #else
+    return false;
+  #endif
+}
+
+static inline word oric_one_pulse() {
+  return oric_turbo_enabled() ? ORICTURBOONEPULSE : ORICONEPULSE;
+}
+
+static inline word oric_zero_pulse(const bool highHalf) {
+  if (oric_turbo_enabled()) {
+    return highHalf ? ORICTURBOZEROHIGHPULSE : ORICTURBOZEROLOWPULSE;
+  }
+  return highHalf ? ORICZEROHIGHPULSE : ORICZEROLOWPULSE;
+}
+
+static inline void oric_prepare_byte(const byte value) {
+  currentByte = value;
+  currentBit = 11;
+  bitChecksum = 0;
+  lastByte = 0;
+}
+
+static inline void oric_write_gap_pulse() {
+  currentPeriod = oric_one_pulse();
+}
+
+} // namespace
+
 void OricBitWrite() {
-  if (currentBit == 11) { //Start Bit
-    #ifdef ORICSPEEDUP
-    if (BAUDRATE <= 2400){
-      if (pass==0) currentPeriod = ORICZEROLOWPULSE; 
-      if (pass==1) currentPeriod = ORICZEROHIGHPULSE;
-    } else {
-      if (pass==0) currentPeriod = ORICTURBOZEROLOWPULSE; 
-      if (pass==1) currentPeriod = ORICTURBOZEROHIGHPULSE;            
-    }
-    #else
-      if (pass==0) currentPeriod = ORICZEROLOWPULSE; 
-      if (pass==1) currentPeriod = ORICZEROHIGHPULSE;
-    #endif         
-  } else if (currentBit == 2) { // Paridad inversa i.e. Impar
-    #ifdef ORICSPEEDUP
-    if (BAUDRATE <= 2400){
-      if (pass==0)  currentPeriod = bitChecksum ? ORICZEROLOWPULSE : ORICONEPULSE; 
-      if (pass==1)  currentPeriod = bitChecksum ? ORICZEROHIGHPULSE : ORICONEPULSE;
-    } else {
-      if (pass==0)  currentPeriod = bitChecksum ? ORICTURBOZEROLOWPULSE : ORICTURBOONEPULSE; 
-      if (pass==1)  currentPeriod = bitChecksum ? ORICTURBOZEROHIGHPULSE : ORICTURBOONEPULSE;                     
-    }
-    #else      
-      if (pass==0)  currentPeriod = bitChecksum ? ORICZEROLOWPULSE : ORICONEPULSE; 
-      if (pass==1)  currentPeriod = bitChecksum ? ORICZEROHIGHPULSE : ORICONEPULSE;
-    #endif     
+  if (currentBit == 11) { // Start bit
+    currentPeriod = oric_zero_pulse(pass != 0);
+  } else if (currentBit == 2) { // Odd parity
+    currentPeriod = bitChecksum ? oric_zero_pulse(pass != 0) : oric_one_pulse();
   } else if (currentBit == 1) {
-    #ifdef ORICSPEEDUP
-    if (BAUDRATE <= 2400){
-      currentPeriod = ORICONEPULSE;       
-    } else {
-      currentPeriod = ORICTURBOONEPULSE;             
-    }
-    #else      
-      currentPeriod = ORICONEPULSE; 
-    #endif  
+    currentPeriod = oric_one_pulse();
   } else {
-    if(currentByte&0x01) {                       //Set next period depending on value of bit 0
-      #ifdef ORICSPEEDUP
-      if (BAUDRATE <= 2400){
-        currentPeriod = ORICONEPULSE;
-      } else{
-        currentPeriod = ORICTURBOONEPULSE;          
-      }
-      #else      
-      currentPeriod = ORICONEPULSE; 
-      #endif        
+    if(currentByte&0x01) {
+      currentPeriod = oric_one_pulse();
     } else {
-      #ifdef ORICSPEEDUP
-      if (BAUDRATE <= 2400){
-        if (pass==0)  currentPeriod = ORICZEROLOWPULSE; 
-        if (pass==1)  currentPeriod = ORICZEROHIGHPULSE;
-      }else{
-        if (pass==0)  currentPeriod = ORICTURBOZEROLOWPULSE; 
-        if (pass==1)  currentPeriod = ORICTURBOZEROHIGHPULSE;                 
-      }
-      #else       
-      if (pass==0)  currentPeriod = ORICZEROLOWPULSE; 
-      if (pass==1)  currentPeriod = ORICZEROHIGHPULSE;
-      #endif        
+      currentPeriod = oric_zero_pulse(pass != 0);
     }
   }   
 
   pass+=1;      //Data is played as 2 x pulses for a zero, and 2 pulses for a one
-  #ifdef ORICSPEEDUP
-  if ((currentPeriod == ORICONEPULSE) || (currentPeriod == ORICTURBOONEPULSE)) { 
-  #else  
-  if (currentPeriod == ORICONEPULSE) {
-  #endif
+  if (currentPeriod == oric_one_pulse()) {
 
     if ((currentBit>2) && (currentBit<11) && (pass==2)) {
       bitChecksum ^= 1;
@@ -146,7 +127,7 @@ void OricDataBlock() {
 
 void FlushBuffer(long newcount) {
   if(count_r>0) {
-    currentPeriod = ORICONEPULSE;
+    oric_write_gap_pulse();
     count_r--;
   } else {   
     count_r= newcount;
@@ -166,10 +147,7 @@ void tzx_process_blockid_oric() {
         OricBitWrite();
       } else {
         ReadByte();
-        currentByte=outByte;
-        currentBit = 11;
-        bitChecksum = 0;
-        lastByte=0;
+        oric_prepare_byte(outByte);
         if (currentByte==0x16) {
             count_r--;
         } else {
@@ -183,10 +161,7 @@ void tzx_process_blockid_oric() {
         OricBitWrite();
       } else {
         if(count_r >0) {
-          currentByte=0x16;
-          currentBit = 11;
-          bitChecksum = 0;
-          lastByte=0;
+          oric_prepare_byte(0x16);
           count_r--;
         } else {
           count_r=1;
@@ -200,10 +175,7 @@ void tzx_process_blockid_oric() {
         OricBitWrite();
       } else {
         if(count_r >0) {
-          currentByte=0x24;
-          currentBit = 11;
-          bitChecksum = 0;
-          lastByte=0;
+          oric_prepare_byte(0x24);
           count_r--;
         } 
         else {
@@ -220,10 +192,7 @@ void tzx_process_blockid_oric() {
       } else {
         if (count_r >0) {
           ReadByte();
-          currentByte=outByte;
-          currentBit = 11;
-          bitChecksum = 0;
-          lastByte=0;
+          oric_prepare_byte(outByte);
           if      (count_r == 5) bytesToRead = (unsigned int)(outByte<<8);
           else if (count_r == 4) bytesToRead = (unsigned int)(bytesToRead + outByte +1) ;
           else if (count_r == 3) bytesToRead = (unsigned int)(bytesToRead -(outByte<<8)) ;
@@ -241,10 +210,7 @@ void tzx_process_blockid_oric() {
         OricBitWrite();
       } else {
         ReadByte();
-        currentByte=outByte;
-        currentBit = 11;
-        bitChecksum = 0;
-        lastByte=0;
+        oric_prepare_byte(outByte);
         if (currentByte==0x00) {
           count_r=1;
           currentBit = 0;
@@ -258,10 +224,7 @@ void tzx_process_blockid_oric() {
         OricBitWrite();
       } else {
         if (count_r >0) {
-          currentByte=0x00;
-          currentBit = 11;
-          bitChecksum = 0;
-          lastByte=0;
+          oric_prepare_byte(0x00);
           count_r--;
         } else {
           count_r=100;
@@ -273,7 +236,7 @@ void tzx_process_blockid_oric() {
 
     case BLOCKTASK::GAP:
       if(count_r>0) {
-        currentPeriod = ORICONEPULSE;
+        oric_write_gap_pulse();
         count_r--;
       } else {   
         currentBlockTask=BLOCKTASK::TDATA;

@@ -9,13 +9,17 @@
 #define AYPLAY
 #define MenuBLK2A
 #define ID11CDTspeedup
-#define DIRECT_RECORDING
+//#define Use_c64                         // Commodore C64/C16 .tap files with native C64-TAPE-RAW/C16-TAPE-RAW headers
+//#define c64_invert                    // invert Commodore C64/C16 .tap playback pulse polarity
+//#define REC_TZX  for atmega 4808/4809
+//#define Use_MTX
 #define ZX81SPEEDUP
-#define Use_MZF
-#define Use_CAQ
+//#define Use_MZF
+//#define Use_CAQ
 #define tapORIC
     #define ORICSPEEDUP
 #define Use_CAS                           // .cas files playback on MSX / Dragon / CoCo Tandy computers
+    //#define Use_TRS80                     // TRS-80 .cas files playback
     #define Use_DRAGON
         #define Use_Dragon_sLeader        // short Leader of 0x55 allowed for loading TOSEC files
             #define Expand_All            // Expand short Leaders in ALL file header blocks. 
@@ -132,5 +136,5 @@
 /////////////////////
 //#define DoubleFont
 
-#define FONT8x8 BasicFont
+#define FONT8x8 cartoonFont
 #define FONT8x16 cartoon8x16
