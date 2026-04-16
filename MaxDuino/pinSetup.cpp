@@ -1,6 +1,18 @@
 #include "configs.h"
+#include "configs.h"
 #include "Arduino.h"
 #include "pinSetup.h"
+
+#if defined(ARDUINO_D1_MINI32)
+  #include "driver/dac_common.h"
+  #include "driver/gpio.h"
+  #include "driver/rtc_io.h"
+#endif
+
+#if defined(MAXDUINO_RP2040)
+#include <SPI.h>
+#include <Wire.h>
+#endif
 
 void pinsetup()
 {
@@ -72,7 +84,7 @@ void pinsetup()
   //VPORTD.OUT |= _BV(btnRoot); 
   //PORTD |= _BV(btnRoot);
 
-  #if defined(Use_Rec) && defined(btnRec)
+  #if defined(RECORD) && defined(btnRec)
     pinMode(btnRec, INPUT_PULLUP);
 
     // Reduce noise on the recording ADC pin.
@@ -119,7 +131,7 @@ void pinsetup()
   PORTA.PIN5CTRL |=PORT_PULLUPEN_bm; /* Enable the internal pullup */
   VPORTA.OUT |=  PIN5_bm;
 
-  #if defined(Use_Rec) && defined(btnRec)
+  #if defined(RECORD) && defined(btnRec)
     pinMode(btnRec, INPUT_PULLUP);
 
     // Reduce noise on the recording ADC pin (ATmega4808 Nano: A7 = PF5 = AIN15)
@@ -179,6 +191,34 @@ void pinsetup()
   PORTD |= _BV(3);
 
    
+#elif defined(ARDUINO_D1_MINI32)
+
+  pinMode(btnMotor, INPUT_PULLUP);
+  digitalWrite(btnMotor, HIGH);
+
+  rtc_gpio_deinit(GPIO_NUM_26);
+  dac_output_disable(DAC_CHANNEL_2);
+  gpio_set_drive_capability((gpio_num_t)outputPin, GPIO_DRIVE_CAP_DEFAULT);
+  pinMode(outputPin, OUTPUT);
+  GPIO.out_w1tc = (1UL << outputPin);
+
+#elif defined(MAXDUINO_RP2040)
+
+  pinMode(btnPlay, INPUT_PULLUP);
+  pinMode(btnStop, INPUT_PULLUP);
+  pinMode(btnUp, INPUT_PULLUP);
+  pinMode(btnDown, INPUT_PULLUP);
+  pinMode(btnMotor, INPUT_PULLUP);
+  pinMode(btnRoot, INPUT_PULLUP);
+
+  Wire.setSDA(RP2040_I2C_SDA_PIN);
+  Wire.setSCL(RP2040_I2C_SCL_PIN);
+
+  SPI1.setSCK(RP2040_SD_SCK_PIN);
+  SPI1.setTX(RP2040_SD_MOSI_PIN);
+  SPI1.setRX(RP2040_SD_MISO_PIN);
+  SPI1.setCS(chipSelect);
+
 #elif defined(SEEED_XIAO_M0) || defined(ARDUINO_XIAO_ESP32C3) || defined(ARDUINO_ESP8266_WEMOS_D1MINI)
 
   // BUTTON PIN CONFIGURATION

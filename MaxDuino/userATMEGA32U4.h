@@ -12,12 +12,12 @@
 #define AYPLAY
 #define MenuBLK2A
 //#define ID11CDTspeedup
-#define DIRECT_RECORDING
+//#define REC_TZX  for atmega 4808/4809
 #define ZX81SPEEDUP
 //#define Use_MZF
 //#define Use_MTX
 //#define Use_CAQ
-//#define Use_c64
+//#define Use_c64                         // Commodore C64/C16 .tap files with native C64-TAPE-RAW/C16-TAPE-RAW headers
 //#define tapORIC
 //    #define ORICSPEEDUP
 #define Use_CAS                           // .cas files playback on MSX / Dragon / CoCo Tandy computers

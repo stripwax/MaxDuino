@@ -2,6 +2,7 @@
 #include "file_utils.h"
 #include "sdfat_config.h"
 #include <SdFat.h>
+#include <string.h>
 
 SdBaseFile entry;  // SD card file
 unsigned long bytesRead=0;
@@ -9,14 +10,82 @@ unsigned long filesize;
 byte lastByte;
 _readout_type readout;
 
-byte filebuffer[20]; // used for small reads from files (readfile, ReadByte, etc use this), sized for the largest header read
+byte filebuffer[20]; // used for small reads from files (readfile, ReadByte, etc use this), sized for the largest small header read
+namespace {
+  #if defined(ARDUINO_D1_MINI32)
+    constexpr uint16_t FILE_READ_CACHE_SIZE = 512;
+  #else
+    constexpr uint16_t FILE_READ_CACHE_SIZE = 64;
+  #endif
+
+  byte fileReadCache[FILE_READ_CACHE_SIZE];
+  unsigned long fileReadCacheStart = 0;
+  uint16_t fileReadCacheLen = 0;
+  bool fileReadCacheValid = false;
+
+  uint16_t refillFileReadCache(unsigned long p)
+  {
+    const bool isSequentialRefill =
+        fileReadCacheValid && (p == (fileReadCacheStart + fileReadCacheLen));
+
+    if (!isSequentialRefill) {
+      if (!entry.seekSet(p)) {
+        fileReadCacheValid = false;
+        fileReadCacheLen = 0;
+        return 0;
+      }
+    }
+
+    const int bytesReadIntoCache = entry.read(fileReadCache, FILE_READ_CACHE_SIZE);
+    if (bytesReadIntoCache <= 0) {
+      fileReadCacheValid = false;
+      fileReadCacheLen = 0;
+      return 0;
+    }
+
+    fileReadCacheStart = p;
+    fileReadCacheLen = uint16_t(bytesReadIntoCache);
+    fileReadCacheValid = true;
+    return fileReadCacheLen;
+  }
+}
+
+void resetFileReadCache()
+{
+  fileReadCacheValid = false;
+  fileReadCacheStart = 0;
+  fileReadCacheLen = 0;
+}
+
 byte readfile(byte nbytes, unsigned long p)
 {
-  byte i=0;
-  if(entry.seekSet(p)) {
-    i=entry.read(filebuffer, nbytes);
+  if (nbytes == 0) {
+    return 0;
   } 
-  return i;
+
+  const unsigned long requestEnd = p + nbytes;
+  if (!fileReadCacheValid ||
+      p < fileReadCacheStart ||
+      requestEnd > (fileReadCacheStart + fileReadCacheLen))
+  {
+    if (refillFileReadCache(p) == 0) {
+      return 0;
+    }
+  }
+
+  unsigned long cacheOffset = p - fileReadCacheStart;
+  uint16_t available = fileReadCacheLen - uint16_t(cacheOffset);
+  if (available < nbytes) {
+    if (refillFileReadCache(p) == 0) {
+      return 0;
+    }
+    cacheOffset = 0;
+    available = fileReadCacheLen;
+  }
+
+  const byte copied = (available < nbytes) ? byte(available) : nbytes;
+  memcpy(filebuffer, fileReadCache + cacheOffset, copied);
+  return copied;
 }
 
 byte ReadByte() {
@@ -66,3 +135,5 @@ byte ReadDword() {
   }
   return false;
 }
+
+

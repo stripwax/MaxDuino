@@ -6,15 +6,20 @@
 #define AYPLAY
 #define MenuBLK2A
 #define ID11CDTspeedup
-#define Use_Rec
-#define Use_c64
+#define RECORD                         // master switch for all recording support
+    #define RECORD_TZX_ID15                // generic TZX direct-recording (ID15)
+    #define RECORD_ZX_SPECTRUM             // Spectrum-tuned TZX recording
+    #define RECORD_CAS_MSX                 // native MSX .cas recording
+    #define RECORD_SHARP_MZF               // native Sharp MZ .mzf recording
 #define ZX81SPEEDUP
-//#define Use_MZF
-//#define Use_MTX
-//#define Use_CAQ
-//#define tapORIC
+#define Use_MZF                        // .mzf playback support
+#define Use_MTX
+#define Use_CAQ
+#define Use_c64                         // Commodore C64/C16 .tap files with native C64-TAPE-RAW/C16-TAPE-RAW headers
+#define tapORIC
     #define ORICSPEEDUP
 #define Use_CAS                           // .cas files playback on MSX / Dragon / CoCo Tandy computers
+    #define Use_TRS80                   // TRS-80 .cas files playback
     #define Use_DRAGON
         #define Use_Dragon_sLeader        // short Leader of 0x55 allowed for loading TOSEC files
             #define Expand_All            // Expand short Leaders in ALL file header blocks.        
@@ -113,13 +118,13 @@
 
 //#define COMPRESS_REPEAT_ROW
 //#define EEPROM_LOGO_COMPRESS
-//#define LOAD_MEM_LOGO             // legacy, logo is not in EEPROM then wasting memory.
+#define LOAD_MEM_LOGO             // legacy, logo is not in EEPROM then wasting memory.
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
 //#define LOAD_EEPROM_LOGO 
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO
-#define LOGO_128_64 MTX
+#define LOGO_128_64 ultimate
 #define LOGO_128_32 LOGOMAXDUINO2
 #define LOGO_84_48 LOGOMAXDUINO2
 

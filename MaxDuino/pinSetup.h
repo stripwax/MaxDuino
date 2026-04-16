@@ -3,6 +3,19 @@
 
 #include "Arduino.h"
 
+#if defined(ARDUINO_D1_MINI32)
+  #include "soc/gpio_struct.h"
+#endif
+
+#if defined(ESP32)
+  #include "hal/gpio_hal.h"
+
+  static inline void ARDUINO_ISR_ATTR esp32WriteOutputLevel(const gpio_num_t pin, const uint32_t level)
+  {
+    gpio_ll_set_level(GPIO_HAL_GET_HW(0), pin, level);
+  }
+#endif
+
 #ifdef __AVR_ATmega2560__
 #define outputPin           23 
 #define INIT_OUTPORT        DDRA |=  _BV(1)         // El pin23 es el bit1 del PORTA
@@ -64,14 +77,26 @@
 #elif defined(ARDUINO_XIAO_ESP32C3)
   #define outputPin         D0
   #define INIT_OUTPORT            pinMode(outputPin,OUTPUT)
-  #define WRITE_LOW               digitalWrite(outputPin,LOW)
-  #define WRITE_HIGH              digitalWrite(outputPin,HIGH)
+  #define WRITE_LOW               esp32WriteOutputLevel((gpio_num_t)outputPin, LOW)
+  #define WRITE_HIGH              esp32WriteOutputLevel((gpio_num_t)outputPin, HIGH)
 
 #elif defined(ARDUINO_ESP8266_WEMOS_D1MINI)
   #define outputPin           16 // D0
   #define INIT_OUTPORT            pinMode(outputPin,OUTPUT)
   #define WRITE_LOW               digitalWrite(outputPin,LOW)
   #define WRITE_HIGH              digitalWrite(outputPin,HIGH)
+
+#elif defined(ARDUINO_D1_MINI32)
+  #define outputPin         26 // D0
+  #define INIT_OUTPORT      pinMode(outputPin,OUTPUT)
+  #define WRITE_LOW         GPIO.out_w1tc = (1UL << outputPin)
+  #define WRITE_HIGH        GPIO.out_w1ts = (1UL << outputPin)
+
+#elif defined(MAXDUINO_RP2040)
+  #define outputPin           9
+  #define INIT_OUTPORT            pinMode(outputPin,OUTPUT_12MA)
+  #define WRITE_LOW               digitalWriteFast(outputPin,LOW)
+  #define WRITE_HIGH              digitalWriteFast(outputPin,HIGH)
 
 #elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__)
   //#define MINIDUINO_AMPLI     // For A.Villena's Miniduino new design . You can define this in platformio.ini
@@ -179,6 +204,34 @@
 #define btnADC        A0 
 #define btnMotor      2
 
+#elif defined(ARDUINO_D1_MINI32)
+//
+// Pin definition for Wemos D1 Mini32 (ESP32) boards
+//
+#define chipSelect    SS
+#define BUTTON_ADC
+#define btnADC        A0
+#define btnMotor      D4
+
+#elif defined(MAXDUINO_RP2040)
+//
+// Pin definition for Raspberry Pi Pico / RP2040 boards
+//
+  const byte chipSelect = 13;
+
+  #define btnUp         0
+  #define btnDown       1
+  #define btnStop       2
+  #define btnPlay       3
+  #define btnMotor      6
+  #define btnRoot       7
+
+  #define RP2040_I2C_SDA_PIN 4
+  #define RP2040_I2C_SCL_PIN 5
+  #define RP2040_SD_SCK_PIN 10
+  #define RP2040_SD_MOSI_PIN 11
+  #define RP2040_SD_MISO_PIN 12
+
 #elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__)
   const byte chipSelect = 10;          //Sd card chip select pin
   
@@ -190,10 +243,11 @@
   #define btnRoot       7             //Return to SD card root
 
   // Dedicated record button (requested: D8 on Nano 4808/4809).
-  // Only enabled when Use_Rec is set in userconfig.
-  #if defined(Use_Rec) && (defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__))
+  // Only enabled when RECORD is set in userconfig.
+  #if defined(RECORD) && (defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__))
     #define btnRec      8
   #endif
+
 #else
 #error Unknown device type or missing definition in pinSetup.h
 #endif
@@ -215,7 +269,14 @@ void pinsetup();
 // values must be chosen to avoid ranges at the extreme top (100%) end.
 // The resistor values and bands chosen here are compatible with ESP devices
 
-#if defined(ESP32) || defined(ESP8266)
+#if defined(ARDUINO_D1_MINI32)
+#define BUTTON_ADC_USE_MILLIVOLTS
+#define btnADCPlayLow 3100
+#define btnADCStopLow 2750
+#define btnADCRootLow 2000
+#define btnADCDownLow 1400
+#define btnADCUpLow 700
+#elif defined(ESP32) || defined(ESP8266)
 // ESP ADC is nonlinear, and also not full scale, so the values are different!
 // because not full scale, a 1k:10k voltage divider (i.e. 90%) is undetectable
 // and reads as 1023 still, so resistor values have been altered to create better spacing

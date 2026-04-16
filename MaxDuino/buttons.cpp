@@ -7,6 +7,59 @@ bool lastbtn=true;
 
 #if defined(BUTTON_ADC)
 
+enum class ADCButtonId : byte {
+  None,
+  Up,
+  Down,
+  Root,
+  Stop,
+  Play
+};
+
+static int readButtonADC()
+{
+  #if defined(BUTTON_ADC_USE_MILLIVOLTS)
+    return analogReadMilliVolts(btnADC);
+  #else
+    return analogRead(btnADC);
+  #endif
+}
+
+static ADCButtonId decodeButtonADC(int sensorValue)
+{
+  if(sensorValue >= btnADCPlayLow) {
+    return ADCButtonId::Play;
+  }
+  if(sensorValue >= btnADCStopLow) {
+    return ADCButtonId::Stop;
+  }
+  if(sensorValue >= btnADCRootLow) {
+    return ADCButtonId::Root;
+  }
+  if(sensorValue >= btnADCDownLow) {
+    return ADCButtonId::Down;
+  }
+  if(sensorValue >= btnADCUpLow) {
+    return ADCButtonId::Up;
+  }
+  return ADCButtonId::None;
+}
+
+static ADCButtonId readDecodedButtonADC()
+{
+  // Cache one ADC sample briefly so a poll cycle classifies all button_*()
+  // calls from the same reading rather than from slightly different conversions.
+  static unsigned long cachedAt = 0;
+  static ADCButtonId cachedButton = ADCButtonId::None;
+
+  const unsigned long now = micros();
+  if ((unsigned long)(now - cachedAt) > 2000UL) {
+    cachedButton = decodeButtonADC(readButtonADC());
+    cachedAt = now;
+  }
+  return cachedButton;
+}
+
 void setup_buttons(void)
 {
   pinMode(btnADC, INPUT);
@@ -20,7 +73,7 @@ void setup_buttons(void)
 
   #if defined(ESP32)
   // ESP32 has additional options for setting ADC range
-  analogSetAttenuation(ADC_11db);
+  analogSetPinAttenuation(btnADC, ADC_11db);
   analogSetClockDiv(255);
   #endif
 }
@@ -28,41 +81,35 @@ void setup_buttons(void)
   // todo - use isr to capture buttons?
 
 bool button_any() {
-  int sensorValue = analogRead(btnADC);
-  return(sensorValue>=btnADCUpLow);
+  return (readDecodedButtonADC() != ADCButtonId::None);
 }
 
 bool button_play()
 {
-  int sensorValue = analogRead(btnADC);
-  return(sensorValue>=btnADCPlayLow);
+  return (readDecodedButtonADC() == ADCButtonId::Play);
 }
 
 bool button_stop()
 {
-  int sensorValue = analogRead(btnADC);
-  return(sensorValue>=btnADCStopLow && sensorValue<btnADCPlayLow);
+  return (readDecodedButtonADC() == ADCButtonId::Stop);
 }
 
 bool button_root()
 {
-  int sensorValue = analogRead(btnADC);
-  return(sensorValue>=btnADCRootLow && sensorValue<btnADCStopLow);
+  return (readDecodedButtonADC() == ADCButtonId::Root);
 }
 
 bool button_down()
 {
-  int sensorValue = analogRead(btnADC);
-  return(sensorValue>=btnADCDownLow && sensorValue<btnADCRootLow);
+  return (readDecodedButtonADC() == ADCButtonId::Down);
 }
 
 bool button_up()
 {
-  int sensorValue = analogRead(btnADC);
-  return(sensorValue>=btnADCUpLow && sensorValue<btnADCDownLow);
+  return (readDecodedButtonADC() == ADCButtonId::Up);
 }
 
-#ifdef Use_Rec
+#ifdef RECORD
 bool button_rec()
 {
   // Record is a dedicated digital pin even when the rest of the UI uses ADC buttons.
@@ -109,7 +156,7 @@ bool button_up() {
   return(digitalRead(btnUp) == LOW);
 }
 
-#ifdef Use_Rec
+#ifdef RECORD
 bool button_rec() {
   #ifdef btnRec
     return (digitalRead(btnRec) == LOW);

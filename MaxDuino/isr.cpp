@@ -3,9 +3,42 @@
 #include "buffer.h"
 #include "pinSetup.h"
 #include "current_settings.h"
+#include "processing_state.h"
 #include "processing_state.h" // checking CURRENT_ID
 #include "TimerCounter.h"
 #include "MaxDuino.h"
+
+namespace {
+#ifdef Use_c64
+constexpr word LONG_PULSE_OPCODE = 0xC000;
+constexpr unsigned long LONG_PULSE_CHUNK_US = 50000UL;
+unsigned long longPulseRemaining = 0;
+#endif
+
+#if defined(ESP32)
+void ARDUINO_ISR_ATTR swap_read_buffer_page() {
+#else
+void swap_read_buffer_page() {
+#endif
+  volatile byte * tmp = readBuffer;
+  readBuffer = writeBuffer;
+  writeBuffer = tmp;
+  morebuff = true;
+}
+
+#if defined(ESP32)
+void ARDUINO_ISR_ATTR advance_read_word() {
+#else
+void advance_read_word() {
+#endif
+  readpos += 2;
+  if(readpos >= getBufferSize())
+  {
+    readpos = 0;
+    swap_read_buffer_page();
+  }
+}
+}
 
 
 //ISR Variables accessed/written by main loop
@@ -20,15 +53,22 @@ void reset_output_state() {
   WRITE_LOW;
   wasPauseBlock=false;
   isPauseBlock=false;
+#ifdef Use_c64
+  longPulseRemaining = 0;
+#endif
 }
 
+#if defined(ESP32)
+void ARDUINO_ISR_ATTR wave2() {
+#else
 void wave2() {
+#endif
   //ISR Output routine
 //  unsigned long zeroTime = micros();
-  word workingPeriod = word(readBuffer[readpos], readBuffer[readpos+1]);
   byte pauseFlipBit = false;
   unsigned long newTime;
   static unsigned long directSampleLength;
+  word workingPeriod = word(readBuffer[readpos], readBuffer[readpos+1]);
  
   if(isStopped)
   {
@@ -36,14 +76,38 @@ void wave2() {
     goto _set_period;
   }
 
-  if ((workingPeriod & HOLD_SIGNAL_MASK) == HOLD_SIGNAL_FLAG)
+#ifdef Use_c64
+  if (currentID == BLOCKID::C64TAP)
   {
+    if (longPulseRemaining != 0)
+    {
+      newTime = (longPulseRemaining > LONG_PULSE_CHUNK_US) ? LONG_PULSE_CHUNK_US : longPulseRemaining;
+      longPulseRemaining -= newTime;
+      goto _set_period;
+    }
 
-    newTime = workingPeriod & HOLD_SIGNAL_MAX_US;
-    if (newTime == 0)
-      newTime = 1;
-    goto _next;
+    if (workingPeriod == LONG_PULSE_OPCODE)
+    {
+      advance_read_word();
+      const unsigned long lowWord = word(readBuffer[readpos], readBuffer[readpos+1]);
+      advance_read_word();
+      const unsigned long highWord = word(readBuffer[readpos], readBuffer[readpos+1]);
+      advance_read_word();
+
+      longPulseRemaining = (highWord << 16) | lowWord;
+
+      pinState = !pinState;
+      if (pinState == LOW)
+        WRITE_LOW;
+      else
+        WRITE_HIGH;
+
+      newTime = (longPulseRemaining > LONG_PULSE_CHUNK_US) ? LONG_PULSE_CHUNK_US : longPulseRemaining;
+      longPulseRemaining -= newTime;
+      goto _set_period;
+    }
   }
+#endif
 
   if bitRead(workingPeriod, 15)          
   {
@@ -77,16 +141,7 @@ void wave2() {
     {
       // this signifies the start of a direct recording block, where we encode the sample period
       directSampleLength = workingPeriod & 0x1fff;
-      readpos += 2;
-      if(readpos >= buffsize)                  //Swap buffer pages if we've reached the end
-      {
-        readpos = 0;
-        // swap read and write buffers
-        volatile byte * tmp = readBuffer;
-        readBuffer = writeBuffer;
-        writeBuffer = tmp;
-        morebuff = true;                  //Request more data to fill inactive page
-      } 
+      advance_read_word();
       workingPeriod = word(readBuffer[readpos], readBuffer[readpos+1]);
     }
     newTime = directSampleLength;
@@ -191,17 +246,10 @@ _after_invert:
   }
   
 _next:
-  readpos += 2;
-  if(readpos >= buffsize)                  //Swap buffer pages if we've reached the end
-  {
-    readpos = 0;
-    // swap read and write buffers
-    volatile byte * tmp = readBuffer;
-    readBuffer = writeBuffer;
-    writeBuffer = tmp;
-    morebuff = true;                  //Request more data to fill inactive page
-  } 
+  advance_read_word();
 
 _set_period:
   Timer.setPeriod(newTime);                 //Finally set the next pulse length
 }
+
+
