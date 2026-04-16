@@ -65,6 +65,16 @@ We also support a customized default baud rate for .UEF files.  The default is 1
 
 ### .TAP
 
+## COMMODORE C64 / C16
+
+### .TAP
+
+We support Commodore `.tap` images that use the native `C64-TAPE-RAW` or `C16-TAPE-RAW` header.
+
+Support is enabled via configuration flag: `Use_c64`. When enabled, `.tap` files are identified by header first, so Commodore TAP files are routed to the Commodore handler while ZX Spectrum / Jupiter Ace / Oric `.tap` files keep their existing extension-based behaviour.
+
+Playback follows Commodore TAP timing semantics directly from the file data. TAP v0/v1 entries are treated as full edge-to-edge pulse periods and split into two half-waves for MaxDuino's output engine; TAP v2 entries are used as half-wave timings directly. Long overflow pulses are preserved using a dedicated extended-pulse path so large tape gaps are not truncated.
+
 ## MATTEL AQUARIUS
 
 ### .CAQ
@@ -114,6 +124,8 @@ In addition, we have included support for enabling the user to choose their own 
 
 ## SHARP MZ (MZ-700, MZ-800)
 
-### .MZF
+### .MZF / .MZT / .M12
 
-We support .MZF files for these computers.
+We support Sharp MZ tape images stored as `.mzf`, `.mzt`, or `.m12`.
+
+`.mzt` / `.m12` files are routed through the same playback engine and use the same pulse timings as `.mzf`. If a file contains a repeated Sharp block, MaxDuino plays the first header+data copy, which preserves the existing `.mzf` behaviour.

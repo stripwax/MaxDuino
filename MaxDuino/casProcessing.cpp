@@ -434,7 +434,7 @@ void processDragon()
 
 void casduinoLoop()
 {
-  if (writepos<buffsize)
+  if (writepos<getBufferSize())
   {
     // first time, set sample period (like ID15)
     if(currentTask==TASK::INIT)

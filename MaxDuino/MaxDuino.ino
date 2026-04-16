@@ -166,6 +166,11 @@
 #include "pinSetup.h"
 #include "USBStorage.h"
 #include "power.h"
+#include "record.h"
+
+#if defined(MAXDUINO_RP2040)
+#include <SPI.h>
+#endif
 
 #ifdef BLOCK_EEPROM_PUT
 #include "EEPROM_wrappers.h"
@@ -308,7 +313,11 @@ void setup() {
     #endif
   #endif
 
+  #if defined(MAXDUINO_RP2040)
+  while (!sd.begin(SdSpiConfig(chipSelect, SHARED_SPI, SD_SPI_CLOCK_SPEED, &SPI1))) {
+  #else
   while (!sd.begin(chipSelect, SD_SPI_CLOCK_SPEED)) {
+  #endif
     //Start SD card and check it's working
     printtextF(PSTR("No SD Card"),0);
     delay(50);
@@ -361,15 +370,40 @@ void loop(void) {
   } else {
     WRITE_LOW;    
   }
-  
-  if(start==0 && (strlen(fileName)> SCREENSIZE)) {
-    //Filename scrolling only runs if no file is playing to prevent I2C writes 
-    //conflicting with the playback Interrupt
-    scrollText(fileName, isDir);
+
+#if defined(ARDUINO_D1_MINI32)
+  if (start == 1 && useOTLAFileOptimizations && currentBlockTask == BLOCKTASK::ID15_TDATA && !pauseOn) {
+    if (millis() - timeDiff > 50) {
+      timeDiff = millis();
+    }
+    return;
   }
+#endif
+  
+  #ifdef RECORD
+    if(start==0 && !is_recording() && (strlen(fileName)> SCREENSIZE)) {
+      //Filename scrolling only runs if no file is playing to prevent I2C writes
+      //conflicting with the playback Interrupt
+      scrollText(fileName, isDir);
+    }
+  #else
+    if(start==0 && (strlen(fileName)> SCREENSIZE)) {
+      //Filename scrolling only runs if no file is playing to prevent I2C writes
+      //conflicting with the playback Interrupt
+      scrollText(fileName, isDir);
+    }
+  #endif
 
   #ifndef NO_MOTOR
     motorState=digitalRead(btnMotor);
+  #endif
+
+  #ifdef RECORD
+    if (is_recording()) {
+      // Drain completed record pages as soon as possible so the ISR keeps a
+      // free page available even if SD writes occasionally stall.
+      recording_loop();
+    }
   #endif
   
   #if (SPLASH_SCREEN && TIMEOUT_RESET)
@@ -394,6 +428,50 @@ void loop(void) {
     
   if (millis() - timeDiff > 50) {   // check switch every 50ms 
     timeDiff = millis();           // get current millisecond count
+
+    #ifdef RECORD
+      if (is_recording()) {
+        #ifndef NO_MOTOR
+          if (mselectMask) {
+            if (button_rec() && is_recording_paused()) {
+              resume_recording();
+              oldMotorState = motorState;
+              debounce(button_rec);
+              return;
+            }
+            if (oldMotorState != motorState) {
+              if (motorState == 1 && !is_recording_paused()) {
+                pause_recording();
+              }
+              if (motorState == 0 && is_recording_paused()) {
+                resume_recording();
+              }
+              oldMotorState = motorState;
+            }
+          }
+        #endif
+
+        recording_loop();
+        if (button_stop()) {
+          stop_recording();
+          debounce(button_stop);
+          getMaxFile();
+          seekFile();
+          printtext(PlayBytes,0);
+          #ifdef LCDSCREEN16x2
+            printtextF(PSTR(""),1);
+          #endif
+          #ifdef OLED1306
+            printtextF(PSTR(""),lineaxy);
+          #endif
+          #ifdef P8544
+            printtextF(PSTR(""),1);
+          #endif
+          scrollText(fileName, isDir, 0);
+        }
+        return;
+      }
+    #endif
 
   #ifdef SOFT_POWER_OFF
     if(start==0)
@@ -435,6 +513,24 @@ void loop(void) {
       
       debounce(button_play);
     }
+
+    #ifdef RECORD
+      // Record button (D8 on Nano 4808/4809): only when not playing.
+      if (button_rec() && start==0) {
+        if (start_recording()) {
+          #ifndef NO_MOTOR
+            if (mselectMask) {
+              // Match playback behavior: enter recording paused until motor
+              // control changes, unless the user presses REC again to resume.
+              pause_recording();
+              oldMotorState = 0;
+            }
+          #endif
+        }
+        debounce(button_rec);
+        return;
+      }
+    #endif
 
   #ifdef ONPAUSE_POLCHG
     if(button_root() && start==1 && pauseOn 
@@ -815,19 +911,45 @@ void loop(void) {
   #endif
 
   #ifndef NO_MOTOR
-    if(start==1 && (oldMotorState!=motorState) && mselectMask) {  
-      //if file is playing and motor control is on then handle current motor state
-      //Motor control works by pulling the btnMotor pin to ground to play, and NC to stop
-      if(motorState==1 && !pauseOn) {
-        printtext2F(PSTR("PAUSED  "),0);
-        pauseOn = true;
-      } 
-      if(motorState==0 && pauseOn) {
-        printtext2F(PSTR("PLAYing "),0);
-        pauseOn = false;
+    {
+      static byte pendingPlaybackMotorState = 1;
+      static unsigned long playbackMotorChangeTime = 0;
+      if(start==1 && mselectMask) {
+        // Handle the startup motor state immediately, but require later changes
+        // to remain stable briefly so short mid-file motor blips do not pause
+        // playback in the middle of a CAS data stream.
+        if (oldMotorState == 0) {
+          pendingPlaybackMotorState = motorState;
+          playbackMotorChangeTime = millis();
+          if(motorState==1 && !pauseOn) {
+            printtext2F(PSTR("PAUSED  "),0);
+            pauseOn = true;
+            scrollText(fileName, isDir, 0);
+          }
+          oldMotorState = motorState;
+        } else if (oldMotorState != motorState) {
+          if (pendingPlaybackMotorState != motorState) {
+            pendingPlaybackMotorState = motorState;
+            playbackMotorChangeTime = millis();
+          } else if (millis() - playbackMotorChangeTime >= 100) {
+            // Motor control works by pulling the btnMotor pin to ground to
+            // play, and NC to stop.
+            if(motorState==1 && !pauseOn) {
+              printtext2F(PSTR("PAUSED  "),0);
+              pauseOn = true;
+            }
+            if(motorState==0 && pauseOn) {
+              printtext2F(PSTR("PLAYing "),0);
+              pauseOn = false;
+            }
+            scrollText(fileName, isDir, 0);
+            oldMotorState = motorState;
+          }
+        } else {
+          pendingPlaybackMotorState = motorState;
+          playbackMotorChangeTime = millis();
+        }
       }
-      scrollText(fileName, isDir, 0);
-      oldMotorState=motorState;
     }
   #endif
   }
@@ -896,6 +1018,7 @@ void downHalfSearchFile() {
 
 void seekFile() {    
   //move to a set position in the directory, store the filename, and display the name on screen.
+  resetFileReadCache();
   entry.close(); // precautionary, and seems harmless if entry is already closed
   if (dirEmpty)
   {
@@ -943,8 +1066,9 @@ void seekFile() {
 }
 
 void stopFile() {
+  const byte wasStarted = start;
   UniStop();
-  if(start==1){
+  if(wasStarted==1){
     printtextF(PSTR("Stopped"),0);
     #ifdef P8544
       lcd.gotoRc(3,38);
@@ -1411,3 +1535,4 @@ void block_mem_oled()
     block++;
   #endif             
 }
+
