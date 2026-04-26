@@ -20,7 +20,7 @@ void ARDUINO_ISR_ATTR swap_read_buffer_page() {
 #else
 void swap_read_buffer_page() {
 #endif
-  volatile byte * tmp = readBuffer;
+  volatile uint16_t * tmp = readBuffer;
   readBuffer = writeBuffer;
   writeBuffer = tmp;
   morebuff = true;
@@ -31,9 +31,9 @@ void ARDUINO_ISR_ATTR advance_read_word() {
 #else
 void advance_read_word() {
 #endif
-  if(readpos < buffsize-2)
+  if(readpos < buffsize-1)
   {
-    readpos += 2;
+    readpos += 1;
   }
   else
   {
@@ -71,7 +71,7 @@ void wave2() {
   byte pauseFlipBit = false;
   unsigned long newTime;
   static unsigned long directSampleLength;
-  word workingPeriod = word(readBuffer[readpos], readBuffer[readpos+1]);
+  uint16_t workingPeriod = readBuffer[readpos];
  
   if(isStopped)
   {
@@ -92,9 +92,9 @@ void wave2() {
     if (workingPeriod == LONG_PULSE_OPCODE)
     {
       advance_read_word();
-      const unsigned long lowWord = word(readBuffer[readpos], readBuffer[readpos+1]);
+      const unsigned long lowWord = readBuffer[readpos];
       advance_read_word();
-      const unsigned long highWord = word(readBuffer[readpos], readBuffer[readpos+1]);
+      const unsigned long highWord = readBuffer[readpos];
       advance_read_word();
 
       longPulseRemaining = (highWord << 16) | lowWord;
@@ -145,7 +145,7 @@ void wave2() {
       // this signifies the start of a direct recording block, where we encode the sample period
       directSampleLength = workingPeriod & 0x1fff;
       advance_read_word();
-      workingPeriod = word(readBuffer[readpos], readBuffer[readpos+1]);
+      workingPeriod = readBuffer[readpos];
     }
     newTime = directSampleLength;
 
@@ -170,9 +170,9 @@ void wave2() {
       // and decrement the iii by 1 (and we knowing iii > 0 because we just checked that)
       // Decrementing iii by 1 is the same as decrementing workingPeriod by 0x0100
       // Please note: we write this back into the READ buffer = the buffer that the ISR reads from
-      readBuffer[readpos] = (workingPeriod>>8)-1;
-      readBuffer[readpos+1] = (workingPeriod&0x7f)<<1;
-      goto _set_period;  // skips the part where we move readpos += 2 because we're using the same readpos now
+      const byte remaining_bits = (workingPeriod & 0xff) << 1;
+      readBuffer[readpos] = ((workingPeriod & 0xff00) - (1<<8)) + remaining_bits;
+      goto _set_period;  // skips the part where we advance readpos because we're using the same readpos now
     }
     else
     {
@@ -232,10 +232,9 @@ _after_invert:
  _after_pause_flip:
       // reduce pause by 1ms as we've already pause for 1.5ms
       workingPeriod = workingPeriod - 1;
-      readBuffer[readpos] = workingPeriod /256;
-      readBuffer[readpos+1] = workingPeriod  %256;                
+      readBuffer[readpos] = workingPeriod;
       pauseFlipBit=false;
-      goto _set_period;  // skips the part where we move readpos += 2 because we're using the same readpos now
+      goto _set_period;  // skips the part where we advance readpos because we're using the same readpos now
     } else {
       newTime = ((unsigned long)workingPeriod)*1000ul; //Set pause length in microseconds
       isPauseBlock=false;

@@ -132,10 +132,9 @@ void bits_to_pulses()
   {
     // we have >0 (at most 8) pulse levels for some bits(s), so put this in the output buffer
     // and move on to the next bit(s)
-    volatile byte * _wb = writeBuffer+writepos;
+    volatile uint16_t * _wb = &writeBuffer[writepos];
     noInterrupts();                       //Pause interrupts while we add a period to the buffer
-    *_wb = 0x40 + (nbits-1); // = (1<<14)>>8;
-    *(_wb+1) = bits;
+    *_wb = ((0x40 + (nbits-1))<<8) + (nbits) ; // = (1<<14)>>8;
     interrupts();
     advance_write_word();
   }
@@ -434,7 +433,7 @@ void processDragon()
 
 void casduinoLoop()
 {
-  if (writepos != write_buffer_full)
+  if (!write_buffer_full)
   {
     // first time, set sample period (like ID15)
     if(currentTask==TASK::INIT)
@@ -442,12 +441,9 @@ void casduinoLoop()
       currentTask=TASK::GETFILEHEADER;
 
       const word _currentPeriod = cas_period | 0x6000;
-      const byte _b1 = _currentPeriod /256;
-      const byte _b2 = _currentPeriod %256;
-      volatile byte * _wb = writeBuffer+writepos;
+      volatile uint16_t * _wb = &writeBuffer[writepos];
       noInterrupts();                       //Pause interrupts while we add a period to the buffer
-      *_wb = _b1;
-      *(_wb+1) = _b2;
+      *_wb = _currentPeriod;
       interrupts();
       advance_write_word();
     }
