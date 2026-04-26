@@ -106,8 +106,9 @@ void UniPlay(){
   const char * filenameExt = strrchr(fileName,'.') + 1;
   checkForEXT(filenameExt);
   isStopped=false;
+  #if defined(NEEDS_OTLA_OPTIMIZATIONS)
   useOTLAFileOptimizations = false;
-  setOTLABufferMode(false);
+  #endif
   
   clearBuffer();
 
@@ -134,8 +135,9 @@ void UniStop() {
   Timer.stop();
   isStopped=true;
   start=0;
+  #if defined(NEEDS_OTLA_OPTIMIZATIONS)
   useOTLAFileOptimizations = false;
-  setOTLABufferMode(false);
+  #endif
   resetFileReadCache();
   entry.close();                              //Close file
   seekFile(); 
@@ -386,10 +388,9 @@ void writeDataDirect16() {
     *_wb = 0x47; // = ((1<<14) + (7<<8))>>8
     *(_wb+1) = _b1;
     interrupts();
-    writepos+=2;
+    advance_write_word();
   }
 }
-
 
 void ForcePauseAfter0() {
   pauseOn=true;
@@ -664,8 +665,9 @@ void TZXProcess() {
       case BLOCKID::ID15:
         //process ID15 - Direct Recording          
         if(currentBlockTask==BLOCKTASK::READPARAM) {
+          #if defined(NEEDS_OTLA_OPTIMIZATIONS)
           useOTLAFileOptimizations = true;
-          setOTLABufferMode(true);
+          #endif
           block_mem_oled();
           currentBit = 0;
           unsigned long SampleLength=0;
@@ -1144,7 +1146,7 @@ void TZXProcess() {
 }
 
 void TZXLoop() {   
-  if(currentBlockTask == BLOCKTASK::ID15_TDATA && writepos+16<=getBufferSize() && bytesToRead>=16)
+  if(currentBlockTask == BLOCKTASK::ID15_TDATA && writepos<=buffsize-16 && bytesToRead>=16)
   {
     // shortcut for ID15 handler for performance
     // write 8 input bytes (=16 output bytes to buffer)
@@ -1153,7 +1155,7 @@ void TZXLoop() {
     return;
   }
 
-  if(writepos<getBufferSize()){                    // Keep filling until full
+  if(writepos != write_buffer_full){                    // Keep filling until full
     TZXProcess();                           //generate the next period to add to the buffer
     if(currentPeriod>0) {
       //add period to the buffer
@@ -1164,10 +1166,10 @@ void TZXLoop() {
       *_wb = _b1;
       *(_wb+1) = _b2;
       interrupts();
-      writepos+=2;
+      advance_write_word();
     }
   } else {
-    #if defined(ARDUINO_D1_MINI32)
+    #if defined(NEEDS_OTLA_OPTIMIZATIONS)
       if (useOTLAFileOptimizations && currentBlockTask == BLOCKTASK::ID15_TDATA)
         return;
     #endif

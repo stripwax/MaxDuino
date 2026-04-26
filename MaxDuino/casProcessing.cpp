@@ -137,7 +137,7 @@ void bits_to_pulses()
     *_wb = 0x40 + (nbits-1); // = (1<<14)>>8;
     *(_wb+1) = bits;
     interrupts();
-    writepos+=2;
+    advance_write_word();
   }
 }
 
@@ -434,7 +434,7 @@ void processDragon()
 
 void casduinoLoop()
 {
-  if (writepos<getBufferSize())
+  if (writepos != write_buffer_full)
   {
     // first time, set sample period (like ID15)
     if(currentTask==TASK::INIT)
@@ -449,7 +449,7 @@ void casduinoLoop()
       *_wb = _b1;
       *(_wb+1) = _b2;
       interrupts();
-      writepos+=2;
+      advance_write_word();
     }
     else
     {

@@ -371,7 +371,7 @@ void loop(void) {
     WRITE_LOW;    
   }
 
-#if defined(ARDUINO_D1_MINI32)
+#if defined(NEEDS_OTLA_OPTIMIZATIONS)
   if (start == 1 && useOTLAFileOptimizations && currentBlockTask == BLOCKTASK::ID15_TDATA && !pauseOn) {
     if (millis() - timeDiff > 50) {
       timeDiff = millis();

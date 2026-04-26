@@ -16,6 +16,8 @@ extern byte pass;
 extern long count_r;
 extern byte currentBit;
 extern word currenPeriod;
+#if defined(NEEDS_OTLA_OPTIMIZATIONS)
 extern bool useOTLAFileOptimizations;
+#endif
 
 #endif // PROCESSING_STATE_H_INCLUDED

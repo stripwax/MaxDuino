@@ -31,8 +31,11 @@ void ARDUINO_ISR_ATTR advance_read_word() {
 #else
 void advance_read_word() {
 #endif
-  readpos += 2;
-  if(readpos >= getBufferSize())
+  if(readpos < buffsize-2)
+  {
+    readpos += 2;
+  }
+  else
   {
     readpos = 0;
     swap_read_buffer_page();

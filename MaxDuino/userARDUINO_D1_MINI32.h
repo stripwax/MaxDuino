@@ -3,7 +3,7 @@
 
 // maximum clock speed that works with this board (depends also on MaxDuino PCB and supporting components)
 #define SD_SPI_CLOCK_SPEED SD_SCK_MHZ(4)
-
+#define NEEDS_OTLA_OPTIMIZATIONS // disable screen updates and button reading (e.g. ADC) when paying ID15 blocks to avoid interference
 
 #define Use_MENU
 #define AYPLAY
@@ -57,6 +57,7 @@
 //#define SERIALSCREEN              // For testing and debugging
 //#define FREERAM                   // Changing filenameLength from 255 to 190
 //#define LARGEBUFFER               // small buffer size used by default to free RAM
+#define VERY_LARGE_BUFFER           // 1k buffer used only on devices with plentiful free RAM
 
 //#define LCD_I2C_ADDR    0x27        // Set the i2c address of your 1602LCD usually 0x27
 //#define LCDSCREEN16x2               // Set if you are using a 1602 LCD screen

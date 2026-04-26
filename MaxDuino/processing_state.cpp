@@ -6,4 +6,6 @@ BLOCKTASK currentBlockTask = BLOCKTASK::READPARAM;
 byte pass=0;
 long count_r = 0;
 byte currentBit=0;
+#if defined(NEEDS_OTLA_OPTIMIZATIONS)
 bool useOTLAFileOptimizations = false;
+#endif
