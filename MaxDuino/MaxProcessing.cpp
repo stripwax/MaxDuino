@@ -336,10 +336,10 @@ void writeDataDirect() {
   currentPeriod = (1<<14) + ((currentBit-1)<<8) + currentByte;
 }
 
-void writeDataDirect16() {
+void writeDataDirect8() {
   // Push byte from file into the buffer, with even less processing.
   // This is equivalent to call writeDataDirect 8 times (which generates
-  // 8 words i.e. 16 bytes in the wbuffer)
+  // 8 words in the wbuffer)
   // This actually bypasses several passes of the TZXLoop / TZXProcess steps
   // This will only be called if there are > 8 more bytes still to read AND
   // space in the output buffer to write 16 bytes without hitting buffsize
@@ -361,6 +361,7 @@ void writeDataDirect16() {
     // and then:
     //     writeBuffer[writeppos] = currentPeriod /256;   //add period to the buffer
     //     writeBuffer[writepos+1] = currentPeriod %256;   //add period to the buffer
+    //     (but note that writeBuffer is now word-sized, so this is conceptually a single operation writeBuffer[writepos] = currentPeriod )
     //
     // but we don't even need to use currentPeriod variable for this, we can do directly:
     // Also note that the following code takes as much as possible out of the noInterrupts section;
@@ -370,13 +371,11 @@ void writeDataDirect16() {
     // 5e7e:	81 83       	std	Z+1, r24	; 0x01
     // 5e80:	78 94       	sei
 
-    const byte _b1 = currentByte;
-    volatile byte * _wb = writeBuffer+writepos;
+    volatile uint16_t * _wb = &writeBuffer[writepos];
     noInterrupts();                       //Pause interrupts while we add a period to the buffer
-    *_wb = 0x47; // = ((1<<14) + (7<<8))>>8
-    *(_wb+1) = _b1;
+    *_wb = (0x47 << 8) + currentByte; // = ((1<<14) + (7<<8))>>8
     interrupts();
-    writepos+=2;
+    advance_write_word();
   }
 }
 
@@ -1132,27 +1131,24 @@ void TZXProcess() {
 }
 
 void TZXLoop() {   
-  if(currentBlockTask == BLOCKTASK::ID15_TDATA && writepos+16<=buffsize && bytesToRead>=16)
+  if(currentBlockTask == BLOCKTASK::ID15_TDATA && !write_buffer_full && writepos<=buffsize-8 && bytesToRead>=8)
   {
     // shortcut for ID15 handler for performance
-    // write 8 input bytes (=16 output bytes to buffer)
+    // write 8 input bytes (=8 output words to buffer)
     // ALSO: skips the lcd updates (SHOW_CNTR, SHOW_PCT) entirely
-    writeDataDirect16();
+    writeDataDirect8();
     return;
   }
 
-  if(writepos<buffsize){                    // Keep filling until full
+  if(!write_buffer_full){                    // Keep filling until full
     TZXProcess();                           //generate the next period to add to the buffer
     if(currentPeriod>0) {
       //add period to the buffer
-      const byte _b1 = currentPeriod /256;
-      const byte _b2 = currentPeriod %256;
-      volatile byte * _wb = writeBuffer+writepos;
+      volatile uint16_t * _wb = &writeBuffer[writepos];
       noInterrupts();                       //Pause interrupts while we add a period to the buffer
-      *_wb = _b1;
-      *(_wb+1) = _b2;
+      *_wb = currentPeriod;
       interrupts();
-      writepos+=2;
+      advance_write_word();
     }
   } else {
     if (!pauseOn) {
@@ -1179,6 +1175,7 @@ void UniLoop() {
   {
     //Buffer has swapped, start from the beginning of the new page
     writepos=0;
+    write_buffer_full=false;
   }
 
  #ifdef Use_CAS

@@ -22,10 +22,27 @@ void reset_output_state() {
   isPauseBlock=false;
 }
 
+static ISR_ATTR void advance_read_word()
+{
+  if(readpos < buffsize-1)
+  {
+    readpos += 1;
+  }
+  else
+  {
+    readpos = 0;
+    // swap read and write buffers
+    volatile uint16_t * tmp = readBuffer;
+    readBuffer = writeBuffer;
+    writeBuffer = tmp;
+    morebuff = true;
+  } 
+}
+
 void ISR_ATTR wave2() {
   //ISR Output routine
 //  unsigned long zeroTime = micros();
-  word workingPeriod = word(readBuffer[readpos], readBuffer[readpos+1]);
+  uint16_t workingPeriod = readBuffer[readpos];
   byte pauseFlipBit = false;
   unsigned long newTime;
   static unsigned long directSampleLength;
@@ -77,17 +94,8 @@ void ISR_ATTR wave2() {
     {
       // this signifies the start of a direct recording block, where we encode the sample period
       directSampleLength = workingPeriod & 0x1fff;
-      readpos += 2;
-      if(readpos >= buffsize)                  //Swap buffer pages if we've reached the end
-      {
-        readpos = 0;
-        // swap read and write buffers
-        volatile byte * tmp = readBuffer;
-        readBuffer = writeBuffer;
-        writeBuffer = tmp;
-        morebuff = true;                  //Request more data to fill inactive page
-      } 
-      workingPeriod = word(readBuffer[readpos], readBuffer[readpos+1]);
+      advance_read_word();
+      workingPeriod = readBuffer[readpos];
     }
     newTime = directSampleLength;
 
@@ -112,9 +120,9 @@ void ISR_ATTR wave2() {
       // and decrement the iii by 1 (and we knowing iii > 0 because we just checked that)
       // Decrementing iii by 1 is the same as decrementing workingPeriod by 0x0100
       // Please note: we write this back into the READ buffer = the buffer that the ISR reads from
-      readBuffer[readpos] = (workingPeriod>>8)-1;
-      readBuffer[readpos+1] = (workingPeriod&0x7f)<<1;
-      goto _set_period;  // skips the part where we move readpos += 2 because we're using the same readpos now
+      const byte remaining_bits = (workingPeriod & 0xff) << 1;
+      readBuffer[readpos] = ((workingPeriod & 0xff00) - (1<<8)) + remaining_bits;
+      goto _set_period;  // skips the part where we advance readpos because we're using the same readpos now
     }
     else
     {
@@ -174,10 +182,9 @@ _after_invert:
  _after_pause_flip:
       // reduce pause by 1ms as we've already pause for 1.5ms
       workingPeriod = workingPeriod - 1;
-      readBuffer[readpos] = workingPeriod /256;
-      readBuffer[readpos+1] = workingPeriod  %256;                
+      readBuffer[readpos] = workingPeriod;
       pauseFlipBit=false;
-      goto _set_period;  // skips the part where we move readpos += 2 because we're using the same readpos now
+      goto _set_period;  // skips the part where we advance readpos because we're using the same readpos now
     } else {
       newTime = ((unsigned long)workingPeriod)*1000ul; //Set pause length in microseconds
       isPauseBlock=false;
@@ -191,16 +198,7 @@ _after_invert:
   }
   
 _next:
-  readpos += 2;
-  if(readpos >= buffsize)                  //Swap buffer pages if we've reached the end
-  {
-    readpos = 0;
-    // swap read and write buffers
-    volatile byte * tmp = readBuffer;
-    readBuffer = writeBuffer;
-    writeBuffer = tmp;
-    morebuff = true;                  //Request more data to fill inactive page
-  } 
+  advance_read_word();
 
 _set_period:
   Timer.setPeriod(newTime);                 //Finally set the next pulse length
