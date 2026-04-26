@@ -11,6 +11,7 @@ byte lastByte;
 _readout_type readout;
 
 byte filebuffer[20]; // used for small reads from files (readfile, ReadByte, etc use this), sized for the largest small header read
+#if defined(USE_FILE_READ_CACHE)
 namespace {
   #if defined(ARDUINO_D1_MINI32)
     constexpr uint16_t FILE_READ_CACHE_SIZE = 512;
@@ -49,14 +50,18 @@ namespace {
     return fileReadCacheLen;
   }
 }
+#endif
 
 void resetFileReadCache()
 {
+  #if defined(USE_FILE_READ_CACHE)
   fileReadCacheValid = false;
   fileReadCacheStart = 0;
   fileReadCacheLen = 0;
+  #endif
 }
 
+#if defined(USE_FILE_READ_CACHE)
 byte readfile(byte nbytes, unsigned long p)
 {
   if (nbytes == 0) {
@@ -87,6 +92,16 @@ byte readfile(byte nbytes, unsigned long p)
   memcpy(filebuffer, fileReadCache + cacheOffset, copied);
   return copied;
 }
+#else
+byte readfile(byte nbytes, unsigned long p)
+{
+  byte i=0;
+  if(entry.seekSet(p)) {
+    i=entry.read(filebuffer, nbytes);
+  } 
+  return i;
+}
+#endif
 
 byte ReadByte() {
   //Read a byte from the file, and move file position on one if successful
