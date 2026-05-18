@@ -62,47 +62,35 @@ void writeUEFData() {
   }
 
   if ((currentBit == 2) && (parity == 0)) currentBit = 1; // parity N
+
+  bool onePulseNow;
   if (currentBit == 11) {
-    currentPeriod = zeroPulse;
+    onePulseNow = false;
   } else if (currentBit == 2) {
-    currentPeriod = (bitChecksum ^ (parity & 0x01)) ? onePulse : zeroPulse; 
+    onePulseNow = (bitChecksum ^ (parity & 0x01)) != 0;
   } else if (currentBit == 1) {
-    currentPeriod = onePulse;    
+    onePulseNow = true;
   } else {
-    if(currentByte&0x01) {                       //Set next period depending on value of bit 0
-      currentPeriod = onePulse;
-    } else {
-      currentPeriod = zeroPulse;
-    }
+    onePulseNow = (currentByte & 0x01) != 0;
   }
 
-  pass+=1;      //Data is played as 2 x pulses for a zero, and 4 pulses for a one when speed is 1200
+  currentPeriod = onePulseNow ? onePulse : zeroPulse;
+  pass += 1;      // Data is played as 2 x pulses for a zero, and 4 pulses for a one when speed is 1200.
 
-  if (currentPeriod == zeroPulse) {
-    if(pass==uefpassforZero) {
-      if ((currentBit>1) && (currentBit<11)) {
-        currentByte >>= 1;                        //Shift along to the next bit
-      }
-      currentBit += -1;
-      pass=0; 
-      if ((lastByte) && (currentBit==0)) {
-        currentTask = TASK::GETCHUNKID;
-      } 
-    }
-  } else {
-    // must be a one pulse
-    if(pass==2*uefpassforZero) {
-      if ((currentBit>1) && (currentBit<11)) {
+  const byte passLimit = onePulseNow ? (byte)(uefpassforZero << 1) : uefpassforZero;
+  if (pass == passLimit) {
+    if ((currentBit > 1) && (currentBit < 11)) {
+      if (onePulseNow) {
         bitChecksum ^= 1;
-        currentByte >>= 1;                        //Shift along to the next bit
       }
+      currentByte >>= 1;                        //Shift along to the next bit
+    }
 
-      currentBit += -1;
-      pass=0; 
-      if ((lastByte) && (currentBit==0)) {
-        currentTask = TASK::GETCHUNKID;
-      } 
-    }    
+    currentBit += -1;
+    pass = 0;
+    if ((lastByte) && (currentBit == 0)) {
+      currentTask = TASK::GETCHUNKID;
+    }
   }
 
   #ifdef DEBUG
@@ -167,7 +155,6 @@ void tzx_process_taskid_uef_getchunkid() {
   //reset data block values
   currentBit=0;
   pass=0;
-  //set current task to PROCESSCHUNKID
   currentTask = TASK::PROCESSCHUNKID;
   currentBlockTask = BLOCKTASK::READPARAM;
   UEFPASS = 0;
