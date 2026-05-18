@@ -6,6 +6,9 @@
 #include "ayplay.h"
 #include "casProcessing.h"
 #include "MaxProcessing.h"
+#ifdef Use_TRS80
+#include "trs80cas.h"
+#endif
 #ifdef Use_MZF
   #include "mzf.h"
 #endif
@@ -94,6 +97,11 @@ else if (!strcasecmp_P(filenameExt, PSTR("caq"))) {
 #endif
 #ifdef Use_CAS
   else if (!strcasecmp_P(filenameExt, PSTR("cas"))) {
+#ifdef Use_TRS80
+    if (trs80cas_detect_and_init()) {
+      return;
+    }
+#endif
     casduino = CASDUINO_FILETYPE::CASDUINO;
     invert=false;
     #if defined(Use_DRAGON)

@@ -36,6 +36,9 @@
 #ifdef Use_CAQ
   #include "caq.h"
 #endif
+#ifdef Use_TRS80
+#include "trs80cas.h"
+#endif
 
 //Temporarily store for a pulse period before loading it into the buffer.
 word currentPeriod=1;
@@ -878,7 +881,13 @@ void TZXProcess() {
           break;
       #endif
 
-        case BLOCKID::JTAP:
+      #if defined(Use_CAS) && defined(Use_TRS80)
+        case BLOCKID::TRS80CAS:
+          trs80cas_process();
+          break;
+      #endif
+
+      case BLOCKID::JTAP:
       /*    //Jupiter Tap file block
           switch(currentBlockTask) {                 
             case BLOCKTASK::READPARAM:

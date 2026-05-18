@@ -14,6 +14,7 @@
 #define tapORIC
     #define ORICSPEEDUP
 #define Use_CAS                           // .cas files playback on MSX / Dragon / CoCo Tandy computers
+    //#define Use_TRS80                   // TRS-80 .cas files playback
     #define Use_DRAGON
         #define Use_Dragon_sLeader        // short Leader of 0x55 allowed for loading TOSEC files
             #define Expand_All            // Expand short Leaders in ALL file header blocks.         

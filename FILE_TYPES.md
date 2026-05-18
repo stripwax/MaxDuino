@@ -104,6 +104,12 @@ There are several additional customizations for .CAS support for DRAGON computer
 
 ### .CAS
 
+## TRS-80
+
+### .CAS
+
+We support TRS-80 .CAS files.  (This section needs more details.)
+
 ## AMSTRAD CPC
 
 ### .CDT
@@ -119,3 +125,4 @@ In addition, we have included support for enabling the user to choose their own 
 We support Sharp MZ tape images stored as `.mzf`, `.mzt`, or `.m12`.
 
 `.mzt` / `.m12` files are routed through the same playback engine and use the same pulse timings as `.mzf`. If a file contains a repeated Sharp block, MaxDuino plays the first header+data copy, which preserves the existing `.mzf` behaviour.
+
