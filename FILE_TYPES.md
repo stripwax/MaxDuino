@@ -114,6 +114,8 @@ In addition, we have included support for enabling the user to choose their own 
 
 ## SHARP MZ (MZ-700, MZ-800)
 
-### .MZF
+### .MZF / .MZT / .M12
 
-We support .MZF files for these computers.
+We support Sharp MZ tape images stored as `.mzf`, `.mzt`, or `.m12`.
+
+`.mzt` / `.m12` files are routed through the same playback engine and use the same pulse timings as `.mzf`. If a file contains a repeated Sharp block, MaxDuino plays the first header+data copy, which preserves the existing `.mzf` behaviour.
