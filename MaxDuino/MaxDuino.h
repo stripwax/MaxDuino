@@ -48,6 +48,7 @@ enum BLOCKID
   ID4B = 0x4B,    //Kansas City block (MSX/BBC/Acorn/...)
   ID5A = 0x5A,    //Glue block (90 dec, ASCII Letter 'Z')
   IDPAUSE = 0x80, //Custom Pause processing
+  TRS80CAS = 0xF3, // TRS-80 cassette image
   C64TAP = 0xF4,  //Commodore C64/C16 TAP image
   MTX = 0xF5,     //Memotech MTX image
   CAQ = 0xF6,     //Mattel Aquarius CAQ cassette image
