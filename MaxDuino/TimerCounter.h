@@ -7,10 +7,14 @@ class TimerCounter
 {
   public:
     TimerCounter();
-    void initialize(unsigned long microseconds);
-    void setPeriod(unsigned long microseconds);
-    void stop();
-    void attachInterrupt(timerCallback isr);
+    static void initialize(unsigned long microseconds);
+    static void setPeriod(unsigned long microseconds);
+    static void stop();
+    static void attachInterrupt(timerCallback isr);
+  private:
+    static unsigned long currentMicroseconds;
+    static void _initialize();
+    static void _setPeriod(unsigned long microseconds);
 };
 extern TimerCounter& Timer;
 

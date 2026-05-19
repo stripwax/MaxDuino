@@ -9,6 +9,32 @@
 
 timerCallback isrCallback = NULL;
 
+unsigned long TimerCounter::currentMicroseconds=0;
+
+// standard timer class for all devices, constructed in the same way
+TimerCounter::TimerCounter()
+{}
+
+
+void TimerCounter::initialize(unsigned long microseconds)
+{
+  _initialize();
+  setPeriod(microseconds);
+}
+
+void TimerCounter::setPeriod(unsigned long microseconds)
+{
+  if (currentMicroseconds == microseconds) {
+    // nothing to do - timer is already set for the correct
+    // period, and it will just wrap and repeat and retrigger
+    // the interrupt anyway
+    return;
+  }
+
+  currentMicroseconds = microseconds;
+  _setPeriod(microseconds);
+}
+
 #if defined(__arm__) && defined(__STM32F1__)
 //clase derivada
 class HwTimerCounter:public HardwareTimer
@@ -114,21 +140,19 @@ class HwTimerCounter:public HardwareTimer
 #define TIMER_CHANNEL 2 // channel 2
 HwTimerCounter timer_instance(TIMER_CHANNEL);
 
-TimerCounter::TimerCounter() {};
 void TimerCounter::stop()
 {
   timer_instance.pause();
 }
 
-void TimerCounter::initialize(unsigned long period)
+void TimerCounter::_initialize()
 {
-  // behaviour of other timers is to set period
-  setPeriod(period);  
+  // nothing else to do
 }
 
-void TimerCounter::setPeriod(unsigned long period)
+void TimerCounter::_setPeriod(unsigned long microseconds)
 {
-  timer_instance.setSTM32Period(period);
+  timer_instance.setSTM32Period(microseconds);
 }
 
 void TimerCounter::attachInterrupt(timerCallback isr)
@@ -142,13 +166,7 @@ void TimerCounter::attachInterrupt(timerCallback isr)
 
 #define TIMER1_RESOLUTION 65536UL  // Timer1 is 16 bit
 
-unsigned long _current_microseconds;
-TimerCounter::TimerCounter()
-{
-    _current_microseconds = 0;
-}
-
-void TimerCounter::initialize(unsigned long microseconds) {
+void TimerCounter::_initialize() {
     // turn off split mode (enabled at startup on TCA0 for MegaCoreX).
     // Ensure timer is stopped for this:
     TCA0.SINGLE.CTRLA &= ~(TCA_SINGLE_ENABLE_bm);     //stop the timer   
@@ -165,22 +183,12 @@ void TimerCounter::initialize(unsigned long microseconds) {
     //TCA0.SINGLE.CTRLA &= ~(TCA_SINGLE_ENABLE_bm);     //stop the timer   
     /* disable event counting */
     //TCA0.SINGLE.EVCTRL &= ~(TCA_SINGLE_CNTEI_bm);
-    setPeriod(microseconds);
 }
 
-void TimerCounter::setPeriod(unsigned long microseconds) {
+void TimerCounter::_setPeriod(unsigned long microseconds) {
     unsigned short pwmPeriod;
     unsigned char clockSelectBits;
 
-    if (_current_microseconds == microseconds)
-    {
-        // nothing to do - timer is already set for the correct
-        // period, and it will just wrap and repeat and retrigger
-        // the interrupt anyway
-        return;
-    }
-
-    _current_microseconds = microseconds;
 
     //DSBOTTOM: the counter runs backwards after TOP, interrupt is at BOTTOM so divide microseconds by 2
     //const unsigned long cycles = (F_CPU / 1000000) * microseconds;
@@ -276,15 +284,12 @@ ISR(TCA0_OVF_vect)
 
 #define TIMER1_RESOLUTION 65536UL  // Timer1 is 16 bit
 
-TimerCounter::TimerCounter(){};
-
-void TimerCounter::initialize(unsigned long microseconds) {
+void TimerCounter::_initialize() {
     TCCR1B = _BV(WGM13);        // set mode as phase and frequency correct pwm, stop the timer
     TCCR1A = 0;                 // clear control register A 
-    setPeriod(microseconds);
 }
 
-void TimerCounter::setPeriod(unsigned long microseconds) {
+void TimerCounter::_setPeriod(unsigned long microseconds) {
     const unsigned long cycles = (F_CPU / 2000000) * microseconds;
     unsigned short pwmPeriod;
     unsigned char clockSelectBits;
@@ -361,14 +366,7 @@ ISR(TIMER1_OVF_vect)
 #define SAMD_TC3        ((TcCount16*) TC3)
 #include "Arduino.h"
   
-unsigned long _current_microseconds;
-TimerCounter::TimerCounter()
-{
-  _current_microseconds = 0;
-  TC3_callback = NULL;
-}
-    
-void TimerCounter::initialize(unsigned long microseconds=1000)
+void TimerCounter::_initialize()
 {
   TcCount16* _Timer = SAMD_TC3;
 
@@ -391,41 +389,27 @@ void TimerCounter::initialize(unsigned long microseconds=1000)
 
   TC3_callback = NULL;
 
-  setPeriod(microseconds); // this does not enable the timer, just configures it
   interrupts();
 }
 
-void TimerCounter::setPeriod(unsigned long microseconds)
+void TimerCounter::_setPeriod(unsigned long microseconds)
 {
   TcCount16* _Timer = SAMD_TC3;
-  if (_current_microseconds == microseconds)
-  {
-    // nothing to do - timer is already set for the correct
-    // period, and it will just wrap and repeat and retrigger
-    // the interrupt anyway
-    return;
-  }
 
   // adjust microseconds if out of bounds:
+  unsigned long clampedCurrentMicroseconds = currentMicroseconds;
   // 1. impose some kind of minimum cycle time, to avoid deadlock
-  if (microseconds < 20)
-  {
-    microseconds = 20;
-  }
+  if (microseconds < 20) microseconds = 20;
+  if (currentMicroseconds < 20) clampedCurrentMicroseconds = 20;
   // 2. avoid wraparound for periods longer than the maximum permitted with the widest prescaler
-  if (microseconds > 1398080)
-  {
-    microseconds = 1398080;
-  }
+  if (microseconds > 1398080) microseconds = 1398080;
+  if (currentMicroseconds > 1398080) clampedCurrentMicroseconds = 1398080;
   // if the adjusted microseconds matches what we previously configured
   // then again nothing to do, timer will repeat as planned
-  if (_current_microseconds == microseconds)
+  if (clampedCurrentMicroseconds == microseconds)
     return;
 
   // otherwise, set new timer registers
-  
-  _current_microseconds = microseconds;
-  
   bool ctrla_enabled = _Timer->CTRLA.reg & TC_CTRLA_ENABLE;
   
   _Timer->CTRLA.reg &= ~TC_CTRLA_ENABLE;
@@ -576,24 +560,14 @@ void ARDUINO_ISR_ATTR onTimer(){
 
 hw_timer_t * timer = NULL;
 
-TimerCounter::TimerCounter()
+void TimerCounter::_initialize()
 {
-  isrCallback = NULL;
+  // count microseconds - so divide CPU freq in Hz by 1e6
+  timer = timerBegin(0, F_CPU/1000000, true);
+  timerAttachInterrupt(timer, &onTimer, true);
 }
 
-void TimerCounter::initialize(unsigned long microseconds=1000000)
-{
-  isrCallback = NULL;
-  if (timer==NULL)
-  {
-    // count microseconds - so divide CPU freq in Hz by 1e6
-    timer = timerBegin(0, F_CPU/1000000, true);
-    timerAttachInterrupt(timer, &onTimer, true);
-    timerAlarmWrite(timer, microseconds, true);
-  }
-}
-
-void TimerCounter::setPeriod(unsigned long microseconds)
+void TimerCounter::_setPeriod(unsigned long microseconds)
 {
   timerAlarmWrite(timer, microseconds, true);
 }
@@ -618,14 +592,8 @@ void IRAM_ATTR onTimer(){
     (*isrCallback)();
 }
 
-TimerCounter::TimerCounter()
+void TimerCounter::_initialize()
 {
-  isrCallback = NULL;
-}
-
-void TimerCounter::initialize(unsigned long microseconds=1000000)
-{
-  isrCallback = NULL;
   // Divide CPU freq in Hz (e.g. 80000000) by 1e6 (=> 80) to determine how many ticks per microsecond
   // DIV16 to reduce this by a factor of 16
   // ESP8266 timer1 is only 23 bits
@@ -633,11 +601,10 @@ void TimerCounter::initialize(unsigned long microseconds=1000000)
   // (which is less than 2^23 i.e. 8338608)
   timer1_isr_init();
   timer1_attachInterrupt(onTimer);
-  timer1_write(microseconds*((F_CPU/1000000)/16));
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 }
 
-void TimerCounter::setPeriod(unsigned long microseconds)
+void TimerCounter::_setPeriod(unsigned long microseconds)
 {
   timer1_write(microseconds*((F_CPU/1000000)/16));
   // timer1_write also (re)enables edge interrupts
