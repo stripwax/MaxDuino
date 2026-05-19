@@ -22,7 +22,7 @@ void reset_output_state() {
   isPauseBlock=false;
 }
 
-void wave2() {
+void ISR_ATTR wave2() {
   //ISR Output routine
 //  unsigned long zeroTime = micros();
   word workingPeriod = word(readBuffer[readpos], readBuffer[readpos+1]);
