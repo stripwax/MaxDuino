@@ -1,6 +1,7 @@
 #include "configs.h"
 #include "Arduino.h"
 #include "TimerCounter.h"
+#include "isr.h"
 
 /*
  *  Interrupt and PWM utilities for 16 bit Timer1 on ATmega168/328
@@ -25,7 +26,7 @@ void TimerCounter::initialize()
   _attachInterrupt(wave2);
 }
 
-void TimerCounter::setPeriod(unsigned long microseconds)
+void ISR_ATTR TimerCounter::setPeriod(unsigned long microseconds)
 {
   if (currentMicroseconds == microseconds) {
     // nothing to do - timer is already set for the correct
@@ -555,7 +556,7 @@ void TimerCounter::_attachInterrupt(timerCallback isr)
 
 #elif defined(ESP32)
 
-void ARDUINO_ISR_ATTR onTimer(){
+void ISR_ATTR onTimer(){
   // just call the callback
   if (isrCallback)
     (*isrCallback)();
@@ -574,7 +575,7 @@ void TimerCounter::_initialize()
   }
 }
 
-void TimerCounter::_setPeriod(unsigned long microseconds)
+void ISR_ATTR TimerCounter::_setPeriod(unsigned long microseconds)
 {
   timerAlarmWrite(timer, microseconds, true);
 }
@@ -593,7 +594,7 @@ void TimerCounter::_attachInterrupt(timerCallback isr)
 
 #elif defined(ESP8266)
 
-void IRAM_ATTR onTimer(){
+void ISR_ATTR onTimer(){
   // just call the callback
   if (isrCallback)
     (*isrCallback)();
@@ -611,7 +612,7 @@ void TimerCounter::_initialize()
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 }
 
-void TimerCounter::_setPeriod(unsigned long microseconds)
+void ISR_ATTR TimerCounter::_setPeriod(unsigned long microseconds)
 {
   timer1_write(microseconds*((F_CPU/1000000)/16));
   // timer1_write also (re)enables edge interrupts
