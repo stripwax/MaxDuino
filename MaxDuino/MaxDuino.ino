@@ -166,6 +166,7 @@
 #include "pinSetup.h"
 #include "USBStorage.h"
 #include "power.h"
+#include "EEPROM_wrappers.h"
 
 SdFat sd;                           //Initialise Sd card 
 SdBaseFile _tmpdirs[2]; // internal file pointers.  (*currentDir points to either _tmpdirs[0] or _tmpdirs[1] and the other is 'scratch')
@@ -241,6 +242,10 @@ bool firstBlockPause = false;
 #endif
 
 void setup() {
+  #if defined(USES_EEPROM)
+  EEPROM_init();
+  #endif
+
   pinsetup();
   pinMode(chipSelect, OUTPUT);      //Setup SD card chipselect pin
 

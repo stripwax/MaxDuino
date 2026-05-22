@@ -4,42 +4,20 @@
 #define EEPROM_H_INCLUDED
 
 #include "Arduino.h"
+#include "configs.h"
 
-#if defined(__AVR__)
-  #include <EEPROM.h>
-  #define EEPROM_put EEPROM.put
-  #define EEPROM_get EEPROM.get
-
-#elif defined(__arm__) && defined(__STM32F1__)
-  #include <EEPROM.h>
-  uint8_t EEPROM_get(uint16_t address, byte &data) {
-    if (EEPROM.init()==EEPROM_OK) {
-      data = (byte)(EEPROM.read(address) & 0xff);  
-      return true;  
-    } else 
-      return false;
-  } 
-  uint8_t EEPROM_put(uint16_t address, byte data) {
-    if (EEPROM.init()==EEPROM_OK) {
-      EEPROM.write(address, (uint16_t) data); 
-      return true;    
-    } else
-      return false;
-  }
-  
-#elif defined(ESP8266)
-  #include <ESP_EEPROM.h>
-  uint8_t EEPROM_get(uint16_t address, byte &data) {
-      EEPROM.begin(512);
-      EEPROM.get(address, data) ;  
-      return true;     
-  }
-  uint8_t EEPROM_put(uint16_t address, byte data) {
-      EEPROM.begin(512);
-      EEPROM.put(address, data); 
-      EEPROM.commit();
-      return true;      
-  }
+#if defined(LOAD_EEPROM_SETTINGS) || defined(RECORD_EEPROM_LOGO) || defined(LOAD_EEPROM_LOGO)
+#define USES_EEPROM
 #endif
-  
+
+#ifdef USES_EEPROM
+void EEPROM_init();
+void EEPROM_write_logo_begin();
+void EEPROM_write_logo_end();
+void EEPROM_read_configbyte(byte &data);
+void EEPROM_write_configbyte(byte data);
+void EEPROM_read_logo_byte(uint16_t address, byte& data);
+void EEPROM_write_logo_byte(uint16_t address, byte data);
+#endif
+
 #endif // EEPROM_H_INCLUDED

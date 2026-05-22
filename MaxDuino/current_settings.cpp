@@ -3,6 +3,7 @@
 #include "maxduino_prefs.h"
 #include "current_settings.h"
 #include "casProcessing.h"
+#include "EEPROM_wrappers.h"
 
 word BAUDRATE = DEFAULT_BAUDRATE;
 // TODO really the following should only be defined ifndef NO_MOTOR
@@ -12,7 +13,6 @@ bool TSXCONTROLzxpolarityUEFSWITCHPARITY = DEFAULT_TSXzxpUEF;
 bool skip2A = DEFAULT_SKIP2A;
 
 #ifdef LOAD_EEPROM_SETTINGS
-#include "EEPROM_wrappers.h"
 void updateEEPROM()
 {
     /* Setting Byte: 
@@ -55,7 +55,7 @@ void updateEEPROM()
       if(skip2A) settings |=32;
     #endif
 
-    EEPROM_put(EEPROM_CONFIG_BYTEPOS, settings);
+    EEPROM_write_configbyte(settings);
     #ifdef Use_CAS
     setCASBaud();
     #endif
@@ -64,7 +64,7 @@ void updateEEPROM()
 void loadEEPROM()
 {
     byte settings=0;
-    EEPROM_get(EEPROM_CONFIG_BYTEPOS, settings);
+    EEPROM_read_configbyte(settings);
         
     if(!settings) return;
     

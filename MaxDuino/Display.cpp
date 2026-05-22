@@ -7,10 +7,7 @@
 #include "i2c.h"
 #include "maxduino_prefs.h"
 #include "current_settings.h"
-
-#if defined(RECORD_EEPROM_LOGO) || defined(LOAD_EEPROM_LOGO)
 #include "EEPROM_wrappers.h"
-#endif
 
 // general text-printing buffer shared by most routines, it's long enough for one line of text plus one NUL terminator
 char fline[17];
@@ -26,10 +23,6 @@ char fline[17];
     if ((nibble + 7) & 16) nibble += 7;
     return nibble + '0';
   }
-
-  #if defined(LOAD_EEPROM_LOGO)
-    #include "EEPROM_wrappers.h"
-  #endif
 
   //==========================================================//
   // Used to send commands to the display.
@@ -383,6 +376,10 @@ char fline[17];
       byte t;
     #endif
 
+    #if defined(RECORD_EEPROM_LOGO)
+    EEPROM_write_logo_begin();
+    #endif
+
     #if defined(OLED1306_128_64) || defined(video64text32)
       for(byte j=0;j<8;j++) {
     #else
@@ -396,7 +393,7 @@ char fline[17];
         #endif
 
         #if defined(RECORD_EEPROM_LOGO) && not defined(EEPROM_LOGO_COMPRESS)
-          EEPROM_put(j*128+i, pgm_read_byte(logo+j*128+i));
+          EEPROM_write_logo_byte(j*128+i, pgm_read_byte(logo+j*128+i));
         #endif
 
         #if defined(RECORD_EEPROM_LOGO) && defined(EEPROM_LOGO_COMPRESS)
@@ -422,17 +419,17 @@ char fline[17];
                   }
                 }
 
-                EEPROM_put((j/2)*64+i/2,nl+nh*16);
+                EEPROM_write_logo_byte((j/2)*64+i/2,nl+nh*16);
               } 
 
             #else
-              EEPROM_put(j*64+i/2, pgm_read_byte(logo+j*128+i));
+              EEPROM_write_logo_byte(j*64+i/2, pgm_read_byte(logo+j*128+i));
             #endif
           }
         #endif   
 
         #if defined(LOAD_EEPROM_LOGO) && not defined(EEPROM_LOGO_COMPRESS)
-          EEPROM_get(j*128+i, t);
+          EEPROM_read_logo_byte(j*128+i, t);
           SendByte(t);
         #endif
 
@@ -443,7 +440,7 @@ char fline[17];
               if (j%2 == 0) {
                 byte ril=0;
                 byte ib=0;
-                EEPROM_get((j/2)*64+i/2, ril);
+                EEPROM_read_logo_byte((j/2)*64+i/2, ril);
 
                 for(ib=0;ib<4;ib++) {
                   if (bitRead (ril,ib)) {
@@ -456,7 +453,7 @@ char fline[17];
               } else {
                 byte rih=0;
                 byte ic=0;
-                EEPROM_get((j/2)*64+i/2, rih);
+                EEPROM_read_logo_byte((j/2)*64+i/2, rih);
 
                 for(ic=4;ic<8;ic++) {
                   if (bitRead (rih,ic)) {
@@ -468,7 +465,7 @@ char fline[17];
                 }
               }
             #else
-              EEPROM_get(j*64+i/2, t);
+              EEPROM_read_logo_byte(j*64+i/2, t);
             #endif
           }
           SendByte(t);
@@ -476,6 +473,11 @@ char fline[17];
     
       }  
     }
+
+    #if defined(RECORD_EEPROM_LOGO)
+    EEPROM_write_logo_end();
+    #endif
+
     #if defined(LOAD_MEM_LOGO) || defined(LOAD_EEPROM_LOGO)
       sendcommand(0xAF);    //display on
     #endif

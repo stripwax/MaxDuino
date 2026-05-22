@@ -112,7 +112,7 @@
 #define BLOCKID21_IN
 #define BLOCKTAP_IN
 #define OLEDPRINTBLOCK 
-//#define LOAD_EEPROM_SETTINGS
+#define LOAD_EEPROM_SETTINGS
 //#define EEPROM_CONFIG_BYTEPOS  255     // Byte position to save configuration
 #define OSTATUSLINE
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
