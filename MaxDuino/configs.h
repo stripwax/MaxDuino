@@ -71,4 +71,6 @@
 
 #endif
 
+#include "configs_sanity.h"
+
 #endif // CONFIGS_H_INCLUDED

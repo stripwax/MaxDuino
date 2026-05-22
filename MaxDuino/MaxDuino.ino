@@ -167,10 +167,6 @@
 #include "USBStorage.h"
 #include "power.h"
 
-#ifdef BLOCK_EEPROM_PUT
-#include "EEPROM_wrappers.h"
-#endif
-
 SdFat sd;                           //Initialise Sd card 
 SdBaseFile _tmpdirs[2]; // internal file pointers.  (*currentDir points to either _tmpdirs[0] or _tmpdirs[1] and the other is 'scratch')
 SdBaseFile *currentDir = &_tmpdirs[0];  // SD card directory
@@ -232,11 +228,7 @@ byte blockID[maxblock];
 
 byte jblks = 1;
 byte oldMinBlock = 0;
-#ifdef BLOCK_EEPROM_PUT
-  byte oldMaxBlock = 99;
-#else
-  byte oldMaxBlock = 19;
-#endif
+byte oldMaxBlock = maxblock-1;
 
 bool firstBlockPause = false;
 
@@ -635,18 +627,11 @@ void loop(void) {
       firstBlockPause = false;
       #ifdef BLOCKID_INTO_MEM
         oldMinBlock = 0;
-        oldMaxBlock = maxblock;
+        oldMaxBlock = maxblock-1;
         if (block > 0) block--;
-        else block = maxblock;      
-      #endif
-      #if defined(BLOCK_EEPROM_PUT)
-        oldMinBlock = 0;
-        oldMaxBlock = 99;
-        if (block > 0) block--;
-        else block = 99;
-      #endif
-      #if defined(BLOCKID_NOMEM_SEARCH)
-        if (block > jblks) block=block-jblks;
+        else block = maxblock-1;
+      #elif defined(BLOCKID_NOMEM_SEARCH)
+        if (block >= jblks) block -= jblks;
         else block = 0;
       #endif        
 
@@ -741,34 +726,21 @@ void loop(void) {
 
       #ifdef BLOCKID_INTO_MEM
         oldMinBlock = 0;
-        oldMaxBlock = maxblock;
+        oldMaxBlock = maxblock-1;
         if (firstBlockPause) {
           firstBlockPause = false;
           if (block > 0) block--;
-          else block = maxblock;
+          else block = maxblock-1;
         } else {
-          if (block < maxblock) block++;
+          if (block < maxblock-1) block++;
           else block = 0;       
         }             
-      #endif
-      #if defined(BLOCK_EEPROM_PUT)
-        oldMinBlock = 0;
-        oldMaxBlock = 99;
-        if (firstBlockPause) {
-          firstBlockPause = false;
-          if (block > 0) block--;
-          else block = 99;
-        } else {
-          if (block < 99) block++;
-          else block = 0;       
-        }         
-      #endif
-      #if defined(BLOCKID_NOMEM_SEARCH)
+      #elif defined(BLOCKID_NOMEM_SEARCH)
         if (firstBlockPause) {
           firstBlockPause = false;
           if (block > 0) block--;
         } else {
-          block = block + jblks;
+          block += jblks;
         }         
       #endif
 
@@ -1165,13 +1137,8 @@ void GetAndPlayBlock()
 {
   #ifdef BLOCKID_INTO_MEM
     bytesRead=blockOffset[block%maxblock];
-    currentID=blockID[block%maxblock];   
-  #endif
-  #ifdef BLOCK_EEPROM_PUT
-    EEPROM_get(BLOCK_EEPROM_START+5*block, bytesRead);
-    EEPROM_get(BLOCK_EEPROM_START+4+5*block, currentID);
-  #endif
-  #ifdef BLOCKID_NOMEM_SEARCH 
+    currentID=blockID[block%maxblock];
+  #elif defined(BLOCKID_NOMEM_SEARCH)
     unsigned long oldbytesRead=0;
     switch(currentID) {
       case BLOCKID::TAP:
@@ -1354,10 +1321,6 @@ void block_mem_oled()
     blockOffset[block%maxblock] = bytesRead;
     blockID[block%maxblock] = currentID;
   #endif
-  #ifdef BLOCK_EEPROM_PUT
-    EEPROM_put(BLOCK_EEPROM_START+5*block, bytesRead);
-    EEPROM_put(BLOCK_EEPROM_START+4+5*block, currentID);
-  #endif
 
   #if defined(OLED1306) && defined(OLEDPRINTBLOCK) 
     #ifdef XY
@@ -1400,14 +1363,9 @@ void block_mem_oled()
   #endif
 
   #if defined(BLOCKID_INTO_MEM)
-    if (block < maxblock) block++;
+    if (block < maxblock-1) block++;
     else block = 0;
-  #endif
-  #if defined(BLOCK_EEPROM_PUT) 
-    if (block < 99) block++;
-    else block = 0; 
-  #endif
-  #if defined(BLOCKID_NOMEM_SEARCH) 
+  #elif defined(BLOCKID_NOMEM_SEARCH) 
     block++;
   #endif             
 }

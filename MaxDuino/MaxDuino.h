@@ -143,11 +143,7 @@ extern byte start;                     //Currently playing flag
 
 extern byte jblks;
 extern byte oldMinBlock;
-#ifdef BLOCK_EEPROM_PUT
-  extern byte oldMaxBlock;
-#else
-  extern byte oldMaxBlock;
-#endif
+extern byte oldMaxBlock;
 
 extern byte jtapflag;
 
