@@ -587,8 +587,8 @@ void TimerCounter::initialize(unsigned long microseconds=1000000)
   if (timer==NULL)
   {
     // count microseconds - so divide CPU freq in Hz by 1e6
-    timer = timerBegin(0, F_CPU/1000000, true);
-    timerAttachInterrupt(timer, &onTimer, true);
+    timer = timerBegin(0, getApbFrequency() / 1000000, true);
+    timerAttachInterruptFlag(timer, &onTimer, true, ARDUINO_ISR_FLAG);
     timerAlarmWrite(timer, microseconds, true);
   }
 }
