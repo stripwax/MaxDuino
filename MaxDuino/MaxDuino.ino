@@ -145,7 +145,7 @@
  //
 
 #include "product_strings.h"
-#include "preferences.h"
+#include "maxduino_prefs.h"
 #include "configs.h"
 #include "current_settings.h"
 #include "Display.h"

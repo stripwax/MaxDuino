@@ -1,6 +1,6 @@
 #include "configs.h"
 #include "Arduino.h"
-#include "preferences.h"
+#include "maxduino_prefs.h"
 #include "current_settings.h"
 #include "casProcessing.h"
 

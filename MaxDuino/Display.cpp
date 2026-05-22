@@ -5,7 +5,7 @@
 #include "Logos.h"
 #include "Display.h"
 #include "i2c.h"
-#include "preferences.h"
+#include "maxduino_prefs.h"
 #include "current_settings.h"
 
 #if defined(RECORD_EEPROM_LOGO) || defined(LOAD_EEPROM_LOGO)
