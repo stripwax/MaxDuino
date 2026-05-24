@@ -7,8 +7,12 @@ name: PlatformIO CI
 #     branches: [ "master" ]
 
 # Triggers on all push
-on: push
-
+on:
+  push:
+    branches:
+      - "**"  # matches everything
+      - "!actions_experiments"  # EXCLUDES test branch
+      
 jobs:
   build:
     runs-on: ubuntu-latest
