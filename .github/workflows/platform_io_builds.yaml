@@ -73,7 +73,7 @@ jobs:
           automatic_release_tag: "latest"
           is_tag_static: true
           prerelease: true
-          title: "Development Build (ACTIONS_EXPERIMENT)"
+          title: "Development Build"
           files: |
             for_release/*
 
