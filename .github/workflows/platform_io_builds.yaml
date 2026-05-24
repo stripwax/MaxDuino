@@ -7,7 +7,8 @@ name: PlatformIO CI
 #     branches: [ "master" ]
 
 # Triggers on all push
-on: push
+on:
+  push:
 
 jobs:
   build:
@@ -43,13 +44,71 @@ jobs:
         shell: bash
         run: find . -regextype posix-basic -regex './.pio/build/\(.*\)/.*\.\(hex\|bin\)$' -print | grep -v '_test_' | sed s':\(./.pio/build/\)\([^/]*\)/\(.*\):echo copying \2_\3 \&\& cp .pio/build/\2/\3 for_release/\2_\3:' | bash
 
+      - name: archive releasable files as output
+        uses: actions/upload-artifact@v4
+        with:
+          name: releaseable-files
+          path: |
+            for_release/*
+
+  latest-dev-build:
+    runs-on: ubuntu-latest
+
+    needs:
+      - build
+
+    steps:
+      # download archive (just created by build process)
+      - name: pull releasable files
+        uses: actions/download-artifact@v5
+        with:
+          name: releaseable-files
+          path: for_release
+
       # create release bundle but only if this commit was in master branch
       - uses: "marvinpinto/action-automatic-releases@latest"
-        if: ${{ github.ref_name == 'master' }}
+        if: ${{ (github.ref_name == 'master') }}
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
+          is_tag_static: true
           prerelease: true
           title: "Development Build"
+          files: |
+            for_release/*
+
+      # create test version of release bundle but only if this commit was in actions_experiments branch
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        if: ${{ (github.ref_name == 'actions_experiments') }}
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest-actions-test"
+          prerelease: true
+          draft: true
+          title: "Development Build (ACTIONS TEST)"
+          files: |
+            for_release/*
+
+  tagged-release-draft:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - build
+
+    steps:
+      # download archive (just created by build process)
+      - name: pull releasable files
+        uses: actions/download-artifact@v5
+        with:
+          name: releaseable-files
+          path: for_release
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        if: ${{ (github.ref_name == 'master') || (github.ref_name == 'actions_experiments')}}
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          is_tag_static: false
+          prerelease: true
+          draft: true
           files: |
             for_release/*
