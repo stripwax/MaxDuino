@@ -63,6 +63,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: releaseable-files
+          path: for_release
 
       # create release bundle but only if this commit was in master branch
       # !!!remove if for master branch!!!
@@ -87,6 +88,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: releaseable-files
+          path: for_release
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
