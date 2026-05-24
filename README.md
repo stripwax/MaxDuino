@@ -3,6 +3,7 @@
 This project contains the MaxDuino firmware, compatible with most MaxDuino and TZXDuino devices.  These devices are 'tape emulators' that output audio for loading into retro computers typically manufactured in the 1980s and 1990s.
 By downloading and installing the latest MaxDuino firmware onto your MaxDuino or TZXDuino devices, you can add support for the largest range of filetypes for different retro computers as well as adding new usability and configuration options for your device.
 For more information about MaxDuino and TZXDuino, check out the [DOCUMENTATION](./Docs.md)
+MaxDuino firmware is free and open-source.
 
 ## LATEST NEWS
 
