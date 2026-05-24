@@ -112,13 +112,13 @@
 
 //#define COMPRESS_REPEAT_ROW
 //#define EEPROM_LOGO_COMPRESS
-//#define LOAD_MEM_LOGO             // legacy, logo is not in EEPROM then wasting memory.
+#define LOAD_MEM_LOGO             // legacy, logo is not in EEPROM then wasting memory.
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
 //#define LOAD_EEPROM_LOGO 
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO
-#define LOGO_128_64 MTX
+#define LOGO_128_64 Maxduino2Alf
 #define LOGO_128_32 LOGOMAXDUINO2
 #define LOGO_84_48 LOGOMAXDUINO2
 
