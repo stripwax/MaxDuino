@@ -1,0 +1,63 @@
+name: PlatformIO CI
+
+# Controls when the workflow will run
+# on:
+#   # Triggers the workflow on push or pull request events but only for the "master" branch
+#   push:
+#     branches: [ "master" ]
+
+# triggers on all push:
+# on: push
+
+
+# Triggers on tag "ONLY ON TEST BRANCH"
+on:
+  push:
+    tags:
+      - "v*"  # "versioned" tag i.e. v3.05.0123 and so on
+    branches: ["actions_experiments"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+          
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: make release folder
+        shell: bash
+        run: mkdir for_release
+          
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Work around missing intelhex package in some versions of tool-esptool
+        run: pip install intelhex
+
+      - name: Build PlatformIO Project
+        run: pio run -v
+
+      - name: move releaseable files for each platform
+        shell: bash
+        run: find . -regextype posix-basic -regex './.pio/build/\(.*\)/.*\.\(hex\|bin\)$' -print | grep -v '_test_' | sed s':\(./.pio/build/\)\([^/]*\)/\(.*\):echo copying \2_\3 \&\& cp .pio/build/\2/\3 for_release/\2_\3:' | bash
+
+      # create release bundle but only if this commit was in master branch
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        if: ${{ github.ref_name == 'master' }}
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          draft: true
+          files: |
+            for_release/*
