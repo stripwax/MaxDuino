@@ -67,7 +67,7 @@ jobs:
 
       # create release bundle but only if this commit was in master branch
       - uses: "marvinpinto/action-automatic-releases@latest"
-        if: ${{ (github.ref_name == 'master') || (github.ref_name == 'actions_experiment')}}
+        if: ${{ (github.ref_name == 'master') || (github.ref_name == 'actions_experiments')}}
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
@@ -92,6 +92,7 @@ jobs:
           path: for_release
 
       - uses: "marvinpinto/action-automatic-releases@latest"
+        if: ${{ (github.ref_name == 'master') || (github.ref_name == 'actions_experiments')}}
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           is_tag_static: false
