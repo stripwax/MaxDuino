@@ -23,7 +23,7 @@ jobs:
       contents: write
       
     # don't run in forks. only the main repo has automatic versioning, and if you autoupdate versions in forks (like branches) you'd get conflicts on version.h every time you merge
-    if: github.repository == 'rcmolina/MaxDuino'
+    if: ${{ (github.repository == 'rcmolina/MaxDuino') || (github.repository == 'stripwax/MaxDuino') }}
       
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
