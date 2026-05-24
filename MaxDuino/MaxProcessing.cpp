@@ -120,8 +120,7 @@ void UniPlay(){
   jtapflag=255;
 
   reset_output_state();
-  Timer.initialize(100000); //100ms pause prevents anything bad happening before we're ready
-  Timer.attachInterrupt(wave2);
+  Timer.initialize();
 }
 
 void UniStop() {

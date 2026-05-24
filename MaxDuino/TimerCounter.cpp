@@ -16,10 +16,13 @@ TimerCounter::TimerCounter()
 {}
 
 
-void TimerCounter::initialize(unsigned long microseconds)
+void TimerCounter::initialize()
 {
   _initialize();
-  setPeriod(microseconds);
+   //100ms pause prevents anything bad happening before we're ready
+  setPeriod(100000);
+  // attach the interrupt handler (there is only one now, wave2 does everything)
+  _attachInterrupt(wave2);
 }
 
 void TimerCounter::setPeriod(unsigned long microseconds)
@@ -155,7 +158,7 @@ void TimerCounter::_setPeriod(unsigned long microseconds)
   timer_instance.setSTM32Period(microseconds);
 }
 
-void TimerCounter::attachInterrupt(timerCallback isr)
+void TimerCounter::_attachInterrupt(timerCallback isr)
 {
   // behaviour of other timers is to attach interrupt and resume
   timer_instance.attachInterrupt(TIMER_CHANNEL, isr);
@@ -265,7 +268,7 @@ void TimerCounter::stop() {
     TCA0.SINGLE.CTRLA &= ~(TCA_SINGLE_ENABLE_bm);
 }
 
-void TimerCounter::attachInterrupt(timerCallback isr) {
+void TimerCounter::_attachInterrupt(timerCallback isr) {
     isrCallback = isr;
     //TIMSK1 = _BV(TOIE1);
     /* enable overflow interrupt */
@@ -325,7 +328,7 @@ void TimerCounter::stop() {
     TCCR1B = _BV(WGM13);
 }
 
-void TimerCounter::attachInterrupt(timerCallback isr) {
+void TimerCounter::_attachInterrupt(timerCallback isr) {
     isrCallback = isr;
     TIMSK1 = _BV(TOIE1);
 }
@@ -526,7 +529,7 @@ void TimerCounter::stop()
   interrupts();
 }
 
-void TimerCounter::attachInterrupt(timerCallback isr)
+void TimerCounter::_attachInterrupt(timerCallback isr)
 {
   noInterrupts();
 
@@ -582,7 +585,7 @@ void TimerCounter::stop()
     timerAlarmDisable(timer);
 }
 
-void TimerCounter::attachInterrupt(timerCallback isr)
+void TimerCounter::_attachInterrupt(timerCallback isr)
 {
   isrCallback = isr;
   timerAlarmEnable(timer);
@@ -619,7 +622,7 @@ void TimerCounter::stop()
   timer1_disable();
 }
 
-void TimerCounter::attachInterrupt(void (*isr)())
+void TimerCounter::_attachInterrupt(void (*isr)())
 {
   isrCallback = isr;
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
