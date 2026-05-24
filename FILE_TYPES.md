@@ -114,13 +114,19 @@ There are several additional customizations for .CAS support for DRAGON computer
 
 ### .CAS
 
-We support TRS Color Computer .CAS files.  (This section needs more details.)
+We support TRS Color Computer .CAS files.  Essentially the same as the Dragon 32 CAS format
 
-## TRS-80
+## TRS-80 Model 1,2,3 and 4
 
 ### .CAS
 
-We support TRS-80 .CAS files.  (This section needs more details.)
+We support TRS-80 .CAS files.
+
+TRS-80 .cas is a separate family of cassette formats: BASIC_L1, BASIC_L2,
+SYSTEM_L1, SYSTEM_L2, and HIGHSPEED, detected from file markers or raw sync
+patterns. Although it shares the .cas extension with CoCo, it is not the same
+format: while CoCo uses the generic Dragon/CoCo CAS byte-stream path, TRS-80
+uses TRS-80-specific timing and playback rules.
 
 ## AMSTRAD CPC
 
@@ -137,3 +143,9 @@ In addition, we have included support for enabling the user to choose their own 
 We support Sharp MZ tape images stored as `.mzf`, `.mzt`, or `.m12`.
 
 `.mzt` / `.m12` files are routed through the same playback engine and use the same pulse timings as `.mzf`. If a file contains a repeated Sharp block, MaxDuino plays the first header+data copy, which preserves the existing `.mzf` behaviour.
+
+## MEMOTECH MTX
+
+### .MTX
+
+We support MTX files but only test in a emulator as of now. 
