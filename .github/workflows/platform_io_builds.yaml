@@ -66,11 +66,12 @@ jobs:
           path: for_release
 
       # create release bundle but only if this commit was in master branch
-      # !!!remove if for master branch!!!
       - uses: "marvinpinto/action-automatic-releases@latest"
+        if: ${{ (github.ref_name == 'master') || (github.ref_name == 'actions_experiment')}}
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest_experiment"
+          automatic_release_tag: "latest"
+          is_tag_static: true
           prerelease: true
           title: "Development Build (ACTIONS_EXPERIMENT)"
           files: |
@@ -91,8 +92,10 @@ jobs:
           path: for_release
 
       - uses: "marvinpinto/action-automatic-releases@latest"
+        if: ${{ (github.ref_name == 'master') || (github.ref_name == 'actions_experiment')}}
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          is_tag_static: false
           prerelease: true
           draft: true
           files: |
