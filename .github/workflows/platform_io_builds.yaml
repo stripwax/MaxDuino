@@ -104,7 +104,6 @@ jobs:
           path: for_release
 
       - uses: "marvinpinto/action-automatic-releases@latest"
-        if: ${{ (github.ref_name == 'master') || (github.ref_name == 'actions_experiments')}}
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           is_tag_static: false
