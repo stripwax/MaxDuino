@@ -4,13 +4,13 @@ This project contains the MaxDuino firmware, compatible with most MaxDuino and T
 
 By downloading and installing the latest MaxDuino firmware onto your MaxDuino or TZXDuino devices, you can add support for the largest range of filetypes for different retro computers as well as adding new usability and configuration options for your device.  **All supported filetypes can be enabled simultaneously** given sufficient system resources - no more switching firmwares on your TZXDuino!
 
-For more information about MaxDuino and TZXDuino, check out the [DOCUMENTATION](./Docs.md)
+For more information about MaxDuino and TZXDuino, check out the [DOCUMENTATION](./DOCS.md)
 
 MaxDuino firmware is free and open-source.
 
 ## LATEST NEWS
 
-* V3.05 Adds improvements to C64 pause handling, and TRS-80 .CAS support. Incldues a lot of performance optimisations, some fixes for ESP32 and ESP8266, and a temporary new home and name change: https://github.com/stripwax/MaxDuino and "MaxDuiNeo 2026"
+* V3.05 Adds improvements to C64 pause handling, and TRS-80 .CAS support. Includes a lot of performance optimisations, some fixes for ESP32 and ESP8266, and a temporary new home and name change: https://github.com/stripwax/MaxDuino and "MaxDuiNeo 2026"
 * V3.04 Adds C64 .TAP support, Sharp MZ-700 .MZT + .M12 file extension support, and Memotech .MTX implementation
 * V3.03 (we skipped v3.03 due to a problem with C64 support)
 * V3.02 Adds Sharp MZ-700 .MZF implementation, and Mattel Aquarius .CAQ implementation
