@@ -1,4 +1,18 @@
-Please note: see https://github.com/rcmolina/MaxDuino_BETA/tree/master/Troubleshooting for archived versions
+# HISTORY OVERVIEW
+
+  See git commit history for changes: https://github.com/stripwax/MaxDuino/commits/master
+
+  See version.h (and the Menu "Version..." option) to display what version you currently have.
+
+  V1.77 and onwards uses semantic versioning :  MAJOR.minor.patch.sha  (build is incremented for each commit, and sha corresponds to the first few characters of the github commit hash)
+  e.g. 1.77.1234.ffca means this is v1.77 , patch number 1234 (based on number of changes), commit HEAD ffca
+
+  Going forwards (from v3.05 onwards) we will be regularly tagging the repository to make this simpler!  E.g. v3.05 has the github tag: v3.5.0
+  
+  Please note: see https://github.com/rcmolina/MaxDuino_BETA/tree/master/Troubleshooting for archived versions
+  You can also of course use github to checkout past versions.  
+
+# HISTORY NOTES
 
 * V3.05 Adds TRS80 .cas support, as well as a lot of performance optimisations, some fixes for ESP32 and ESP8266, and a temporary new home and name change: https://github.com/stripwax/MaxDuino and "MaxDuiNeo 2026"
 * V3.04 Adds C64 support
@@ -12,23 +26,19 @@ Please note: see https://github.com/rcmolina/MaxDuino_BETA/tree/master/Troublesh
   https://github.com/rcmolina/z802tzx3/blob/master/HoH8%5B5800%5D.tzx
 * V2.02 Oled driver optimizations.
 * V2.01 aka "San Fermin". Fixed oled corruption and new cartoon8x16 font.
-* V2.00.x New maxduino stable and tested reference version.
+* V2.00.x New maxduino stable and tested reference version.  Dragon optimizations.
+* V1.77 Started new Maxduino version, big sdfat savings by David Hooper @stripwax, solved buffer corruption at last
 * V1.77.x  **SEE VERSION.H FOR MORE DETAILS**  first rolling version with automatic version numbering.
-  See git commit history for changes: https://github.com/rcmolina/MaxDuino/commits/master
-  See version.h (and the Menu "Version..." option) to display what version you currently have.
-  V1.77 uses semantic versioning :  MAJOR.minor.patch.sha  (build is incremented for each commit, and sha corresponds to the first few characters of the github commit hash)
-  e.g. 1.77.1234.ffca means this is v1.77 , patch number 1234 (based on number of changes), commit HEAD ffca
 
 * "New MaxDuino": No version Numbers due to collaborative new contributions for the project
-26/06/2022 Oric: Fixed pointer bug when loading some tap programs (Pulsoid, @desUBIKado).
-24/06/2022 Assisted Oric tap multiblock loading with automatic pausing when setting Skip_BLK2A flag to off in menu.
-18/06/2022 SAMD21 Support (@David), tested Arduino Micro and new pin definitions (@Rafa)
-14/06/2022 SdFat much improved, now userconfig7.h with all options activated, and also until 10 subdirs and max filelength 256. David is your hero!
-11/06/2022: ZX:inject the real filename into the fake ay header + Refixed inversion for zx polarity loading.
-zx81:Removed initial pause from zx81 loading to avoid inversion problems.
+  * 26/06/2022 Oric: Fixed pointer bug when loading some tap programs (Pulsoid, @desUBIKado).
+  * 24/06/2022 Assisted Oric tap multiblock loading with automatic pausing when setting Skip_BLK2A flag to off in menu.
+  * 18/06/2022 SAMD21 Support (@David), tested Arduino Micro and new pin definitions (@Rafa)
+  * 14/06/2022 SdFat much improved, now userconfig7.h with all options activated, and also until 10 subdirs and max filelength 256. David is your hero!
+  * 11/06/2022: ZX:inject the real filename into the fake ay header + Refixed inversion for zx polarity loading. zx81:Removed initial pause from zx81 loading to avoid inversion problems.
 
 * V1.76 New option to trace ID15 blocks #BLOCKID15_IN. Support variable baudrate on the fly for Amstrad CPC ID11 blocks (like TSXControl).
-A bunch of bugs solved: At last solved memory corruption problem when reconfiguring options due to wrong buffer overflow , also reoptimized size to free more space. Changed also logic for searching extension when reading file (thanks to David Hooper alias stripwax).
+A bunch of bugs solved: At last solved memory corruption problem when reconfiguring options due to wrong buffer overflow , also reoptimized size to free more space. Changed also logic for searching extension when reading file (thanks to David Hooper @stripwax).
 Double font i2c_start syntax error (@alferboy).
 * V1.75 New option to handle more than 255 block in Blockmode if needed. Decrease block count in Blockmode to skip some blocks thus matching live oled block count.
 * V1.74 aka "Christmas21 Eve". Used SoftI2CMaster instead of Softwire to save more space, new adjusted configs.
@@ -84,3 +94,36 @@ First support of 1,3" oled SH1106 but using 128x32 and not 128x64. Backported op
 * V1.30 max TSX speed 3850 vs cas speed 3675. Also changed in Menu.
 * V1.29 3-digits counter can be configured to display m:ss with #define CNTRBASE
 * V1.28 Better speeed loading tzx files, more than 5000 baud using PORT instructions
+
+# PRIOR HISTORY
+
+Maxduino is derived from TZXDuino and CASDuino and related Arduitape projects.  Pasted below is the original history from Maxduino.ino from the TZXDuino source.
+
+    *              V1.0
+    *                Motor Control Added.
+    *                High compatibility with Spectrum TZX, and Tap files
+    *                and CPC CDT and TZX files.
+    *                
+    *                V1.32 Added direct loading support of AY files using the SpecAY loader 
+    *                to play Z80 coded files for the AY chip on any 128K or 48K with AY 
+    *                expansion without the need to convert AY to TAP using FILE2TAP.EXE. 
+    *                Download the AY loader from http://www.specay.co.uk/download 
+    *                and load the LOADER.TAP AY file loader on your spectrum first then
+    *                simply select any AY file and just hit play to load it. A complete
+    *                set of extracted and DEMO AY files can be downloaded from
+    *                http://www.worldofspectrum.org/projectay/index.htm
+    *                Happy listening!
+    *                
+    *                V1.8.1 TSX support for MSX added by Natalia Pujol
+    *                
+    *                V1.8.2 Percentage counter and timer added by Rafael Molina Chesserot along with a reworking of the OLED1306 library. 
+    *                Many memory usage improvements as well as a menu for TSX Baud Rates and a refined directory controls.
+    *                
+    *                V1.8.3 PCD8544 library changed to use less memory. Bitmaps added and Menu system reduced to a more basic level. 
+    *                Bug fixes of the Percentage counter and timer when using motor control/
+    *
+    *                V1.8u1 (kernel@kernelcrash.com)  
+    *                Mods to V1.8 TZXDuino to enable UEF playback. Only supports gunzip'd
+    *                UEF files though (that still end in .uef). Plays back UEF's as square
+    *                wave not sine waves.
+  

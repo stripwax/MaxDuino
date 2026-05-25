@@ -6,10 +6,11 @@ If you have built your own variant using PlatformIO or Arduino IDE, the instruct
 
 ## Releases
 
-The primary repository for MaxDuino is: https://github.com/rcmolina/MaxDuino.
+The primary repository for MaxDuino is: https://github.com/stripwax/MaxDuino 
+
 We automatically generate new releases of firmware binaries for every commit on the "master" branch, provided that the automatic build scripts have succeeded with no error messages.
 
-We also aim to produce release packages with tagged versions whenever there is a major or minor version bump.
+We also aim to produce release packages with tagged versions whenever there is a major or minor version bump.  From v3.05 onwards, we will be tagging the github repository - for example, v3.05.0 has github tag "v3.5.0"
 
 ## Installing A Release
 

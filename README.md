@@ -45,7 +45,7 @@ Various MaxDuino and TZXDuino devices have been manufactured over the last 15 ye
 *  STMicroelectonics STM32 (experimental, needs testing)
 *  .. and others
 
-The above are included in GitHub releases: https://github.com/rcmolina/MaxDuino/releases
+The above are included in GitHub releases: https://github.com/stripwax/MaxDuino/releases
 
 More information at [MAXDUINO DEVICES](./MAXDUINO_DEVICES.md)
 
@@ -76,6 +76,13 @@ More information at [HISTORY](./HISTORY.md)
 
 See [DOCS](./DOCS.md)
 
+## TECHNICAL ADVICE
+
+    // ---------------------------------------------------------------------------------
+    // USE CLASS-4 AND CLASS-10 CARDS on this project WITH SDFAT2 FOR BETTER ACCESS SPEED
+    // ---------------------------------------------------------------------------------
+
 ## In memoriam
 
-To my father R.I.P. who bought my first ZX Spectrum and forced me to learn with his casio programming calc.
+> To my father R.I.P. who bought my first ZX Spectrum and forced me to learn with his casio programming calc.
+[Rafa Molina](https://github.com/rcmolina)

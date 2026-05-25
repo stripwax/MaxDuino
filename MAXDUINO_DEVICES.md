@@ -88,8 +88,9 @@ MaxDuino firmware is itself an open-source project and remains free for everybod
 
 ## Prebuilt configurations
 
-Several combinations are available 'prebuilt' and included in GitHub releases: https://github.com/rcmolina/MaxDuino/releases
-You can create your own combinations by editing the configuration files and building your own firmware - see [BUILDING](./BUILDING.md)
+Several combinations are available 'prebuilt' and included in GitHub releases: https://github.com/stripwax/MaxDuino/releases
+
+You can of course create your own custom firmware by editing the configuration files and compiling yourself - see [BUILDING](./BUILDING.md)
 
 # Notes
 1. Support for P8544 has been removed due to lack of devices for testing and development purposes
