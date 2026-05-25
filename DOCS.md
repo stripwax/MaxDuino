@@ -10,8 +10,5 @@
 
 ## External links
 
-* TBD
-
-## Wiki pages
-
-* TBD
+* Forum (**requires registration**): https://www.va-de-retro.com/foros/viewtopic.php?t=5541&start=9999
+* Other external links TBD

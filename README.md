@@ -1,16 +1,19 @@
 ﻿# MaxDuino
 
 This project contains the MaxDuino firmware, compatible with most MaxDuino and TZXDuino devices.  These devices are 'tape emulators' that output audio for loading into retro computers typically manufactured in the 1980s and 1990s.
-By downloading and installing the latest MaxDuino firmware onto your MaxDuino or TZXDuino devices, you can add support for the largest range of filetypes for different retro computers as well as adding new usability and configuration options for your device.
+
+By downloading and installing the latest MaxDuino firmware onto your MaxDuino or TZXDuino devices, you can add support for the largest range of filetypes for different retro computers as well as adding new usability and configuration options for your device.  **All supported filetypes can be enabled simultaneously** given sufficient system resources - no more switching firmwares on your TZXDuino!
+
 For more information about MaxDuino and TZXDuino, check out the [DOCUMENTATION](./Docs.md)
+
 MaxDuino firmware is free and open-source.
 
 ## LATEST NEWS
 
-* V3.05 Adds TRS80 .cas support, as well as a lot of performance optimisations, some fixes for ESP32 and ESP8266, and a temporary new home and name change: https://github.com/stripwax/MaxDuino and "MaxDuiNeo 2026"
-* V3.04 Adds C64 support
+* V3.05 Adds improvements to C64 pause handling, and TRS-80 .CAS support. Incldues a lot of performance optimisations, some fixes for ESP32 and ESP8266, and a temporary new home and name change: https://github.com/stripwax/MaxDuino and "MaxDuiNeo 2026"
+* V3.04 Adds C64 .TAP support, Sharp MZ-700 .MZT + .M12 file extension support, and Memotech .MTX implementation
 * V3.03 (we skipped v3.03 due to a problem with C64 support)
-* V3.02 Adds Sharp MZ-700 .MZF and Mattel Aquarius .CAQ implementation.
+* V3.02 Adds Sharp MZ-700 .MZF implementation, and Mattel Aquarius .CAQ implementation
 * V3.01 Adds Native Jupiter tap (JTAP) implementation.
 * V3.00 Adds 44.1kHz OTLA support and we now use "Maxduino OTLA" as reference name for this version. Check https://github.com/rcmolina/otla_tzx for some testing.
 
@@ -19,15 +22,25 @@ MaxDuino firmware is free and open-source.
 * ZX SPECTRUM: .TZX, .TAP, .AY
 * ZX80: .P, .O
 * ZX81: .P, .O
-* BBC MICRO: .UEF
+* ORIC-1: .TAP
+* BBC MICRO / ACORN ATOM / ACORN ELECTRON: .UEF
 * JUPITER ACE: .TAP (JTAP)
+* COMMODORE C64/C16: .TAP
 * MATTEL AQUARIUS: .CAQ
-* MSX: .TSZ, .CAS
-* DRAGON 32: .CAS
+* MSX: .CAS, .TSX, .TZX
+* DRAGON 32/64: .CAS
+* TANDY COLOR COMPUTER: .CAS
+* TRS-80 MODEL 1, 2, 3, and 4: .CAS
 * AMSTRAD CPC: .CDT
-* SHARP MZ-700: .MZF
-* TRS-80: .CAS
-* COMMODORE 64: .TAP
+* SHARP MZ (MZ-700, MZ-800): .MZF, .MZT, .M12
+* MEMOTECH MTX: .MTX
+
+**All supported filetypes can be enabled simultaneously** on any Maxduino device that has sufficient firmware and RAM capacity, such as:
+
+* Thinary Every / Nano Every
+* ESP32
+* ESP8266
+* SAMD21
 
 More information at [FILE TYPES](./FILE_TYPES.md)
 

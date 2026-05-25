@@ -14,10 +14,10 @@
 
 # HISTORY NOTES
 
-* V3.05 Adds TRS80 .cas support, as well as a lot of performance optimisations, some fixes for ESP32 and ESP8266, and a temporary new home and name change: https://github.com/stripwax/MaxDuino and "MaxDuiNeo 2026"
-* V3.04 Adds C64 support
+* V3.05 Adds improvements to C64 pause handling, and TRS-80 .CAS support. Incldues a lot of performance optimisations, some fixes for ESP32 and ESP8266, and a temporary new home and name change: https://github.com/stripwax/MaxDuino and "MaxDuiNeo 2026"
+* V3.04 Adds C64 .TAP support, Sharp MZ-700 .MZT + .M12 file extension support, and Memotech .MTX implementation
 * V3.03 (we skipped v3.03 due to a problem with C64 support)
-* V3.02 Adds Sharp MZ-700 .MZF and Mattel Aquarius .CAQ implementation.
+* V3.02 Adds Sharp MZ-700 .MZF implementation, and Mattel Aquarius .CAQ implementation
 * V3.01 Adds Native Jupiter tap (JTAP) implementation.
 * V3.00 Adds 44.1kHz OTLA support and we now use "Maxduino OTLA" as reference name for this version. Check https://github.com/rcmolina/otla_tzx for some testing.
 * V2.03 OTLA working with tzx id15
