@@ -6,9 +6,12 @@ name: PlatformIO CI
 #   push:
 #     branches: [ "master" ]
 
-# Triggers on all push
+# Triggers on all push to all branches EXCEPT docs_site (since that's an orphan branch, for resources and GitHub Pages)
 on:
   push:
+    branches:
+      - "**"
+      - "!docs_site"
 
 jobs:
   build:
