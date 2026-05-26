@@ -24,4 +24,5 @@ https://github.com/stripwax/MaxDuino/wiki
 ## External links
 
 * Original forum thread from Rafa Molina (**requires registration**): https://www.va-de-retro.com/foros/viewtopic.php?t=5541&start=9999
-* Other external links TBD
+* Videos from Rafael - https://www.youtube.com/channel/UC0L03I8mb4CMytW7MuhF--g/videos
+Other external links TBD
