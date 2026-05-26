@@ -8,8 +8,6 @@
  *  Original code by Jesse Tane for http://labs.ideo.com August 2008
  */
 
-timerCallback isrCallback = NULL;
-
 unsigned long TimerCounter::currentMicroseconds=0;
 
 // standard timer class for all devices, constructed in the same way
@@ -22,8 +20,8 @@ void TimerCounter::initialize()
   _initialize();
    //100ms pause prevents anything bad happening before we're ready
   setPeriod(100000);
-  // attach the interrupt handler (there is only one now, wave2 does everything)
-  _attachInterrupt(wave2);
+  // attach the interrupt handler (there is only one now, and it does everything)
+  _attachInterrupt();
 }
 
 void ISR_ATTR TimerCounter::setPeriod(unsigned long microseconds)
@@ -159,10 +157,10 @@ void TimerCounter::_setPeriod(unsigned long microseconds)
   timer_instance.setSTM32Period(microseconds);
 }
 
-void TimerCounter::_attachInterrupt(timerCallback isr)
+void TimerCounter::_attachInterrupt()
 {
   // behaviour of other timers is to attach interrupt and resume
-  timer_instance.attachInterrupt(TIMER_CHANNEL, isr);
+  timer_instance.attachInterrupt(TIMER_CHANNEL, isrCallback);
   timer_instance.resume();
 }
 
@@ -269,8 +267,7 @@ void TimerCounter::stop() {
     TCA0.SINGLE.CTRLA &= ~(TCA_SINGLE_ENABLE_bm);
 }
 
-void TimerCounter::_attachInterrupt(timerCallback isr) {
-    isrCallback = isr;
+void TimerCounter::_attachInterrupt() {
     //TIMSK1 = _BV(TOIE1);
     /* enable overflow interrupt */
     TCA0.SINGLE.INTCTRL |= TCA_SINGLE_OVF_bm;
@@ -278,8 +275,7 @@ void TimerCounter::_attachInterrupt(timerCallback isr) {
 
 ISR(TCA0_OVF_vect)
 {
-  if (isrCallback)
-    (*isrCallback)();
+  isrCallback();
   /* The interrupt flag has to be cleared manually */
   TCA0.SINGLE.INTFLAGS = TCA_SINGLE_OVF_bm;
 }  
@@ -329,15 +325,13 @@ void TimerCounter::stop() {
     TCCR1B = _BV(WGM13);
 }
 
-void TimerCounter::_attachInterrupt(timerCallback isr) {
-    isrCallback = isr;
+void TimerCounter::_attachInterrupt() {
     TIMSK1 = _BV(TOIE1);
 }
 
 ISR(TIMER1_OVF_vect)
 {
-  if (isrCallback)
-    (*isrCallback)();
+  isrCallback();
 }
 
 #elif defined(__SAMD21__)
@@ -351,8 +345,6 @@ ISR(TIMER1_OVF_vect)
   // As an aside, the TimerTC3 library also has the same bugs (as well as one or two others), as it is derived from
   // the same logic as SAMD_TimerInterrupt, and therefore also cannot be used by this project...
   
-  static timerCallback TC3_callback;
-  
   void TC3_Handler()
   {
     // get timer struct
@@ -361,8 +353,7 @@ ISR(TIMER1_OVF_vect)
     // If the compare register matching the timer count, trigger this interrupt
     if (TC->INTFLAG.bit.MC0 == 1) 
     {
-      if (TC3_callback)
-        (*TC3_callback)();
+      isrCallback();
       TC->INTFLAG.bit.MC0 = 1; // write 1 here, to clear the interrupt tr
     }
   }
@@ -390,8 +381,6 @@ void TimerCounter::_initialize()
   _Timer->CTRLA.reg |= TC_CTRLA_WAVEGEN_MFRQ;
   
   while (_Timer->STATUS.bit.SYNCBUSY);
-
-  TC3_callback = NULL;
 
   interrupts();
 }
@@ -530,7 +519,7 @@ void TimerCounter::stop()
   interrupts();
 }
 
-void TimerCounter::_attachInterrupt(timerCallback isr)
+void TimerCounter::_attachInterrupt()
 {
   noInterrupts();
 
@@ -539,8 +528,6 @@ void TimerCounter::_attachInterrupt(timerCallback isr)
   // disable the timer (this might not be necessary)
   _Timer->CTRLA.reg &= ~TC_CTRLA_ENABLE;
   while (_Timer->STATUS.bit.SYNCBUSY);
-  
-  TC3_callback = isr;
   
   // Enable the compare interrupt
   SAMD_TC3->INTENSET.reg = 0;
@@ -556,22 +543,15 @@ void TimerCounter::_attachInterrupt(timerCallback isr)
 
 #elif defined(ESP32)
 
-void ISR_ATTR onTimer(){
-  // just call the callback
-  if (isrCallback)
-    (*isrCallback)();
-}
-
 hw_timer_t * timer = NULL;
 
 void TimerCounter::_initialize()
 {
-  isrCallback = NULL;
   if (timer==NULL)
   {
     // count microseconds - so divide CPU freq in Hz by 1e6
     timer = timerBegin(0, getApbFrequency() / 1000000, true);
-    timerAttachInterruptFlag(timer, &onTimer, true, ARDUINO_ISR_FLAG);
+    timerAttachInterruptFlag(timer, &isrCallback, true, ARDUINO_ISR_FLAG);
   }
 }
 
@@ -586,19 +566,12 @@ void TimerCounter::stop()
     timerAlarmDisable(timer);
 }
 
-void TimerCounter::_attachInterrupt(timerCallback isr)
+void TimerCounter::_attachInterrupt()
 {
-  isrCallback = isr;
   timerAlarmEnable(timer);
 }
 
 #elif defined(ESP8266)
-
-void ISR_ATTR onTimer(){
-  // just call the callback
-  if (isrCallback)
-    (*isrCallback)();
-}
 
 void TimerCounter::_initialize()
 {
@@ -608,8 +581,6 @@ void TimerCounter::_initialize()
   // So 1000000 us (=1 second) would need 1000000 * (80/16) ticks = 5000000 ticks
   // (which is less than 2^23 i.e. 8338608)
   timer1_isr_init();
-  timer1_attachInterrupt(onTimer);
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 }
 
 void ISR_ATTR TimerCounter::_setPeriod(unsigned long microseconds)
@@ -623,9 +594,9 @@ void TimerCounter::stop()
   timer1_disable();
 }
 
-void TimerCounter::_attachInterrupt(void (*isr)())
+void TimerCounter::_attachInterrupt()
 {
-  isrCallback = isr;
+  timer1_attachInterrupt(isrCallback);
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 }
 

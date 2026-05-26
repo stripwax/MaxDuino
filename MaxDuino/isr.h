@@ -21,7 +21,7 @@
 #endif
 #endif
 
-void ISR_ATTR wave2();
+void ISR_ATTR isrCallback();
 
 //ISR Variables
 extern volatile byte isStopped;

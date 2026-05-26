@@ -61,7 +61,7 @@ void bits_to_pulses()
   //
   //
   // This function packs the output levels as 1s and 0s (highs and lows respectively)
-  // into the same format used by the ID15/Direct mode of wave2:
+  // into the same format used by the ID15/Direct mode of isrCallback:
   //
   // 010xxiiibbbbbbbb = 0x4000 + (I<<8) + B
   // |||\/\_/\______/
