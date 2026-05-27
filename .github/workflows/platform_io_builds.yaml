@@ -7,11 +7,15 @@ name: PlatformIO CI
 #     branches: [ "master" ]
 
 # Triggers on all push to all branches EXCEPT docs_site (since that's an orphan branch, for resources and GitHub Pages)
+# Also Triggers on all tags beginning "v*"
+# In combination, the "branches" and "tags" filters behave like OR rules, not AND rules.
 on:
   push:
     branches:
       - "**"
       - "!docs_site"
+    tags:
+      - "v*"
 
 jobs:
   build:
