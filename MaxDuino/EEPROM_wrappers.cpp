@@ -142,6 +142,51 @@
   }
   #endif
 
+#elif defined(__SAMD21__)
+  #define EEPROM_EMULATION_SIZE 1025  // must define before #include
+  #include <FlashStorage_SAMD.h>
+  
+  #if defined(LOAD_EEPROM_LOGO) || defined(RECORD_EEPROM_LOGO)
+  byte EEPROM_logo_bytes[1024];
+  #endif
+
+  void EEPROM_init() {
+    EEPROM.setCommitASAP(false); // to avoid wearing out flash
+  #if defined(LOAD_EEPROM_LOGO) || defined(RECORD_EEPROM_LOGO)
+    for(int i=0; i<1024; i++)
+      EEPROM_logo_bytes[i] =  EEPROM.read(i);
+  #endif
+  }
+
+  void EEPROM_read_configbyte(byte &data) {
+    data = EEPROM.read(EEPROM_CONFIG_BYTEPOS);
+  }
+
+  void EEPROM_write_configbyte(byte data) {
+    EEPROM.write(EEPROM_CONFIG_BYTEPOS, data);
+    EEPROM.commit();
+  }
+
+  #if defined(LOAD_EEPROM_LOGO) || defined(RECORD_EEPROM_LOGO)
+  void EEPROM_write_logo_begin() {
+  }
+
+  void EEPROM_write_logo_end() {
+    for(int i=0; i<1024; i++)
+      EEPROM.write(i, EEPROM_logo_bytes[i]);
+    EEPROM.commit();
+  }
+
+  void EEPROM_read_logo_byte(uint16_t address, byte& data) {
+    data = EEPROM_logo_bytes[address];
+  }
+
+  void EEPROM_write_logo_byte(uint16_t address, byte data) {
+    // all writes buffered here so that we can write a single byte array to emulated eeprom
+    EEPROM_logo_bytes[address] = data;
+  }
+  #endif
+
 #else
   #error "EEPROM support required but no EEPROM library or compatibility layer has been implemented for this target"
 #endif

@@ -10,6 +10,11 @@
 
 #elif defined(OLED1306)
   #define SCREENSIZE 16
+  #if defined(OLED1306_128_64) || defined(video64text32)
+    #define logo_size_bytes 1024
+  #else
+    #define logo_size_byte 512
+  #endif
   void sendcommand(unsigned char com);
   void SendByte(unsigned char data);
   void sendChar(unsigned char data);

@@ -103,8 +103,8 @@
 #define BLOCKID21_IN
 #define BLOCKTAP_IN
 #define OLEDPRINTBLOCK 
-//#define LOAD_EEPROM_SETTINGS
-//#define EEPROM_CONFIG_BYTEPOS  255     // Byte position to save configuration
+#define LOAD_EEPROM_SETTINGS
+#define EEPROM_CONFIG_BYTEPOS  1024     // Byte position to save configuration
 #define OSTATUSLINE
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // EEPROM LOGO. How to move to EEPROM, saving memory:
@@ -117,13 +117,13 @@
 
 //#define COMPRESS_REPEAT_ROW
 //#define EEPROM_LOGO_COMPRESS
-#define LOAD_MEM_LOGO             // Xiao M0 doesn't have eeprom
+#define LOAD_MEM_LOGO   // reprogramming the flash also erases the emulated EEPROM, so LOAD_EEPROM_LOGO is not a useful feature on this device       
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
 //#define LOAD_EEPROM_LOGO 
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO
-#define LOGO_128_64 cablemax
+#define LOGO_128_64 Maxduino2Alf
 #define LOGO_128_32 LOGOMAXDUINO2
 #define LOGO_84_48 LOGOMAXDUINO2
 

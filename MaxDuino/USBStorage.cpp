@@ -51,13 +51,17 @@ void msc_flush_cb (void)
 void usb_detach()
 {
   //usb_msc.detach();
-  USBDevice.detach();
+  if (TinyUSBDevice.mounted()) {
+    USBDevice.detach();
+    delay(500);
+  }
 }
 
 void usb_retach()
 {
   //usb_msc.retach();
   USBDevice.attach();
+  delay(500);
 }
 
 void setup_usb_storage()
@@ -78,8 +82,15 @@ void setup_usb_storage()
   // Set disk size, SD block size is always 512
   usb_msc.setCapacity(sector_count, 512);
 
-  // MSC is ready for read/write
+  // 2. Initialize Serial. Because -DUSE_TINYUSB is set, 
+  // this automatically sets up a CDC interface next to your MSC drive.
+  Serial.begin(115200);
+
+  // 3. switch storage state safely
+  delay(1000);
   usb_msc.setUnitReady(true);
+  usb_detach();
+  usb_retach();
 }
 
 #endif
