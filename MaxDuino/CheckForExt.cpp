@@ -96,7 +96,7 @@ else if (!strcasecmp_P(filenameExt, PSTR("caq"))) {
   }
 #endif
 #ifdef Use_CAS
-  else if (!strcasecmp_P(filenameExt, PSTR("cas"))) {
+  else if (!strcasecmp_P(filenameExt, PSTR("cas")) || !strcasecmp_P(filenameExt, PSTR("c10"))) {
 #ifdef Use_TRS80
     if (trs80cas_detect_and_init()) {
       return;

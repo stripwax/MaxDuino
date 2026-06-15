@@ -116,6 +116,12 @@ There are several additional customizations for .CAS support for DRAGON computer
 
 We support TRS Color Computer .CAS files.  Essentially the same as the Dragon 32 CAS format
 
+## TRS-80 MC-10
+
+### .C10
+
+We support TRS-80 MC-10 .C10 files.  Essentially the same as the COCO/Dragon .CAS format with a different extension.
+
 ## TRS-80 Model 1,2,3 and 4
 
 ### .CAS

@@ -30,6 +30,7 @@ MaxDuino firmware is free and open-source.
 * MSX: .CAS, .TSX, .TZX
 * DRAGON 32/64: .CAS
 * TANDY COLOR COMPUTER: .CAS
+* TANDY TRS-80 MC-10: .C10
 * TRS-80 MODEL 1, 2, 3, and 4: .CAS
 * AMSTRAD CPC: .CDT
 * SHARP MZ (MZ-700, MZ-800): .MZF, .MZT, .M12
