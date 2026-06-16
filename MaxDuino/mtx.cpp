@@ -6,6 +6,7 @@
 #include "MaxDuino.h"
 #include "MaxProcessing.h"
 #include "processing_state.h"
+#include "TimerCounter.h"
 
 // Memotech MTX tape waveform, based on the supplied mtx.c converter.
 // At 44.1 kHz normal mode:

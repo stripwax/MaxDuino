@@ -215,7 +215,7 @@ void pinsetup();
 // values must be chosen to avoid ranges at the extreme top (100%) end.
 // The resistor values and bands chosen here are compatible with ESP devices
 
-#if defined(ESP32) || defined(ESP8266)
+#if defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(ESP8266)
 // ESP ADC is nonlinear, and also not full scale, so the values are different!
 // because not full scale, a 1k:10k voltage divider (i.e. 90%) is undetectable
 // and reads as 1023 still, so resistor values have been altered to create better spacing

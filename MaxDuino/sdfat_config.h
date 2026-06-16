@@ -5,7 +5,7 @@
 
 // default SPI clock speed
 #ifndef SD_SPI_CLOCK_SPEED
-  #if defined(ESP32) || defined(ESP8266)
+  #if defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(ESP8266)
     #ifndef SD_SPI_CLOCK_SPEED
       #define SD_SPI_CLOCK_SPEED SD_SCK_MHZ(4)
     #endif

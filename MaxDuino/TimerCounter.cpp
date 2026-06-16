@@ -38,6 +38,9 @@ void ISR_ATTR TimerCounter::setPeriod(unsigned long microseconds)
 }
 
 #if defined(__arm__) && defined(__STM32F1__)
+
+#define __TIMER_MAXPAUSE_PERIOD 8191
+
 //clase derivada
 class HwTimerCounter:public HardwareTimer
 {
@@ -166,6 +169,8 @@ void TimerCounter::_attachInterrupt()
 
 #elif defined(__AVR_ATmega4809__) || defined(__AVR_ATmega4808__)
 
+#define __TIMER_MAXPAUSE_PERIOD 8191
+
 #define TIMER1_RESOLUTION 65536UL  // Timer1 is 16 bit
 
 void TimerCounter::_initialize() {
@@ -282,6 +287,8 @@ ISR(TCA0_OVF_vect)
 
 #elif defined(__AVR_ATmega328P__) || defined ( __AVR_ATmega2560__) || defined(__AVR_ATmega32U4__)
 
+#define __TIMER_MAXPAUSE_PERIOD 8191
+
 #define TIMER1_RESOLUTION 65536UL  // Timer1 is 16 bit
 
 void TimerCounter::_initialize() {
@@ -335,6 +342,9 @@ ISR(TIMER1_OVF_vect)
 }
 
 #elif defined(__SAMD21__)
+
+#define __TIMER_MAXPAUSE_PERIOD 1000
+
   // The following, including the MyTC3Timer class, is a modified version of SAMDTimer (from SAMD_TimerInterrupt)
   // incorporating significant fixes to period accuracy and reducing instruction count of setInterval function
   // see https://github.com/khoih-prog/SAMD_TimerInterrupt/issues/18
@@ -541,7 +551,9 @@ void TimerCounter::_attachInterrupt()
   interrupts();
 }
 
-#elif defined(ESP32)
+#elif defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3)
+
+#define __TIMER_MAXPAUSE_PERIOD 1000
 
 hw_timer_t * timer = NULL;
 
@@ -572,6 +584,8 @@ void TimerCounter::_attachInterrupt()
 }
 
 #elif defined(ESP8266)
+
+#define __TIMER_MAXPAUSE_PERIOD 1000
 
 void TimerCounter::_initialize()
 {
@@ -606,3 +620,4 @@ void TimerCounter::_attachInterrupt()
 
 static class TimerCounter _TimerInstance;
 class TimerCounter &Timer = _TimerInstance;
+const unsigned long MAXPAUSE_PERIOD = __TIMER_MAXPAUSE_PERIOD;

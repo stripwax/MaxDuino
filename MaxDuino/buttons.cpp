@@ -18,8 +18,8 @@ void setup_buttons(void)
   analogReadResolution(10);
   #endif
 
-  #if defined(ESP32)
-  // ESP32 has additional options for setting ADC range
+  #if defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3)
+  // ESP32-C3 has additional options for setting ADC range
   analogSetAttenuation(ADC_11db);
   analogSetClockDiv(255);
   #endif

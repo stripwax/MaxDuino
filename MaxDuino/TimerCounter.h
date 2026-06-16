@@ -17,5 +17,6 @@ class TimerCounter
     static void ISR_ATTR _setPeriod(unsigned long microseconds);
 };
 extern TimerCounter& Timer;
+extern const unsigned long MAXPAUSE_PERIOD;
 
 #endif // TIMER_H_INCLUDED

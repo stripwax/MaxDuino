@@ -94,7 +94,7 @@
     EEPROM_put(address, data);
   }
 
-#elif defined(ARDUINO_XIAO_ESP32C3)
+#elif defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3)
   #include <Preferences.h>
   Preferences prefs;
   

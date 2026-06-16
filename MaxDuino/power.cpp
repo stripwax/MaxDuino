@@ -115,7 +115,7 @@ void power_off()
 
 // device-specific poweroff actions
 
-#if defined(ESP32)
+#if defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3)
 #include "esp_sleep.h"
 #include "driver/periph_ctrl.h"
 
