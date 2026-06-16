@@ -5,7 +5,6 @@
 #include "Logos.h"
 #include "Display.h"
 #include "i2c.h"
-#include "maxduino_prefs.h"
 #include "current_settings.h"
 #include "EEPROM_wrappers.h"
 

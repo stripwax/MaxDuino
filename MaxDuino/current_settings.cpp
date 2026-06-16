@@ -1,6 +1,5 @@
 #include "configs.h"
 #include "Arduino.h"
-#include "maxduino_prefs.h"
 #include "current_settings.h"
 #include "casProcessing.h"
 #include "EEPROM_wrappers.h"

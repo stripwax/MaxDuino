@@ -71,6 +71,8 @@
 
 #endif
 
+#include "maxduino_prefs.h"
+
 #include "configs_sanity.h"
 
 #endif // CONFIGS_H_INCLUDED

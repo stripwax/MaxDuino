@@ -2,7 +2,6 @@
 #define UEF_H_INCLUDED
 
 #include "configs.h"
-#include "current_settings.h"
 
 #ifdef Use_UEF
 void UEFCarrierToneBlock();
@@ -36,21 +35,37 @@ void tzx_process_taskid_uef_processchunkid();
 #define UEFZEROPULSE             416
 #define UEFONEPULSE              208
 
-#if defined(TURBOBAUD1500)
+#if defined(UEF_TURBOBAUD)
+  #if UEF_TURBOBAUD==1200
+  // same as standard
+  #define UEFTURBOPILOTPULSES           (UEFPILOTPULSES)
+  #define UEFTURBOPILOTLENGTH           (UEFPILOTLENGTH)
+  #define UEFTURBOZEROPULSE             (UEFZEROPULSE)
+  #define UEFTURBOONEPULSE              (UEFONEPULSE)
+  #elif UEF_TURBOBAUD==1500
   #define UEFTURBOPILOTPULSES       outWord<<2
   #define UEFTURBOPILOTLENGTH       156
   #define UEFTURBOZEROPULSE         332
   #define UEFTURBOONEPULSE          166
-#elif defined(TURBOBAUD1550)
+  #elif UEF_TURBOBAUD==1550
   #define UEFTURBOPILOTPULSES       320
   #define UEFTURBOPILOTLENGTH       161
   #define UEFTURBOZEROPULSE         322
   #define UEFTURBOONEPULSE          161
-#elif defined(TURBOBAUD1600)
+  #elif UEF_TURBOBAUD==1600
   #define UEFTURBOPILOTPULSES       320
   #define UEFTURBOPILOTLENGTH       156
   #define UEFTURBOZEROPULSE         313
   #define UEFTURBOONEPULSE          156
+  #else
+  #error Unsupported value of UEF_TURBOBAUD
+  #endif
+#else
+  // no turbo defined so same as 1200
+  #define UEFTURBOPILOTPULSES           (UEFPILOTPULSES)
+  #define UEFTURBOPILOTLENGTH           (UEFPILOTLENGTH)
+  #define UEFTURBOZEROPULSE             (UEFZEROPULSE)
+  #define UEFTURBOONEPULSE              (UEFONEPULSE)
 #endif
 
 #endif

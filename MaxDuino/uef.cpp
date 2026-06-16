@@ -5,7 +5,7 @@
 #include "MaxProcessing.h"
 #include "processing_state.h"
 #include "file_utils.h"
-
+#include "current_settings.h"
 
 #ifdef Use_UEF
 PROGMEM const char UEFFile[9] = {'U','E','F',' ','F','i','l','e','!'};

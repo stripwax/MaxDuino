@@ -30,25 +30,6 @@
         //#define Use_c114                // security cycles replaced with carrier tone
         //#define Use_c116                // floating point gap chunk for .hq.uef
         #define Use_c117                // data encoding format change for 300 bauds
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//         UEF file instructions: UEF files are compressed and can not be executed directly in MAXDUINO,                 //
-/*         for that you have to decompress these files manually.                                                         */
-/*         linux / mac os: gunzip -c game.uef> game.uef.tmp && mv game.uef.tmp game.uef                                  */
-/*         windows os: add .gz to file name, then click to extract with winrar                                           */
-//***********************************************************************************************************************//
-//                                       Set Acorn UEF default speed                                                     //
-#define TURBOBAUD1500                 // default setting, 25% faster than 1200 baudios standard speed
-//#define TURBOBAUD1550
-//#define TURBOBAUD1600
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//** If Use_MENU commented to remove Menu, then vars need setting preference cause no EEPROM for read/write **//
-//** These are also the initial first-time defaults when you haven't saved preferences to EEPROM yet **//
-#define DEFAULT_BAUDRATE 3850
-#define DEFAULT_MSELECTMASK 0   // Motor control state 1=on 0=off
-#define DEFAULT_TSXzxpUEF 0     // Multiple flag: rpolarity needed for zx games: Basil the Great Mouse Detective, 
-                                //            Mask // SpeedControl for .tsx // UEF Switch Parity
-#define DEFAULT_SKIP2A 0        // Pause on for BLK:2A
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*                                   Configure your screen settings here                                                  */

@@ -51,7 +51,8 @@ Fast playback support is enabled via configuration flag: `ORICSPEEDUP`.  This is
 
 ### .UEF
 
-We support many of the .UEF features, but not all are enabled by default (increases firmware size so you may wish to customize your build to choose which options you really need).
+We support many of the .UEF features, but not all are enabled by default for every device type (due to firmware size limitations) - you may wish to customize your build to turn on or off options you care about.
+
 * `Use_c112` - enableds integer gap chunk for .uef
 * `Use_hqUEF` - support `.hq.uef` files playback (see note)
 * `Use_c104` - support defined tape format data block: data bits per packet/parity/stop bits    
@@ -59,7 +60,15 @@ We support many of the .UEF features, but not all are enabled by default (increa
 * `Use_c116` - floating point gap chunk for .hq.uef
 * `Use_c117` - data encoding format change for 300 bauds
         
-We also support a customized default baud rate for .UEF files.  The default is 1200, but you can customize it by setting one of the following configuration flags: `TURBOBAUD1500`, `TURBOBAUD1550`, `TURBOBAUD1600`
+We also support a customized turbo baud rate for .UEF files.  The standard speed is 1200 baud and the default 'turbo' speed is 1500 baud.  To turn on the 'turbo' mode, set the MaxDuino BAUDRATE (in the Menu) to anything other than 1200.  To turn off 'turbo' mode for UEF, set the MaxDuino BAUDRATE back to 1200.  You can customize the 'turbo' speed, at *compile time*, by changing the value of `UEF_TURBOBAUD` in `maxduino_prefs.h` or in your `userconfig.h` file - supported values are 1500, 1550 or 1600.  If `UEF_TURBOBAUD` is set to 1200, or is undefined completely, then .UEF will always play back at 1200 baud and the MaxDuino BAUDRATE setting will have no effect on .UEF playback.
+
+#### Instructions for preparing .UEF files
+
+* UEF files are compressed and can not be executed directly in MAXDUINO
+* You have to decompress these files manually first.
+* For example: on linux / mac os: `gunzip -c game.uef > game.uef.tmp && mv game.uef.tmp game.uef`
+* For example: windows os: add .gz to file name, then click to extract with winrar
+
 
 ## JUPITER ACE
 

@@ -2,7 +2,7 @@
 #define CONFIGS_SANITY_H_INCLUDED
 
 #ifndef CONFIGS_H_INCLUDED
-#error Must include CONFIGS_H before including configs_sanity.CONFIGS_H
+#error Must include configs.h before including configs_sanity.h
 #endif
 
 /* BEGIN SANITY CHECKS FOR INVALID CONFIGURATION */
