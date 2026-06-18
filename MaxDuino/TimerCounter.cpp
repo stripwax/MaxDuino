@@ -614,6 +614,74 @@ void TimerCounter::_attachInterrupt()
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 }
 
+#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
+
+#define __TIMER_MAXPAUSE_PERIOD 1000
+
+#include <hardware/timer.h>
+#include <pico/time.h>
+
+static int rp2040_alarm_num = -1;
+static unsigned long rp2040_current_microseconds = 0;
+static volatile uint64_t rp2040_next_target_us = 0;
+static volatile bool rp2040_in_callback = false;
+
+static void __not_in_flash_func(rp2040_timer_callback)(uint alarm_num)
+{
+  (void)alarm_num;
+  rp2040_in_callback = true;
+  isrCallback();
+
+  // re-arm , using the (newly-set) rp2040_current_microseconds, and the previous rp2040_next_target_us alarm which this isr handled
+  rp2040_current_microseconds = rp2040_current_microseconds ? rp2040_current_microseconds : 1;
+  rp2040_next_target_us += rp2040_current_microseconds;
+  if (rp2040_next_target_us <= get_absolute_time() + 1) {
+    rp2040_next_target_us = get_absolute_time() + rp2040_current_microseconds;
+  }
+
+  hardware_alarm_set_target(
+    rp2040_alarm_num,
+    from_us_since_boot(rp2040_next_target_us)
+  );
+
+  rp2040_in_callback = false;
+}
+
+void TimerCounter::_initialize()
+{
+  if (rp2040_alarm_num < 0) {
+    rp2040_alarm_num = hardware_alarm_claim_unused(true);
+    hardware_alarm_set_callback(rp2040_alarm_num, rp2040_timer_callback);
+  }
+
+  rp2040_next_target_us = 0;
+  rp2040_in_callback = false;
+  hardware_alarm_cancel(rp2040_alarm_num);
+}
+
+void TimerCounter::_setPeriod(unsigned long microseconds)
+{
+  rp2040_current_microseconds = microseconds ? microseconds : 1;
+}
+
+void TimerCounter::stop()
+{
+  hardware_alarm_cancel(rp2040_alarm_num);
+  rp2040_next_target_us = 0;
+  rp2040_in_callback = false;
+}
+
+void TimerCounter::_attachInterrupt()
+{
+  // arm the alarm for the first time; subsequent callbacks will re-arm it
+  rp2040_next_target_us = to_us_since_boot(delayed_by_us(get_absolute_time(), rp2040_current_microseconds));
+  rp2040_in_callback = false;
+  hardware_alarm_set_target(
+    rp2040_alarm_num,
+    from_us_since_boot(rp2040_next_target_us)
+  );
+}
+
 #else
 #error Missing definition of TimerCounter / unsupported device
 #endif

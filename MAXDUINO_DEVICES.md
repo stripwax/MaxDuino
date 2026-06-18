@@ -60,6 +60,7 @@ MaxDuino firmware is itself an open-source project and remains free for everybod
 *  Thinary Nano Every
 *  Arduino Mega32u4
 *  Arduino Mega 2560
+*  Raspberry Pi Pico
 *  Seeeduino Seeed Xiao M0 (SAMD21) (experimental)
 *  Espressif ESP8266 (experimental)
 *  Espressif ESP32C3 (experimental)
@@ -83,7 +84,7 @@ MaxDuino firmware is itself an open-source project and remains free for everybod
 
 *  5 buttons (Up, Down, Left, Play, Pause, Stop)  (See [Note 2](#notes))
   * Most devices support multi-press combinations
-  * Some devices only support one-button-at-a-time due to lack of indepdent GPIOs e.g. ESP32C3, Xiao M0
+  * Some devices only support one-button-at-a-time due to lack of independent GPIO or insufficient pins e.g. Seeed Xiao (ESP32C3, SAMD21)
 *  Power button, aka "soft-off" (for supported devices only e.g. ESP32C3) (See [Note 3](#notes))
 
 ## Prebuilt configurations

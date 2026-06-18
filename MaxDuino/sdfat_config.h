@@ -21,4 +21,10 @@
 #define SDFAT_FILE_TYPE 1
 #endif
 
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
+#define SD_CONFIG SdSpiConfig(chipSelect, SHARED_SPI, SD_SPI_CLOCK_SPEED, &SPI1)
+#else
+#define SD_CONFIG SdSpiConfig(chipSelect, SHARED_SPI, SD_SPI_CLOCK_SPEED)
+#endif
+
 #endif // SDFAT_CONFIG_H_INCLUDED

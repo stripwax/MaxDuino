@@ -2,6 +2,11 @@
 #include "Arduino.h"
 #include "pinSetup.h"
 
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
+#include <SPI.h>
+#include <Wire.h>
+#endif
+
 void pinsetup()
 {
 #ifdef __AVR_ATmega2560__
@@ -183,6 +188,23 @@ void pinsetup()
 
   // BUTTON PIN CONFIGURATION
   // n.a.
+  
+#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
+
+  pinMode(btnPlay, INPUT_PULLUP);
+  pinMode(btnStop, INPUT_PULLUP);
+  pinMode(btnUp, INPUT_PULLUP);
+  pinMode(btnDown, INPUT_PULLUP);
+  pinMode(btnMotor, INPUT_PULLUP);
+  pinMode(btnRoot, INPUT_PULLUP);
+
+  Wire.setSDA(RP2040_I2C_SDA_PIN);
+  Wire.setSCL(RP2040_I2C_SCL_PIN);
+
+  SPI1.setSCK(RP2040_SD_SCK_PIN);
+  SPI1.setTX(RP2040_SD_MOSI_PIN);
+  SPI1.setRX(RP2040_SD_MISO_PIN);
+  SPI1.setCS(chipSelect);
   
 #elif defined(__AVR_ATmega328P__)
   //pinMode(btnPlay,INPUT_PULLUP);  // Not needed, default is INPUT (0)

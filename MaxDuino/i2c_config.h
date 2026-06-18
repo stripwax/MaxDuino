@@ -2,6 +2,7 @@
 #define I2C_CONFIG_H_INCLUDED
 
 #include "constants.h"
+#include "configs.h"
 
 // preferred I2C implementation
 #ifndef I2C_Library_Preference

@@ -53,13 +53,8 @@
 #elif defined(SEEED_XIAO_M0)
   #define outputPin           A0
   #define INIT_OUTPORT            pinMode(outputPin,OUTPUT)
-  //#define INIT_OUTPORT            pinMode(outputPin,OUTPUT); GPIOA->regs->CRH |=  0x00000030  
   #define WRITE_LOW               digitalWrite(outputPin,LOW)
-  //#define WRITE_LOW               GPIOA->regs->ODR &= ~0b0000001000000000
-  //#define WRITE_LOW               gpio_write_bit(GPIOA, 9, LOW)
   #define WRITE_HIGH              digitalWrite(outputPin,HIGH)
-  //#define WRITE_HIGH              GPIOA->regs->ODR |=  0b0000001000000000
-  //#define WRITE_HIGH              gpio_write_bit(GPIOA, 9, HIGH)
 
 #elif defined(ARDUINO_XIAO_ESP32C3)
   #define outputPin         D0
@@ -72,6 +67,12 @@
   #define INIT_OUTPORT            pinMode(outputPin,OUTPUT)
   #define WRITE_LOW               digitalWrite(outputPin,LOW)
   #define WRITE_HIGH              digitalWrite(outputPin,HIGH)
+
+#elif defined(ARDUINO_RASPBERRY_PI_PICO)
+  #define outputPin           9
+  #define INIT_OUTPORT            pinMode(outputPin,OUTPUT_12MA)
+  #define WRITE_LOW               digitalWriteFast(outputPin,LOW)
+  #define WRITE_HIGH              digitalWriteFast(outputPin,HIGH)
 
 #elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__)
   //#define MINIDUINO_AMPLI     // For A.Villena's Miniduino new design . You can define this in platformio.ini
@@ -178,6 +179,24 @@
 #define BUTTON_ADC
 #define btnADC        A0 
 #define btnMotor      2
+
+#elif defined(ARDUINO_RASPBERRY_PI_PICO)
+//
+// Pin definition for Raspberry Pi Pico boards
+//
+  #define btnDown       0
+  #define btnUp         1
+  #define btnStop       2
+  #define btnPlay       3
+  #define btnMotor      6
+  #define btnRoot       7
+
+  #define RP2040_I2C_SDA_PIN 4
+  #define RP2040_I2C_SCL_PIN 5
+  #define RP2040_SD_SCK_PIN 10
+  #define RP2040_SD_MOSI_PIN 11
+  #define RP2040_SD_MISO_PIN 12
+  #define chipSelect 13
 
 #elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__)
   const byte chipSelect = 10;          //Sd card chip select pin

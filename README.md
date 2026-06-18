@@ -42,6 +42,7 @@ MaxDuino firmware is free and open-source.
 * ESP32
 * ESP8266
 * SAMD21
+* Raspberry Pi Pico
 
 More information at [FILE TYPES](./FILE_TYPES.md)
 
@@ -53,6 +54,7 @@ Various MaxDuino and TZXDuino devices have been manufactured over the last 15 ye
 *  Arduino Nano Every
 *  Thinary Nano Every
 *  Arduino Mega 2560
+*  Raspberry Pi Pico
 *  Seeeduino Seeed Xiao M0 (SAMD21) (experimental)
 *  Espressif ESP8266 (experimental)
 *  Espressif ESP32C3 (experimental)

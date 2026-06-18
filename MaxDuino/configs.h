@@ -61,6 +61,11 @@
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_ATMEGA328P
     #endif
     #define CONFIG_PATH userconfig
+  #elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
+    #ifndef CONFIGFILE
+    #define CONFIGFILE _CONFIG_FILE_DEFAULT_RP2040
+    #endif
+    #define CONFIG_PATH userRPI_PICOconfig
   #else
     #if not defined(CONFIGFILE) or not defined(CONFIG_PATH)
     #error Unknown platform for default configs
