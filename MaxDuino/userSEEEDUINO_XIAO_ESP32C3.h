@@ -93,7 +93,7 @@
 #define BLOCKTAP_IN
 #define OLEDPRINTBLOCK 
 #define LOAD_EEPROM_SETTINGS
-//#define EEPROM_CONFIG_BYTEPOS  255     // Byte position to save configuration
+//#define EEPROM_CONFIG_BYTEPOS  255     // Byte position to save configuration  // ESP32C3 uses a different EEPROM mechanism and BYTEPOS is irrelevant
 #define OSTATUSLINE
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // EEPROM LOGO. How to move to EEPROM, saving memory:
@@ -106,7 +106,7 @@
 
 //#define COMPRESS_REPEAT_ROW
 //#define EEPROM_LOGO_COMPRESS
-#define LOAD_MEM_LOGO             // Not yet using EEPROM for ESP32
+#define LOAD_MEM_LOGO             // No point using EEPROM for ESP32C3 logo, since EEPROM is emulated in flash, and flashing new firmware erases EEPROM (and also ESP32C3 has lots of spare flash)
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
 //#define LOAD_EEPROM_LOGO 
 
