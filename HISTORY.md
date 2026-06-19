@@ -14,6 +14,7 @@
 
 # HISTORY NOTES
 
+* V3.06 Adds support for Raspberry Pi Pico boards
 * V3.05 Adds improvements to C64 pause handling, and TRS-80 .CAS support. Incldues a lot of performance optimisations, some fixes for ESP32 and ESP8266, and a temporary new home and name change: https://github.com/stripwax/MaxDuino and "MaxDuiNeo 2026"
 * V3.04 Adds C64 .TAP support, Sharp MZ-700 .MZT + .M12 file extension support, and Memotech .MTX implementation
 * V3.03 (we skipped v3.03 due to a problem with C64 support)
