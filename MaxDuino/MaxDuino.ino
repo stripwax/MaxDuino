@@ -357,12 +357,10 @@ void loop(void) {
           #elif defined(SHOW_STATUS_LCD)        
             lcd.setCursor(0,0);
             lcd.print(BAUDRATE);
-            lcd.print(' ');
-            if(mselectMask) lcd.print(F(" M:ON"));
-            else lcd.print(F("m:off"));
-            lcd.print(' ');
-            if (TSXCONTROLzxpolarityUEFSWITCHPARITY) lcd.print(F(" %^ON"));
-            else lcd.print(F("%^off"));         
+            if(mselectMask) lcd.print(F("  M:ON"));
+            else lcd.print(F(" m:off"));
+            if (TSXCONTROLzxpolarityUEFSWITCHPARITY) lcd.print(F("  %^ON"));
+            else lcd.print(F(" %^off"));         
           #elif defined(SHOW_DIRNAMES)
             str4cpy(input,fileName);
             GetFileName(oldMinFile);
@@ -589,9 +587,9 @@ void loop(void) {
       #ifdef OLED1306
         #ifdef XY2
           if (jblks==BM_BLKSJUMP) {
-            sendStrXY("^",15,0);
+            sendStrXY(PSTR("^"),15,0);
           } else {
-            sendStrXY("\'",15,0);
+            sendStrXY(PSTR("\'"),15,0);
           }
         #else
           setXY(15,0);
@@ -777,7 +775,7 @@ void seekFile() {
 
     entry.getName(fileName,filenameLength);
     filesize = entry.fileSize();
-    if(entry.isDir() || !strcmp(fileName, "ROOT")) { isDir=1; } else { isDir=0; }
+    if(entry.isDir() || !strcmp_P(fileName, PSTR("ROOT"))) { isDir=1; } else { isDir=0; }
     entry.close();
   }
 
@@ -860,7 +858,7 @@ void changeDir() {
     // do nothing because you haven't selected a valid file yet and the directory is empty
     return;
   }
-  else if(!strcmp(fileName, "ROOT"))
+  else if(!strcmp_P(fileName, PSTR("ROOT")))
   {
     subdir=0;    
     changeDirRoot();
@@ -957,13 +955,13 @@ void SetPlayBlock()
         }
       #endif                         
 
-      sendStrXY("BLK:",0,0);
+      sendStrXY(PSTR("BLK:"),0,0);
       sendStrXY((char *)input,4,0);
         
       if (block < 100) {
-        sendStrXY(" ID:", 6,0);
+        sendStrXY(PSTR(" ID:"), 6,0);
       } else {
-        sendStrXY(" ID:", 7,0);
+        sendStrXY(PSTR(" ID:"), 7,0);
       }
           
       input[0]=HEX_CHAR(currentID>>4);
@@ -990,9 +988,9 @@ void SetPlayBlock()
         }
       #endif                           
       setXY(0,0);
-      sendStr("BLK:");
-      sendStr((char *)input);//sendChar(' ');
-      sendStr(" ID:");
+      sendStr(PSTR("BLK:"));
+      sendStr((char *)input);
+      sendStr(PSTR(" ID:"));
 
       input[0]=HEX_CHAR(currentID>>4);
       input[1]=HEX_CHAR(currentID&0x0f);

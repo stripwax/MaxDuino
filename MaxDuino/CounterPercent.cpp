@@ -38,9 +38,7 @@ void lcdTime() {
       else {
         // es 000,1000,2000,...
         lcd.setCursor(13,0);
-        lcd.print('0');
-        lcd.print('0');
-        lcd.print('0');
+        lcd.print(F("000"));
       }
 
       lcdsegs++;
@@ -70,7 +68,7 @@ void lcdTime() {
         }
         else {
           // es 000,1000,2000,...
-          sendStrXY("000",13,0);
+          sendStrXY(F("000"),13,0);
         }
 
         lcdsegs++;

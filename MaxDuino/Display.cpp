@@ -83,6 +83,14 @@ char fline[17];
 
   //==========================================================//
   // Prints a string regardless the cursor position.
+  void sendStr(const __FlashStringHelper *string)
+  {
+    // copy string from flash to ram
+    strncpy_P(fline, (PGM_P)string, 16);
+    fline[17]='\0';
+    sendStr(fline);
+  }
+
   void sendStr(const char *string)
   {
     unsigned char i=0;
@@ -112,6 +120,13 @@ char fline[17];
   //==========================================================//
   // Prints a string in coordinates X Y, being multiples of 8.
   // This means we have 16 COLS (0-15) and 8 ROWS (0-7).
+  void sendStrXY(const __FlashStringHelper *string, byte X, byte Y)
+  {
+    strncpy_P(fline, (PGM_P)string, 16);
+    fline[17]='\0';
+    sendStrXY(fline, X, Y);
+  }
+  
   void sendStrXY(const char *string, byte X, byte Y)
   {
     #ifdef XY
@@ -129,87 +144,45 @@ char fline[17];
     #endif
   
     #if defined(XY2) && not defined(DoubleFont)
-      byte Xh=X, Xl=X;
-      const char *stringL=string, *stringH=string;
+      const char *stringL=string;
+      byte nib, dbl;
 
-      setXY(Xl,Y);
+      setXY(X,Y);
       while(*stringL) {
         mx_i2c_start(OLED_address);
         mx_i2c_write(0x40);
 
         for(byte i=0;i<8;i++){
-          byte ril=(pgm_read_byte(myFont[*stringL-0x20]+i));
-          //byte il=(pgm_read_byte(&DFONT[ril & 0x0F]));
-      //    byte il=DFONT[ril %16];
-          byte il=pgm_read_byte(DFONT+(ril %16));
- /*
-          for(byte ib=0;ib<4;ib++){
-            if (bitRead (ril,ib)){
-              il |= (1 << ib*2);
-              il |= (1 << (ib*2)+1);
-            }
-          }
-*/
-/*
-          if (bitRead(ril,0)) il|= 1+2;
-          if (bitRead(ril,1)) il|= 4+8;
-          if (bitRead(ril,2)) il|= 16+32;
-          if (bitRead(ril,3)) il|= 64+128;
-*/
-
-          //mx_i2c_start(OLED_address);
-          //mx_i2c_write(0x40);
-          mx_i2c_write(il);
-          //mx_i2c_end();
+          nib=(pgm_read_byte(myFont[*stringL-0x20]+i)) & 0x0F;
+          dbl=pgm_read_byte(DFONT+nib);
+          mx_i2c_write(dbl);
         }
 
         mx_i2c_end();
-        Xl++;    
         stringL++;
       }
     
-      setXY(Xh,Y+1);
-      while(*stringH){      
+      setXY(X,Y+1);
+      while(*string){      
         mx_i2c_start(OLED_address);
         mx_i2c_write(0x40);           
         
         for(byte i=0;i<8;i++){
-          byte rih=(pgm_read_byte(myFont[*stringH-0x20]+i));
-          //byte ih=(pgm_read_byte(&DFONT[rih >>4]));
-       //   byte ih=DFONT[rih / 16];
-          byte ih=pgm_read_byte(DFONT+(rih / 16));       
-/*
-          for(byte ic=4;ic<8;ic++){
-            if (bitRead (rih,ic)) {
-              ih |= (1 << (ic-4)*2);
-              ih |= (1 << ((ic-4)*2)+1);
-            }   
-          }
-*/
-/*
-          if (bitRead(rih,4)) ih|= 1+2;
-          if (bitRead(rih,5)) ih|= 4+8;
-          if (bitRead(rih,6)) ih|= 16+32;
-          if (bitRead(rih,7)) ih|= 64+128;
-*/
-          //mx_i2c_start(OLED_address);
-          //mx_i2c_write(0x40);  
-          mx_i2c_write(ih);
-          //mx_i2c_end();          
+          nib=(pgm_read_byte(myFont[*string-0x20]+i))/16;
+          dbl=pgm_read_byte(DFONT+nib);
+          mx_i2c_write(dbl);
         }
 
         mx_i2c_end();
-        Xh++;    
-        stringH++;
+        string++;
       }
     
     #endif // defined(XY2) && not defined(DoubleFont)
 
   #if defined(XY2) && defined(DoubleFont)
-    byte Xh=X, Xl=X;
-    const char *stringL=string, *stringH=string;
+    const char *stringL=string;
   
-    setXY(Xl,Y);
+    setXY(X,Y);
     while(*stringL) {
       mx_i2c_start(OLED_address);
       mx_i2c_write(0x40); 
@@ -219,21 +192,19 @@ char fline[17];
         mx_i2c_write(ril);
       }
       mx_i2c_end();
-      Xl++;    
       stringL++;
     }
   
-    setXY (Xh,Y+1);
-    while(*stringH) {
+    setXY (X,Y+1);
+    while(*string) {
       mx_i2c_start(OLED_address);
       mx_i2c_write(0x40); 
       for(byte i=0;i<8;i++){
-        byte rih=(pgm_read_byte(myFont[*stringH-0x20]+i+8));
+        byte rih=(pgm_read_byte(myFont[*string-0x20]+i+8));
         mx_i2c_write(rih);
       }
       mx_i2c_end();
-      Xh++;    
-      stringH++;
+      string++;
     }
   
     #endif // defined(XY2) && defined(DoubleFont)
@@ -614,8 +585,7 @@ void printtext2F(const char* text, byte l) {  //Print text to screen.
 
   #ifdef OLED1306
     #ifdef XY2
-      strncpy_P(fline, text, 16);
-      sendStrXY(fline,0,l);
+      sendStrXY(text,0,l);
     #endif
      
     #ifdef XY 
@@ -761,7 +731,7 @@ void printtext(char* text, byte l) {  //Print text to screen.
 void OledStatusLine() {
   #ifdef XY
     setXY(4,2);
-    sendStr("ID:   BLK:");
+    sendStr(F("ID:   BLK:"));
     #ifdef OLED1306_128_64
       setXY(0,7);
       ultoa(BAUDRATE,fline,10);
@@ -770,17 +740,17 @@ void OledStatusLine() {
       #ifndef NO_MOTOR       
         setXY(5,7);
         if(mselectMask) {
-          sendStr(" M:ON");
+          sendStr(F(" M:ON"));
         } else {
-          sendStr("m:off");
+          sendStr(F("m:off"));
         }
       #endif    
 
       setXY(11,7); 
       if (TSXCONTROLzxpolarityUEFSWITCHPARITY) {
-        sendStr(" %^ON");
+        sendStr(F(" %^ON"));
       } else {
-        sendStr("%^off");
+        sendStr(F("%^off"));
       }
 
     #else // OLED1306_128_64 not defined
@@ -791,36 +761,36 @@ void OledStatusLine() {
       #ifndef NO_MOTOR        
         setXY(5,3);
         if(mselectMask) {
-          sendStr(" M:ON");
+          sendStr(F(" M:ON"));
         } else {
-          sendStr("m:off");
+          sendStr(F("m:off"));
         }
       #endif    
       setXY(11,3); 
       if (TSXCONTROLzxpolarityUEFSWITCHPARITY) {
-        sendStr(" %^ON");
+        sendStr(F(" %^ON"));
       } else {
-        sendStr("%^off");
+        sendStr(F("%^off"));
       }
     #endif
   #endif
   
   #ifdef XY2                        // Y with double value
     #ifdef OLED1306_128_64          // 8 rows supported
-      sendStrXY("ID:   BLK:",4,4);        
+      sendStrXY(F("ID:   BLK:"),4,4);        
       ultoa(BAUDRATE,fline,10);
       sendStrXY(fline,0,6);
       #ifndef NO_MOTOR       
         if(mselectMask) {
-          sendStrXY(" M:ON",5,6);
+          sendStrXY(F(" M:ON"),5,6);
         } else {
-          sendStrXY("m:off",5,6);
+          sendStrXY(F("m:off"),5,6);
         }
       #endif      
       if (TSXCONTROLzxpolarityUEFSWITCHPARITY) {
-        sendStrXY(" %^ON",11,6);
+        sendStrXY(F(" %^ON"),11,6);
       } else {
-        sendStrXY("%^off",11,6);
+        sendStrXY(F("%^off"),11,6);
       }
     #endif      
   #endif  

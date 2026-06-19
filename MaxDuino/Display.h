@@ -14,7 +14,9 @@
   void SendByte(unsigned char data);
   void sendChar(unsigned char data);
   void setXY(unsigned char col, unsigned char row);
+  void sendStr(const __FlashStringHelper *string);
   void sendStr(const char *string);
+  void sendStrXY(const __FlashStringHelper *string, byte X, byte Y);
   void sendStrXY(const char *string, byte X, byte Y);
   void reset_display(void);
   void displayOn(void);
