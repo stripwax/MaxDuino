@@ -100,7 +100,7 @@ void menuMode()
   {
     if(updateScreen) {
       printtextF(PSTR("Menu"),0);
-      printtextF((char *)(pgm_read_ptr(&(MENU_ITEMS[menuItem]))), M_LINE2);
+      printtextF((const char *)(pgm_read_ptr(&(MENU_ITEMS[menuItem]))), M_LINE2);
       updateScreen=false;
     }
     if(button_down() && !lastbtn){
@@ -114,7 +114,7 @@ void menuMode()
       updateScreen=true;
     }
     if(button_play() && !lastbtn) {
-      printtextF((char *)(pgm_read_ptr(&(MENU_ITEMS[menuItem]))), 0);
+      printtextF((const char *)(pgm_read_ptr(&(MENU_ITEMS[menuItem]))), 0);
       switch(menuItem){
         case MenuItems::VERSION:
           printtextF(P_VERSION, M_LINE2);

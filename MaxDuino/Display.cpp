@@ -585,7 +585,7 @@ void printtext2F(const char* text, byte l) {  //Print text to screen.
 
   #ifdef OLED1306
     #ifdef XY2
-      sendStrXY(text,0,l);
+      sendStrXY(reinterpret_cast<const __FlashStringHelper *> (text),0,l);
     #endif
      
     #ifdef XY 
