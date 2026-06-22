@@ -62,8 +62,8 @@
 #define XY2force                    // Use with care: delay interrupts and crash with other options, needs I2CFAST
 
 // disable these both due to noise on ESP8266:
-// #define SHOW_CNTR
-// #define SHOW_PCT
+#define SHOW_CNTR
+#define SHOW_PCT
 
 #define CNTRBASE 100                // 100 for sss, 60 for m:ss (sorry, no space for separator)
 //#define ONPAUSE_POLCHG
