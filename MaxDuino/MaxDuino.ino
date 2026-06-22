@@ -52,6 +52,9 @@
 #include "power.h"
 #include "EEPROM_wrappers.h"
 
+const char TXT_PAUSED[] PROGMEM =  "Paused  ";
+const char TXT_PLAYING[] PROGMEM = "Playing ";
+
 SdFat sd;                           //Initialise Sd card 
 SdBaseFile _tmpdirs[2]; // internal file pointers.  (*currentDir points to either _tmpdirs[0] or _tmpdirs[1] and the other is 'scratch')
 SdBaseFile *currentDir = &_tmpdirs[0];  // SD card directory
@@ -303,11 +306,11 @@ void loop(void) {
       } else {
         //If a file is playing, pause or unpause the file                  
         if (!pauseOn) {
-          printtext2F(PSTR("Paused  "),0);
+          printtext2F(TXT_PAUSED,0);
           jblks =1; 
           firstBlockPause = true;
         } else  {
-          printtext2F(PSTR("Playing      "),0);
+          printtext2F(TXT_PLAYING,0);
           currpct=100;
           firstBlockPause = false;      
         }
@@ -678,11 +681,11 @@ void loop(void) {
       //if file is playing and motor control is on then handle current motor state
       //Motor control works by pulling the btnMotor pin to ground to play, and NC to stop
       if(motorState==1 && !pauseOn) {
-        printtext2F(PSTR("PAUSED  "),0);
+        printtext2F(TXT_PAUSED,0);
         pauseOn = true;
       } 
       if(motorState==0 && pauseOn) {
-        printtext2F(PSTR("PLAYing "),0);
+        printtext2F(TXT_PLAYING,0);
         pauseOn = false;
       }
       scrollText(fileName, isDir, 0);
@@ -820,7 +823,7 @@ void playFile() {
   }
   else if (!dirEmpty) 
   {
-    printtextF(PSTR("Playing"),0);
+    printtextF(TXT_PLAYING,0);
     pauseOn = false;
     scrollText(fileName, isDir, 0);
     currpct=100;
