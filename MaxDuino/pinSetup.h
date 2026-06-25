@@ -74,6 +74,12 @@
   #define WRITE_LOW               digitalWriteFast(outputPin,LOW)
   #define WRITE_HIGH              digitalWriteFast(outputPin,HIGH)
 
+#elif defined(WEMOS_D1_MINI32)
+  #define outputPin         26 // D0
+  #define INIT_OUTPORT      pinMode(outputPin,OUTPUT)
+  #define WRITE_LOW         GPIO.out_w1tc = (1UL << outputPin)
+  #define WRITE_HIGH        GPIO.out_w1ts = (1UL << outputPin)
+
 #elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__)
   //#define MINIDUINO_AMPLI     // For A.Villena's Miniduino new design . You can define this in platformio.ini
   #define outputPin           9
@@ -180,6 +186,15 @@
 #define btnADC        A0 
 #define btnMotor      2
 
+#elif defined(WEMOS_D1_MINI32)
+//
+// Pin definition for Wemos D1 Mini32 (ESP32) boards
+//
+#define chipSelect    SS
+#define BUTTON_ADC
+#define btnADC        A0
+#define btnMotor      D4
+
 #elif defined(ARDUINO_RASPBERRY_PI_PICO)
 //
 // Pin definition for Raspberry Pi Pico boards
@@ -234,7 +249,16 @@ void pinsetup();
 // values must be chosen to avoid ranges at the extreme top (100%) end.
 // The resistor values and bands chosen here are compatible with ESP devices
 
-#if defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(ESP8266)
+#if defined(ESP32_XTENSA)
+// ESP ADC is nonlinear, and also not full scale, so the values are different
+// For ESP32 (XTENSA-based e.g. ESP32-WROOM) we ask the Espressif framework to return
+// calibrated ADC values in millivolts. Range is therefore 0-3200
+#define btnADCPlayLow 3100
+#define btnADCStopLow 2750
+#define btnADCRootLow 2000
+#define btnADCDownLow 1400
+#define btnADCUpLow 700
+#elif defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(ESP8266)
 // ESP ADC is nonlinear, and also not full scale, so the values are different!
 // because not full scale, a 1k:10k voltage divider (i.e. 90%) is undetectable
 // and reads as 1023 still, so resistor values have been altered to create better spacing

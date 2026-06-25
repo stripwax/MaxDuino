@@ -10,6 +10,7 @@ MaxDuino firmware is free and open-source.
 
 ## LATEST NEWS
 
+* V3.07 Adds support for ESP32-WROOM boards (D1 Mini32)
 * V3.06 Adds support for Raspberry Pi Pico boards
 * V3.05 Adds improvements to C64 pause handling, and TRS-80 .CAS support. Includes a lot of performance optimisations, some fixes for ESP32 and ESP8266, and a temporary new home and name change: https://github.com/stripwax/MaxDuino and "MaxDuiNeo 2026"
 * V3.04 Adds C64 .TAP support, Sharp MZ-700 .MZT + .M12 file extension support, and Memotech .MTX implementation
@@ -56,8 +57,9 @@ Various MaxDuino and TZXDuino devices have been manufactured over the last 15 ye
 *  Thinary Nano Every
 *  Arduino Mega 2560
 *  Raspberry Pi Pico
+*  Espressif ESP8266
+*  Espressif ESP32-WROOM
 *  Seeeduino Seeed Xiao M0 (SAMD21) (experimental)
-*  Espressif ESP8266 (experimental)
 *  Espressif ESP32C3 (experimental)
 *  STMicroelectonics STM32 (experimental, needs testing)
 *  .. and others

@@ -61,9 +61,10 @@ MaxDuino firmware is itself an open-source project and remains free for everybod
 *  Arduino Mega32u4
 *  Arduino Mega 2560
 *  Raspberry Pi Pico
+*  Espressif ESP32-WROOM (e.g. "D1 Mini32")
+*  Espressif ESP8266 (e.g. "Wemos D1 Mini")
 *  Seeeduino Seeed Xiao M0 (SAMD21) (experimental)
-*  Espressif ESP8266 (experimental)
-*  Espressif ESP32C3 (experimental)
+*  Espressif ESP32C3 (experimental) (SEEED XIAO ESP32-C3)
 *  STMicroelectonics STM32 (experimental, needs testing)
 
 ## LCD type

@@ -1,9 +1,26 @@
 // includes the corresponding user config.h file based on target platform
 
+// The configs are used for multiple things and there is currently overlap:
+//  * whether EEPROM logo is supported by target hardware or not;
+//  * what prefernces you might have for EEPROM logo and fonts, etc
+//  * what hardware capabilities are supported by a standard circuit using this board (e.g. is there a motor output)
+//  * which different file types can all be enabled simultaneously and still fit into firmware
+//  * how much RAM can be devoted to the various buffer
+
+// Some of these are related to the specific MCU, some related to the board that uses a certain MCU
+// (e.g. Seeed form-factor has fewer available GPIOs), some related to the overall MaxDuino device circuit
+// using the board (e.g. what specific components like OLED or LCD16x2), some related to just personal
+// preferences.
+
+// As a result, there's a lot of copy+pasting across all the config files which is not good practice
+// My hope is to improve MaxDuino to separate more cleanly to simplify these distinct kinds
+// of 'configuration'
+
 #ifndef CONFIGS_H_INCLUDED
 #define CONFIGS_H_INCLUDED
 
 #include "defines_config.h"
+#include "defines_board_arch.h"
 
 // IF YOU REALLY WANT TO DEFINE YOUR CONFIG VERSION IN THIS HEADER FILE,
 // YOU CAN, BY UNCOMMENTING AND CHANGING THE FOLLOWING LINE
@@ -40,7 +57,7 @@
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_XIAO_M0
     #endif
     #define CONFIG_PATH userSEEEDUINO_XIAO_M0config
-  #elif defined(ARDUINO_XIAO_ESP32C3)
+  #elif defined(ESP32_RISCV)
     #ifndef CONFIGFILE
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_XIAO_ESP32C3
     #endif
@@ -66,6 +83,11 @@
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_RP2040
     #endif
     #define CONFIG_PATH userRPI_PICOconfig
+  #elif defined(ESP32_XTENSA)
+    #ifndef CONFIGFILE
+    #define CONFIGFILE _CONFIG_FILE_DEFAULT_D1_MINI32
+    #endif
+    #define CONFIG_PATH userD1_MINI32config
   #else
     #if not defined(CONFIGFILE) or not defined(CONFIG_PATH)
     #error Unknown platform for default configs

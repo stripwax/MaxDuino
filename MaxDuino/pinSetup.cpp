@@ -189,6 +189,11 @@ void pinsetup()
   // BUTTON PIN CONFIGURATION
   // n.a.
   
+#elif defined(ESP32_XTENSA)
+
+  pinMode(btnMotor, INPUT_PULLUP);
+  digitalWrite(btnMotor, HIGH);
+
 #elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
 
   pinMode(btnPlay, INPUT_PULLUP);
