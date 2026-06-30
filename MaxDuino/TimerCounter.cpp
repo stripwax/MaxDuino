@@ -399,19 +399,6 @@ void TimerCounter::_setPeriod(unsigned long microseconds)
 {
   TcCount16* _Timer = SAMD_TC3;
 
-  // adjust microseconds if out of bounds:
-  unsigned long clampedCurrentMicroseconds = currentMicroseconds;
-  // 1. impose some kind of minimum cycle time, to avoid deadlock
-  if (microseconds < 20) microseconds = 20;
-  if (currentMicroseconds < 20) clampedCurrentMicroseconds = 20;
-  // 2. avoid wraparound for periods longer than the maximum permitted with the widest prescaler
-  if (microseconds > 1398080) microseconds = 1398080;
-  if (currentMicroseconds > 1398080) clampedCurrentMicroseconds = 1398080;
-  // if the adjusted microseconds matches what we previously configured
-  // then again nothing to do, timer will repeat as planned
-  if (clampedCurrentMicroseconds == microseconds)
-    return;
-
   // otherwise, set new timer registers
   bool ctrla_enabled = _Timer->CTRLA.reg & TC_CTRLA_ENABLE;
   
@@ -538,7 +525,7 @@ void TimerCounter::_attachInterrupt()
   // disable the timer (this might not be necessary)
   _Timer->CTRLA.reg &= ~TC_CTRLA_ENABLE;
   while (_Timer->STATUS.bit.SYNCBUSY);
-  
+
   // Enable the compare interrupt
   SAMD_TC3->INTENSET.reg = 0;
   SAMD_TC3->INTENSET.bit.MC0 = 1;
