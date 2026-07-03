@@ -87,7 +87,7 @@ char fline[17];
   {
     // copy string from flash to ram
     strncpy_P(fline, (PGM_P)string, 16);
-    fline[17]='\0';
+    fline[16]='\0';
     sendStr(fline);
   }
 
@@ -123,7 +123,7 @@ char fline[17];
   void sendStrXY(const __FlashStringHelper *string, byte X, byte Y)
   {
     strncpy_P(fline, (PGM_P)string, 16);
-    fline[17]='\0';
+    fline[16]='\0';
     sendStrXY(fline, X, Y);
   }
   
