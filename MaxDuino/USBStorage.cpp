@@ -26,26 +26,26 @@ Adafruit_USBD_MSC usb_msc;
 // Callback invoked when received READ10 command.
 // Copy disk's data to buffer (up to bufsize) and
 // return number of copied bytes (must be multiple of block size)
-int32_t msc_read_cb (uint32_t lba, void* buffer, uint32_t bufsize)
-{
-  (void) bufsize;
-  return sd.card()->readSector(lba, (uint8_t*) buffer) ? 512 : -1;
+int32_t msc_read_cb(uint32_t lba, void* buffer, uint32_t bufsize) {
+  // Calculate how many blocks the OS is requesting (usually 512, 1024, or 2048)
+  uint32_t block_count = bufsize / 512;
+
+  return sd.card()->readSectors(lba, (uint8_t*)buffer, block_count) ? (int32_t)bufsize : -1;
 }
 
 // Callback invoked when received WRITE10 command.
 // Process data in buffer to disk's storage and 
 // return number of written bytes (must be multiple of block size)
-int32_t msc_write_cb (uint32_t lba, uint8_t* buffer, uint32_t bufsize)
-{
-  (void) bufsize;
-  return sd.card()->writeSector(lba, buffer) ? 512 : -1;
+int32_t msc_write_cb(uint32_t lba, uint8_t* buffer, uint32_t bufsize) {
+  uint32_t block_count = bufsize / 512;
+
+  return sd.card()->writeSectors(lba, (uint8_t*)buffer, block_count) ? (int32_t)bufsize : -1;
 }
 
 // Callback invoked when WRITE10 command is completed (status received and accepted by host).
 // used to flush any pending cache.
-void msc_flush_cb (void)
-{
-  // nothing to do
+void msc_flush_cb(void) {
+  sd.card()->syncDevice();
 }
 
 void usb_detach()
