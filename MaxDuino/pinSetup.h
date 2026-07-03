@@ -162,10 +162,17 @@
 // Pin definition for Seeeduino Xiao M0 boards
 //
 
-#define chipSelect    12            //Sd card chip select pin - map to LED (on assumption that SD CS is actually just tied directly to GND)
-#define BUTTON_ADC
-#define btnADC        A2 // analog input pin for ADC buttons
-#define NO_MOTOR    // because no spare gpio
+#if defined(RICKY_TEST_BOARD)
+  #define chipSelect    D6
+  #define BUTTON_ADC
+  #define btnADC        A3
+  #define btnMotor      A1
+#else
+  #define chipSelect    12            //Sd card chip select pin - map to LED (on assumption that SD CS is actually just tied directly to GND)
+  #define BUTTON_ADC
+  #define btnADC        A2 // analog input pin for ADC buttons
+  #define NO_MOTOR    // because no spare gpio
+#endif
 
 #elif defined(ARDUINO_XIAO_ESP32C3)
 //
@@ -268,11 +275,20 @@ void pinsetup();
 #define btnADCDownLow 500 // 10k ohm reading around 590
 #define btnADCUpLow 200 // 20k ohm reading around 390
 #else
-#define btnADCPlayLow 950 // 0 ohm reading around 1000, ideally 1023
-#define btnADCStopLow 800 // 2.2k ohm reading around 840
-#define btnADCRootLow 600 // 4.7k ohm reading around 695
-#define btnADCDownLow 420 // 10k ohm reading around 510
-#define btnADCUpLow 200 // 20k ohm reading around 340
+  #if defined(RICKY_TEST_BOARD)
+  #define btnADCPlayLow 830
+  #define btnADCStopLow 750
+  #define btnADCRootLow 650
+  #define btnADCDownLow 400
+  #define btnADCUpLow 240
+  #define btnADCRecLow 100
+  #else
+  #define btnADCPlayLow 950 // 0 ohm reading around 1000, ideally 1023
+  #define btnADCStopLow 800 // 2.2k ohm reading around 840
+  #define btnADCRootLow 600 // 4.7k ohm reading around 695
+  #define btnADCDownLow 420 // 10k ohm reading around 510
+  #define btnADCUpLow 200 // 20k ohm reading around 340
+  #endif
 #endif
 
 #endif // BUTTON_ADC
