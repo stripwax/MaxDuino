@@ -179,10 +179,17 @@
 // Pin definition for Seeeduino Xiao ESP32C3 boards
 //
 
-#define chipSelect    D7
-#define BUTTON_ADC
-#define btnADC        A2 // analog input pin for ADC buttons // CHANGED!!!
-#define NO_MOTOR    // because no spare gpio
+#if defined(RICKY_TEST_BOARD)
+  #define chipSelect    D6
+  #define BUTTON_ADC
+  #define btnADC        A3
+  #define btnMotor      A1
+#else
+  #define chipSelect    D7
+  #define BUTTON_ADC
+  #define btnADC        A2 // analog input pin for ADC buttons // CHANGED!!!
+  #define NO_MOTOR    // because no spare gpio
+#endif
 
 #elif defined(ARDUINO_ESP8266_WEMOS_D1MINI)
 //
@@ -251,36 +258,76 @@ void pinsetup();
 
 // For a 10-bit ADC, each button is calibrated to the band between this value and the next value above
 // (or 1023 for upper limit).
+// For ESP32 (both XTENSA-based e.g. ESP32-WROOM and RISC-V based e.g. ESP32-C3) we ask the Espressif
+// framework to return calibrated ADC values in millivolts. Range is therefore 0-3200
 // The bands are intentionally set very wide, and far apart
 // However note that ESP ADC is nonlinear and not full-scale, so the resistor
 // values must be chosen to avoid ranges at the extreme top (100%) end.
-// The resistor values and bands chosen here are compatible with ESP devices
+// The resistor values above are compatible with ESP devices
 
-#if defined(ESP32_XTENSA)
-// ESP ADC is nonlinear, and also not full scale, so the values are different
-// For ESP32 (XTENSA-based e.g. ESP32-WROOM) we ask the Espressif framework to return
-// calibrated ADC values in millivolts. Range is therefore 0-3200
-#define btnADCPlayLow 3100
-#define btnADCStopLow 2750
-#define btnADCRootLow 2000
-#define btnADCDownLow 1400
-#define btnADCUpLow 700
-#elif defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(ESP8266)
+// Taking measurements with D1Mini32 vs ESP8266 in the original board:
+// (Note: D1Mini32 values shown here are the calibrated mv ; ESP8266 are the raw ADC as the api doesn't return mv)
+//            | D1_MINI32 | D1_ESP8266 |
+// no button: |   142     |     12     |
+// Play:      |   3139    |    1024    |
+// Stop:      |   3035    |    986     |
+// Root:      |   2680    |    875     |
+// Down:      |   1670    |    543     |
+// Up:        |   1114    |    364     |
+// Rec:       |   n/a     |    n/a     |
+
+// Taking measurements with different devices in the ricky test board:
+// (Note: D1Mini32 and ESP32C3 values shown here are the calibrated mv
+// ESP8266 and SAMD21 are the raw ADC as the api doesn't return mv)
+//            | D1_MINI32 | ESP32C3 | D1_ESP8266 |  SAMD21  |
+// no button: |   142     |    0    |     12     |     4    |
+// Play:      |   2740    |  2667   |    895     |   848    |
+// Stop:      |   2490    |  2412   |    813     |   770    |
+// Root:      |   2190    |  2131   |    718     |   680    |
+// Down:      |   1370    |  1330   |    450     |   420    |
+// Up:        |   900     |  875    |    300     |   280    |
+// Rec:       |   450     |  433    |    153     |   140    |
+
+#if defined(ESP32_XTENSA) || defined(ESP32_RISCV)
+  #if defined(RICKY_TEST_BOARD)
+    #define btnADCPlayLow 2600
+    #define btnADCStopLow 2300
+    #define btnADCRootLow 1900
+    #define btnADCDownLow 1200
+    #define btnADCUpLow 700
+    #define btnADCRecLow 350
+  #else
+    #define btnADCPlayLow 3100
+    #define btnADCStopLow 2750
+    #define btnADCRootLow 2000
+    #define btnADCDownLow 1400
+    #define btnADCUpLow 700
+  #endif
+#elif defined(ESP8266)
 // ESP ADC is nonlinear, and also not full scale, so the values are different!
 // because not full scale, a 1k:10k voltage divider (i.e. 90%) is undetectable
 // and reads as 1023 still, so resistor values have been altered to create better spacing
-#define btnADCPlayLow 1020 // 0 ohm reading 1023 due to saturation
-#define btnADCStopLow 900 // 2.2k ohm reading around 960
-#define btnADCRootLow 700 // 4.7k ohm reading around 800
-#define btnADCDownLow 500 // 10k ohm reading around 590
-#define btnADCUpLow 200 // 20k ohm reading around 390
+  #if defined(RICKY_TEST_BOARD)
+    #define btnADCPlayLow 850
+    #define btnADCStopLow 750
+    #define btnADCRootLow 600
+    #define btnADCDownLow 375
+    #define btnADCUpLow 225
+    #define btnADCRecLow 90
+  #else
+    #define btnADCPlayLow 1020 // 0 ohm reading 1023 due to saturation
+    #define btnADCStopLow 900 // 2.2k ohm reading around 960
+    #define btnADCRootLow 700 // 4.7k ohm reading around 800
+    #define btnADCDownLow 460 // 10k ohm reading around 590
+    #define btnADCUpLow 200 // 20k ohm reading around 390
+  #endif
 #else
   #if defined(RICKY_TEST_BOARD)
-  #define btnADCPlayLow 830
-  #define btnADCStopLow 750
-  #define btnADCRootLow 650
-  #define btnADCDownLow 400
-  #define btnADCUpLow 240
+  #define btnADCPlayLow 800
+  #define btnADCStopLow 730
+  #define btnADCRootLow 500
+  #define btnADCDownLow 350
+  #define btnADCUpLow 220
   #define btnADCRecLow 100
   #else
   #define btnADCPlayLow 950 // 0 ohm reading around 1000, ideally 1023

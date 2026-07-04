@@ -30,11 +30,18 @@ void adcTaskCore0(void * parameter)
       latest_voltage_mv = esp_adc_cal_raw_to_voltage(raw_reading, &adc_chars);
       // Delay to allow Core 0 to handle other tasks (avoid watchdog crashes)
       vTaskDelay(pdMS_TO_TICKS(10)); 
+      #if defined(DEBUG_ADC)
+      Serial.println(latest_voltage_mv);
+      #endif
   }
 }
 
 void setup_buttons(void)
 {
+  #if defined(DEBUG_ADC)
+  Serial.begin(9600);
+  #endif
+
   // Execute the ADC reads on the other core, to avoid interrupting the TimerCounter
   // Create the task, pin it to Core 0, and allocate a stack size
   xTaskCreatePinnedToCore(
@@ -67,14 +74,27 @@ void setup_buttons(void)
 
   #if defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3)
   // ESP32-C3 has additional options for setting ADC range
+  analogReadResolution(12);
   analogSetAttenuation(ADC_11db);
   analogSetClockDiv(255);
+  #endif
+
+  #if defined(DEBUG_ADC)
+  Serial.begin(9600);
   #endif
 }
 
 static int readButtonADC()
 {
-  return analogRead(btnADC);
+  #if defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3)
+  int adc_value = analogReadMilliVolts(btnADC);
+  #else
+  int adc_value = analogRead(btnADC);
+  #endif
+  #if defined(DEBUG_ADC)
+  Serial.println(adc_value);
+  #endif
+  return adc_value;
 }
 #endif
 

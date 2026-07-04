@@ -550,7 +550,11 @@ void TimerCounter::_initialize()
   {
     // count microseconds - so divide CPU freq in Hz by 1e6
     timer = timerBegin(0, getApbFrequency() / 1000000, true);
+    #if defined(ESP32_XTENSA)
     timerAttachInterruptFlag(timer, &isrCallback, true, ARDUINO_ISR_FLAG);
+    #else
+    timerAttachInterrupt(timer, &isrCallback, true);
+    #endif
   }
 }
 
