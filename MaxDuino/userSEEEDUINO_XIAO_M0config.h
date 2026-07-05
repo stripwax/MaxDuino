@@ -13,8 +13,9 @@
 #define AYPLAY
 #define MenuBLK2A
 #define ID11CDTspeedup
-//#define Use_Rec  for atmega 4808/4809
 #define ZX81SPEEDUP
+#define Use_c64
+//#define Use_Rec  for atmega 4808/4809
 #define Use_MZF
 #define Use_MTX
 #define Use_CAQ
@@ -103,7 +104,7 @@
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO
-#define LOGO_128_64 cablemax
+#define LOGO_128_64 Maxduino2Alf
 #define LOGO_128_32 LOGOMAXDUINO2
 #define LOGO_84_48 LOGOMAXDUINO2
 

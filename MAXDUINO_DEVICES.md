@@ -55,17 +55,20 @@ MaxDuino firmware is itself an open-source project and remains free for everybod
 
 ## Microcontroller type
 
-*  Arduino Nano 328p
-*  Arduino Nano Every
-*  Thinary Nano Every
-*  Arduino Mega32u4
-*  Arduino Mega 2560
-*  Raspberry Pi Pico
-*  Espressif ESP32-WROOM (e.g. "D1 Mini32")
-*  Espressif ESP8266 (e.g. "Wemos D1 Mini")
-*  Seeeduino Seeed Xiao M0 (SAMD21) (experimental)
-*  Espressif ESP32C3 (experimental) (SEEED XIAO ESP32-C3)
+MaxDuino can be run on custom PCBs built using any of the following microcontrollers, as well as on standard dev boards listed in parentheses:
+
+*  Atmel (Microchip) ATMEGA328P (Arduino Nano / Arduino Uno v1-3)
+*  Atmel (Microchip) ATMEGA32u4 (Arduino Leonardo)
+*  Atmel (Microchip) ATMEGA4809 (Arduino Nano Every)
+*  Atmel (Microchip) ATMEGA4808 (Thinary Nano Every)
+*  Atmel (Microchip) ATMEGA2560 (Arduino Mega 2560)
+*  RaspberryPi RP2040 (Raspberry Pi Pico)
+*  Espressif ESP8266 (Wemos D1 Mini)
+*  Espressif ESP32-WROOM (D1 Mini32)
+*  Atmel (Microchip) SAMD21 (SEEED XIAO M0 SAMD21)
+*  Espressif ESP32C3 (SEEED XIAO ESP32-C3)
 *  STMicroelectonics STM32 (experimental, needs testing)
+*  .. and others
 
 ## LCD type
 
@@ -78,15 +81,17 @@ MaxDuino firmware is itself an open-source project and remains free for everybod
 
 ## Output type
 
-*  Audio jack
-*  (Optional) Motor control line
+*  Audio output (typically connected to jack socket)
 
 ## Inputs type
 
-*  5 buttons (Up, Down, Left, Play, Pause, Stop)  (See [Note 2](#notes))
+*  5 buttons : Up, Down, Play/Pause, Stop, Menu (aka 'Root')   (See [Note 2](#notes))
   * Most devices support multi-press combinations
-  * Some devices only support one-button-at-a-time due to lack of independent GPIO or insufficient pins e.g. Seeed Xiao (ESP32C3, SAMD21)
+  * Some devices only support one-button-at-a-time due to lack of independent GPIO or insufficient pins e.g. Seeed Xiao (ESP32C3, SAMD21, D1 Mini)
 *  Power button, aka "soft-off" (for supported devices only e.g. ESP32C3) (See [Note 3](#notes))
+*  (Optional) Motor control sense
+*  (Optional) Audio input (typically connected to jack socket)
+*  (Optional) Record button  (See [Note 4](#notes))
 
 ## Prebuilt configurations
 
@@ -98,4 +103,4 @@ You can of course create your own custom firmware by editing the configuration f
 1. Support for P8544 has been removed due to lack of devices for testing and development purposes
 2. Devices may have a reset button but this directly resets the device via a hardware reset signal, and is not handled by the firmware
 3. Currently, soft-off is implemented as a long-press on the Stop button, but future hardware iterations might include a separate GPIO power button
-
+4. Experimental record functionality is included and enabled for certain devices, check sourcecode for more details

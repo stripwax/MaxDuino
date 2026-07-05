@@ -52,15 +52,16 @@ More information at [FILE TYPES](./FILE_TYPES.md)
 
 Various MaxDuino and TZXDuino devices have been manufactured over the last 15 years or so, and these have been constructed with different combinations of hardware components (microcontroller type, LCD type, etc).  We provide MaxDuino software intended to be compatible with all of them and more.
 
-*  Arduino Nano 328p
-*  Arduino Nano Every
-*  Thinary Nano Every
-*  Arduino Mega 2560
-*  Raspberry Pi Pico
-*  Espressif ESP8266
-*  Espressif ESP32-WROOM
-*  Seeeduino Seeed Xiao M0 (SAMD21) (experimental)
-*  Espressif ESP32C3 (experimental)
+*  Atmel (Microchip) ATMEGA328P (Arduino Nano / Arduino Uno v1-3)
+*  Atmel (Microchip) ATMEGA32u4 (Arduino Leonardo)
+*  Atmel (Microchip) ATMEGA4809 (Arduino Nano Every)
+*  Atmel (Microchip) ATMEGA4808 (Thinary Nano Every)
+*  Atmel (Microchip) ATMEGA2560 (Arduino Mega 2560)
+*  RaspberryPi RP2040 (Raspberry Pi Pico)
+*  Espressif ESP8266 (Wemos D1 Mini)
+*  Espressif ESP32-WROOM (D1 Mini32)
+*  Atmel (Microchip) SAMD21 (SEEED XIAO M0 SAMD21)
+*  Espressif ESP32C3 (SEEED XIAO ESP32-C3)
 *  STMicroelectonics STM32 (experimental, needs testing)
 *  .. and others
 
