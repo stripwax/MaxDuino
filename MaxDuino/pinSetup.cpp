@@ -1,6 +1,9 @@
 #include "configs.h"
 #include "Arduino.h"
 #include "pinSetup.h"
+#if defined(ARDUINO_XIAO_ESP32C3)
+#include <driver/gpio.h>
+#endif
 
 #if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
 #include <SPI.h>
@@ -184,7 +187,12 @@ void pinsetup()
   PORTD |= _BV(3);
 
    
-#elif defined(SEEED_XIAO_M0) || defined(ARDUINO_XIAO_ESP32C3) || defined(ARDUINO_ESP8266_WEMOS_D1MINI)
+#elif defined(ARDUINO_XIAO_ESP32C3)
+
+  // GPIO output drive strength — try minimum (5mA) to reduce overshoot/ringing on edges
+  gpio_set_drive_capability((gpio_num_t)outputPin, GPIO_DRIVE_CAP_0);
+
+#elif defined(SEEED_XIAO_M0) || defined(ARDUINO_ESP8266_WEMOS_D1MINI)
 
   // BUTTON PIN CONFIGURATION
   // n.a.

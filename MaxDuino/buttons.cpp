@@ -60,6 +60,37 @@ static int readButtonADC()
   return latest_voltage_mv;
 }
 
+#elif defined(ESP32_RISCV)
+
+  // Uses analogReadMilliVolts, rate-limited to every 50 ms.
+  // The IDF's adc2_get_raw (called internally) wraps the conversion
+  // in portENTER_CRITICAL, which clears mstatus.MIE on single-core
+  // RISC-V for ~25 µs.  This can starve the timer ISR, but at 50 ms
+  // intervals the glitch duty cycle is negligible (~0.05 %).
+  void setup_buttons(void)
+  {
+    #if defined(DEBUG_ADC)
+    Serial.begin(9600);
+    #endif
+    analogReadResolution(12);
+    analogSetAttenuation(ADC_11db);
+    analogSetClockDiv(128);
+  }
+
+  static int readButtonADC()
+  {
+    static unsigned long last = 0;
+    static int adc_value = 0;
+    unsigned long now = millis();
+    if (now - last >= 50) {
+      last = now;
+      adc_value = (int)analogReadMilliVolts(btnADC);
+      #if defined(DEBUG_ADC)
+      Serial.println(adc_value);
+      #endif
+    }
+    return adc_value;
+  }
 #else
 void setup_buttons(void)
 {
@@ -72,13 +103,6 @@ void setup_buttons(void)
   analogReadResolution(10);
   #endif
 
-  #if defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3)
-  // ESP32-C3 has additional options for setting ADC range
-  analogReadResolution(12);
-  analogSetAttenuation(ADC_11db);
-  analogSetClockDiv(255);
-  #endif
-
   #if defined(DEBUG_ADC)
   Serial.begin(9600);
   #endif
@@ -86,17 +110,15 @@ void setup_buttons(void)
 
 static int readButtonADC()
 {
-  #if defined(ARDUINO_ESP32C3_DEV) || defined(CONFIG_IDF_TARGET_ESP32C3)
-  int adc_value = analogReadMilliVolts(btnADC);
-  #else
   int adc_value = analogRead(btnADC);
-  #endif
   #if defined(DEBUG_ADC)
   Serial.println(adc_value);
   #endif
   return adc_value;
 }
+
 #endif
+
 
 bool button_any() {
   int sensorValue = readButtonADC();

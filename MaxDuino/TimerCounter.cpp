@@ -3,6 +3,17 @@
 #include "TimerCounter.h"
 #include "isr.h"
 
+#if defined(ESP32_RISCV)
+#include "driver/timer.h"
+#include "esp_intr_alloc.h"
+
+static bool IRAM_ATTR timer_isr_wrapper(void *arg) {
+    void (*fn)(void) = (void (*)(void))arg;
+    fn();
+    return false;
+}
+#endif
+
 /*
  *  Interrupt and PWM utilities for 16 bit Timer1 on ATmega168/328
  *  Original code by Jesse Tane for http://labs.ideo.com August 2008
@@ -553,14 +564,23 @@ void TimerCounter::_initialize()
     #if defined(ESP32_XTENSA)
     timerAttachInterruptFlag(timer, &isrCallback, true, ARDUINO_ISR_FLAG);
     #else
-    timerAttachInterrupt(timer, &isrCallback, true);
+    // timerBegin(0, ...) → group=0, timer=0 (see timer_dev[] in esp32-hal-timer.c)
+    timer_isr_callback_add(TIMER_GROUP_0, TIMER_0,
+                           timer_isr_wrapper, (void *)isrCallback, ESP_INTR_FLAG_IRAM);
     #endif
   }
 }
 
 void ISR_ATTR TimerCounter::_setPeriod(unsigned long microseconds)
 {
+#if defined(ESP32_RISCV)
+  // timerAlarmWrite handles alarm value + autoreload via IDF registers (alarmhi/lo).
+  // tx_alarm_en is self-clearing on C3 — must re-arm every period.
   timerAlarmWrite(timer, microseconds, true);
+  TIMERG0.hw_timer[0].config.tx_alarm_en = 1;
+#else
+  timerAlarmWrite(timer, microseconds, true);
+#endif
 }
 
 void TimerCounter::stop()

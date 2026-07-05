@@ -59,8 +59,8 @@
 #elif defined(ARDUINO_XIAO_ESP32C3)
   #define outputPin         D0
   #define INIT_OUTPORT            pinMode(outputPin,OUTPUT)
-  #define WRITE_LOW               digitalWrite(outputPin,LOW)
-  #define WRITE_HIGH              digitalWrite(outputPin,HIGH)
+  #define WRITE_LOW               GPIO.out_w1tc.val = (1UL << outputPin)
+  #define WRITE_HIGH              GPIO.out_w1ts.val = (1UL << outputPin)
 
 #elif defined(ARDUINO_ESP8266_WEMOS_D1MINI)
   #define outputPin           16 // D0
