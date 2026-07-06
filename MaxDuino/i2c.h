@@ -75,11 +75,19 @@
     #error Unknown I2C library configuration
   #endif
 
-  #define mx_i2c_init() Wire.begin();\
-                        Wire.setClock(I2CCLOCK)
-  #define mx_i2c_start(address) Wire.beginTransmission(address)
-  #define mx_i2c_write(byte) Wire.write(byte)
-  #define mx_i2c_end() Wire.endTransmission()
+    
+  // XIAO boards: D4/D5 = GPIO 6/7 are on i2c1 (Wire1), not i2c0 (Wire).
+  #if defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
+    #define I2C_WIRE_CLASS Wire1
+  #else
+    #define I2C_WIRE_CLASS Wire
+  #endif
+
+  #define mx_i2c_init() I2C_WIRE_CLASS.begin();\
+                        I2C_WIRE_CLASS.setClock(I2CCLOCK)
+  #define mx_i2c_start(address) I2C_WIRE_CLASS.beginTransmission(address)
+  #define mx_i2c_write(byte) I2C_WIRE_CLASS.write(byte)
+  #define mx_i2c_end() I2C_WIRE_CLASS.endTransmission()
 
 #endif
 

@@ -74,8 +74,8 @@
   #define WRITE_LOW               digitalWriteFast(outputPin,LOW)
   #define WRITE_HIGH              digitalWriteFast(outputPin,HIGH)
 
-#elif defined(ARDUINO_SEEED_XIAO_RP2040)
-  #define outputPin           0
+#elif defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
+  #define outputPin           D0
   #define INIT_OUTPORT            pinMode(outputPin,OUTPUT_12MA)
   #define WRITE_LOW               digitalWriteFast(outputPin,LOW)
   #define WRITE_HIGH              digitalWriteFast(outputPin,HIGH)
@@ -189,7 +189,7 @@
   #define chipSelect    D6
   #define BUTTON_ADC
   #define btnADC        A3
-  #define btnMotor      A1
+  #define btnMotor      D1
 #else
   #define chipSelect    D7
   #define BUTTON_ADC
@@ -233,17 +233,21 @@
   #define RP2040_SD_MISO_PIN 12
   #define chipSelect 13
 
-#elif defined(ARDUINO_SEEED_XIAO_RP2040)
+#elif defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
 //
 // Pin definition for Seeed Xiao RP2040 boards
 //
   #if defined(RICKY_TEST_BOARD)
     #define chipSelect    D6
     #define BUTTON_ADC
+    #if defined(ARDUINO_SEEED_XIAO_RP2350)
+    #define btnADC        A2 /* there isn't an A3 on this board!  You need to bodge a jumper between pin 3 and pin 4 */
+    #else
     #define btnADC        A3
-    #define btnMotor      A1
+    #endif
+    #define btnMotor      D1
   #else
-    #define chipSelect    -1 //Sd card chip select pin - unmapped (on assumption that SD CS is actually just tied directly to GND)
+    #define chipSelect    D6
     #define BUTTON_ADC
     #define btnADC        A2 // analog input pin for ADC buttons
     #define NO_MOTOR    // because no spare gpio

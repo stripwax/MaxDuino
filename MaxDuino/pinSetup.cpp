@@ -5,9 +5,10 @@
 #include <driver/gpio.h>
 #endif
 
-#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
 #include <SPI.h>
 #include <Wire.h>
+#include "i2c.h"
 #endif
 
 void pinsetup()
@@ -202,7 +203,7 @@ void pinsetup()
   pinMode(btnMotor, INPUT_PULLUP);
   digitalWrite(btnMotor, HIGH);
 
-#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
+#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
 
   #if defined(BUTTON_ADC)
   // nothing else required
@@ -220,13 +221,23 @@ void pinsetup()
   pinMode(btnMotor, INPUT_PULLUP);
   #endif
 
-  Wire.setSDA(RP2040_I2C_SDA_PIN);
-  Wire.setSCL(RP2040_I2C_SCL_PIN);
+  I2C_WIRE_CLASS.setSDA(RP2040_I2C_SDA_PIN);
+  I2C_WIRE_CLASS.setSCL(RP2040_I2C_SCL_PIN);
 
-  SPI1.setSCK(RP2040_SD_SCK_PIN);
-  SPI1.setTX(RP2040_SD_MOSI_PIN);
-  SPI1.setRX(RP2040_SD_MISO_PIN);
-  SPI1.setCS(chipSelect);
+  // XIAO boards use SPI0 (SD pins D8/D9/D10 = GPIO 2/4/3 match default SPI0 pins).
+  // Pico and others use SPI1 with default pins (GPIO 10/11/12).
+  // Don't call setCS at all — SdFat manages CS as a regular GPIO via
+  // digitalWrite (not through the SPI peripheral's CS signal).
+  #if defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
+    SPI.setSCK(RP2040_SD_SCK_PIN);
+    SPI.setTX(RP2040_SD_MOSI_PIN);
+    SPI.setRX(RP2040_SD_MISO_PIN);
+  #else
+    SPI1.setSCK(RP2040_SD_SCK_PIN);
+    SPI1.setTX(RP2040_SD_MOSI_PIN);
+    SPI1.setRX(RP2040_SD_MISO_PIN);
+    SPI1.setCS(chipSelect);
+  #endif
   
 #elif defined(__AVR_ATmega328P__)
   //pinMode(btnPlay,INPUT_PULLUP);  // Not needed, default is INPUT (0)

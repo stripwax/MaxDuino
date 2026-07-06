@@ -58,7 +58,7 @@
     EEPROM_put(address, data);
   }
 
-#elif defined(ESP8266) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
+#elif defined(ESP8266) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
 
   // an EEPROM library that emulates EEPROM using flash (which is not wiped when new firmware is flashed)
   // ESP8266 uses a differently-nmamed library, just to be awkward, even if it does the same thing

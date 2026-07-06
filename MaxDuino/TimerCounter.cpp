@@ -625,7 +625,7 @@ void TimerCounter::_attachInterrupt()
   timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
 }
 
-#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
+#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
 
 #define __TIMER_MAXPAUSE_PERIOD 1000
 
@@ -635,12 +635,10 @@ void TimerCounter::_attachInterrupt()
 static int rp2040_alarm_num = -1;
 static unsigned long rp2040_current_microseconds = 0;
 static volatile uint64_t rp2040_next_target_us = 0;
-static volatile bool rp2040_in_callback = false;
 
-static void __not_in_flash_func(rp2040_timer_callback)(uint alarm_num)
+static void ISR_ATTR rp2040_timer_callback(uint alarm_num)
 {
   (void)alarm_num;
-  rp2040_in_callback = true;
   isrCallback();
 
   // re-arm , using the (newly-set) rp2040_current_microseconds, and the previous rp2040_next_target_us alarm which this isr handled
@@ -655,7 +653,6 @@ static void __not_in_flash_func(rp2040_timer_callback)(uint alarm_num)
     from_us_since_boot(rp2040_next_target_us)
   );
 
-  rp2040_in_callback = false;
 }
 
 void TimerCounter::_initialize()
@@ -666,7 +663,6 @@ void TimerCounter::_initialize()
   }
 
   rp2040_next_target_us = 0;
-  rp2040_in_callback = false;
   hardware_alarm_cancel(rp2040_alarm_num);
 }
 
@@ -679,14 +675,12 @@ void TimerCounter::stop()
 {
   hardware_alarm_cancel(rp2040_alarm_num);
   rp2040_next_target_us = 0;
-  rp2040_in_callback = false;
 }
 
 void TimerCounter::_attachInterrupt()
 {
   // arm the alarm for the first time; subsequent callbacks will re-arm it
   rp2040_next_target_us = to_us_since_boot(delayed_by_us(get_absolute_time(), rp2040_current_microseconds));
-  rp2040_in_callback = false;
   hardware_alarm_set_target(
     rp2040_alarm_num,
     from_us_since_boot(rp2040_next_target_us)

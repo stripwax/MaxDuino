@@ -78,7 +78,7 @@
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_ATMEGA328P
     #endif
     #define CONFIG_PATH userconfig
-  #elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
+  #elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
     #ifndef CONFIGFILE
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_RP2040
     #endif

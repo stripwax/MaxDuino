@@ -58,6 +58,7 @@ Various MaxDuino and TZXDuino devices have been manufactured over the last 15 ye
 *  Atmel (Microchip) ATMEGA4808 (Thinary Nano Every)
 *  Atmel (Microchip) ATMEGA2560 (Arduino Mega 2560)
 *  RaspberryPi RP2040 (Raspberry Pi Pico)
+*  RaspberryPi RP2350 (SEEED XIAO RP2350)
 *  Espressif ESP8266 (Wemos D1 Mini)
 *  Espressif ESP32-WROOM (D1 Mini32)
 *  Atmel (Microchip) SAMD21 (SEEED XIAO M0 SAMD21)
