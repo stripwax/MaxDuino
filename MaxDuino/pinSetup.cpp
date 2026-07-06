@@ -204,12 +204,21 @@ void pinsetup()
 
 #elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040)
 
+  #if defined(BUTTON_ADC)
+  // nothing else required
+  #else
   pinMode(btnPlay, INPUT_PULLUP);
   pinMode(btnStop, INPUT_PULLUP);
   pinMode(btnUp, INPUT_PULLUP);
   pinMode(btnDown, INPUT_PULLUP);
-  pinMode(btnMotor, INPUT_PULLUP);
   pinMode(btnRoot, INPUT_PULLUP);
+  #endif
+
+  #if defined(NO_MOTOR)
+  // nothing to do for btnMotor
+  #else
+  pinMode(btnMotor, INPUT_PULLUP);
+  #endif
 
   Wire.setSDA(RP2040_I2C_SDA_PIN);
   Wire.setSCL(RP2040_I2C_SCL_PIN);

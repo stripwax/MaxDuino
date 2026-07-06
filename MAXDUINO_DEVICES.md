@@ -62,12 +62,12 @@ MaxDuino can be run on custom PCBs built using any of the following microcontrol
 *  Atmel (Microchip) ATMEGA4809 (Arduino Nano Every)
 *  Atmel (Microchip) ATMEGA4808 (Thinary Nano Every)
 *  Atmel (Microchip) ATMEGA2560 (Arduino Mega 2560)
-*  RaspberryPi RP2040 (Raspberry Pi Pico)
+*  RaspberryPi RP2040 (Raspberry Pi Pico, also SEEED XIAO RP2040 (untested))
 *  Espressif ESP8266 (Wemos D1 Mini)
 *  Espressif ESP32-WROOM (D1 Mini32)
 *  Atmel (Microchip) SAMD21 (SEEED XIAO M0 SAMD21)
 *  Espressif ESP32C3 (SEEED XIAO ESP32-C3)
-*  STMicroelectonics STM32 (experimental, needs testing)
+*  STMicroelectonics STM32F (possibly incomplete, needs testing)
 *  .. and others
 
 ## LCD type

@@ -74,7 +74,13 @@
   #define WRITE_LOW               digitalWriteFast(outputPin,LOW)
   #define WRITE_HIGH              digitalWriteFast(outputPin,HIGH)
 
-#elif defined(WEMOS_D1_MINI32)
+#elif defined(ARDUINO_SEEED_XIAO_RP2040)
+  #define outputPin           0
+  #define INIT_OUTPORT            pinMode(outputPin,OUTPUT_12MA)
+  #define WRITE_LOW               digitalWriteFast(outputPin,LOW)
+  #define WRITE_HIGH              digitalWriteFast(outputPin,HIGH)
+
+  #elif defined(WEMOS_D1_MINI32)
   #define outputPin         26 // D0
   #define INIT_OUTPORT      pinMode(outputPin,OUTPUT)
   #define WRITE_LOW         GPIO.out_w1tc = (1UL << outputPin)
@@ -227,7 +233,29 @@
   #define RP2040_SD_MISO_PIN 12
   #define chipSelect 13
 
-#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__)
+#elif defined(ARDUINO_SEEED_XIAO_RP2040)
+//
+// Pin definition for Seeed Xiao RP2040 boards
+//
+  #if defined(RICKY_TEST_BOARD)
+    #define chipSelect    D6
+    #define BUTTON_ADC
+    #define btnADC        A3
+    #define btnMotor      A1
+  #else
+    #define chipSelect    -1 //Sd card chip select pin - unmapped (on assumption that SD CS is actually just tied directly to GND)
+    #define BUTTON_ADC
+    #define btnADC        A2 // analog input pin for ADC buttons
+    #define NO_MOTOR    // because no spare gpio
+  #endif
+
+  #define RP2040_I2C_SDA_PIN D4
+  #define RP2040_I2C_SCL_PIN D5
+  #define RP2040_SD_SCK_PIN D8
+  #define RP2040_SD_MOSI_PIN D10
+  #define RP2040_SD_MISO_PIN D9
+
+  #elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__)
   const byte chipSelect = 10;          //Sd card chip select pin
   
   #define btnPlay       17            //Play Button
