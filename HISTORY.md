@@ -14,6 +14,8 @@
 
 # HISTORY NOTES
 
+* V3.08 Adds support for SEEED XIAO RP2040 and SEEED XIAO RP2350 boards
+* V3.07 Adds support for ESP32-WROOM boards (D1 Mini32)
 * V3.06 Adds support for Raspberry Pi Pico boards
 * V3.05 Adds improvements to C64 pause handling, and TRS-80 .CAS support. Incldues a lot of performance optimisations, some fixes for ESP32 and ESP8266, and a temporary new home and name change: https://github.com/stripwax/MaxDuino and "MaxDuiNeo 2026"
 * V3.04 Adds C64 .TAP support, Sharp MZ-700 .MZT + .M12 file extension support, and Memotech .MTX implementation
