@@ -58,31 +58,61 @@
     EEPROM_put(address, data);
   }
 
-#elif defined(ESP8266) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
+#elif defined(__SAMD21__) || defined(__SAMD21G18A__) || defined(ESP8266) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
 
-  // an EEPROM library that emulates EEPROM using flash (which is not wiped when new firmware is flashed)
-  // ESP8266 uses a differently-nmamed library, just to be awkward, even if it does the same thing
-  #if defined(ESP8266)
-  #include <ESP_EEPROM.h>
+  // All these platforms provide a flash-backed EEPROM emulation library
+  // with a common EEPROM.get/put/commit API, even if the include differs.
+  #if defined(__SAMD21__) || defined(__SAMD21G18A__)
+    #define EEPROM_EMULATION_SIZE 1025
+    #include <FlashStorage_SAMD.h>
+  #elif defined(ESP8266)
+    #include <ESP_EEPROM.h>
   #else
-  #include <EEPROM.h>
+    #include <EEPROM.h>
   #endif
-  
+
+  #if defined(__SAMD21__) || defined(__SAMD21G18A__)
+    // EEPROM locator for extra_script.py — bookended markers
+    // that encode the runtime flash address and size of the
+    // EEPROM backing store (_data_eeprom_storage).  extra_script.py
+    // searches for "MAXD" in the bossac dump, reads addr+size,
+    // verifies "DXAM", then extracts/embeds the EEPROM data at
+    // the correct offset — no hardcoded flash address needed.
+    static const struct {
+      uint32_t magic1;   // "MAXD" = 0x4458414D
+      uint32_t addr;     // flash address of _data_eeprom_storage
+      uint32_t size;     // flash-aligned byte count
+      uint32_t magic2;   // "DXAM" = 0x4D415844
+    } eeprom_locator __attribute__((used)) = {
+      0x4458414D,
+      (uint32_t)(uintptr_t)&_dataeeprom_storage[0],
+      (uint32_t)sizeof(_dataeeprom_storage),
+      0x4D415844
+    };
+  #endif
+
   void EEPROM_init() {
+    #if defined(__SAMD21__) || defined(__SAMD21G18A__)
+      EEPROM.setCommitASAP(false);
+      (void)*((volatile uint32_t*)&eeprom_locator);
+    #else
       EEPROM.begin(1025);
+    #endif
   }
 
   static void EEPROM_get(uint16_t address, byte &data) {
-    EEPROM.get(address, data) ;  
+    EEPROM.get(address, data);
   }
+
   static void EEPROM_put(uint16_t address, byte data) {
-    EEPROM.put(address, data); 
+    EEPROM.put(address, data);
   }
 
   void EEPROM_write_logo_begin() {}
+
   void EEPROM_write_logo_end() {
     EEPROM.commit();
-  };
+  }
 
   void EEPROM_read_configbyte(byte &data) {
     EEPROM_get(EEPROM_CONFIG_BYTEPOS, data);
