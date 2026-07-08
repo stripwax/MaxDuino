@@ -69,4 +69,7 @@ void OledStatusLine();
 byte HEX_CHAR(byte);
 #endif
 
+extern const char TXT_PAUSED[];
+extern const char TXT_PLAYING[];
+
 #endif // DISPLAY_H_INCLUDED

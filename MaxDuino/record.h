@@ -2,6 +2,7 @@
 #define RECORD_H_INCLUDED
 
 #include <Arduino.h>
+#include "configs.h"
 
 // The recorder supports multiple runtime-selectable formats.
 // Compile-time feature flags decide which record types appear in the menu.
@@ -30,6 +31,19 @@ void resume_recording();
 
 // Stop recording, finalize the active file format and close the file.
 void stop_recording();
+
+// For config, settings, menu, etc
+enum class RecordFormat : byte {
+  TZX_ID15 = 0,
+  CAS_MSX = 1,
+  ZX_SPECTRUM = 2,
+  SHARP_MZF = 3,
+  _COUNT,  /* put this after the end, so it's always equals one after the last one */
+  _NONE
+};
+#define RECORD_FORMAT_MASK 0x07  /* bit mask for record format settings within eeprom stored byte */
+bool isRecordFormatSupported(const RecordFormat format);
+RecordFormat defaultRecordFormat();
 
 #else
 
