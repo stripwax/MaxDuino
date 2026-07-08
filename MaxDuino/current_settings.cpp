@@ -7,20 +7,7 @@
 word BAUDRATE = DEFAULT_BAUDRATE;
 
 #if defined(RECORD)
-static RecordFormat defaultRecordFormat()
-{
-  #if defined(RECORD) && defined(RECORD_TZX_ID15)
-    return RecordFormat::TZX_ID15;
-  #elif defined(RECORD) && defined(RECORD_ZX_SPECTRUM)
-    return RecordFormat::ZX_SPECTRUM;
-  #elif defined(RECORD) && defined(RECORD_CAS_MSX) && defined(Use_CAS)
-    return RecordFormat::CAS_MSX;
-  #elif defined(RECORD) && defined(RECORD_SHARP_MZF)
-    return RecordFormat::SHARP_MZF;
-  #else
-    return RecordFormat::TZX_ID15;
-  #endif
-}
+#include "record.h"
 
 RecordFormat recordFormat = defaultRecordFormat();
 
@@ -60,40 +47,6 @@ bool TSXCONTROLzxpolarityUEFSWITCHPARITY = DEFAULT_TSXzxpUEF;
 bool skip2A = DEFAULT_SKIP2A;
 
 #ifdef LOAD_EEPROM_SETTINGS
-
-  #if defined(RECORD)
-  static bool isRecordFormatSupported(const RecordFormat format)
-  {
-    switch (format) {
-      case RecordFormat::TZX_ID15:
-        #if defined(RECORD) && defined(RECORD_TZX_ID15)
-          return true;
-        #else
-          return false;
-        #endif
-      case RecordFormat::CAS_MSX:
-        #if defined(RECORD) && defined(RECORD_CAS_MSX) && defined(Use_CAS)
-          return true;
-        #else
-          return false;
-        #endif
-      case RecordFormat::ZX_SPECTRUM:
-        #if defined(RECORD) && defined(RECORD_ZX_SPECTRUM)
-          return true;
-        #else
-          return false;
-        #endif
-      case RecordFormat::SHARP_MZF:
-        #if defined(RECORD) && defined(RECORD_SHARP_MZF)
-          return true;
-        #else
-          return false;
-        #endif
-    }
-
-    return false;
-  }
-  #endif
 
 void updateEEPROM()
 {

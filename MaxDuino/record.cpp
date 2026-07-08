@@ -1,13 +1,8 @@
 #include "configs.h"
 
-#include "record.h"
-
 #ifdef RECORD
 
-#if defined(RECORD_CAS_MSX) && !defined(Use_CAS)
-#error RECORD_CAS_MSX requires Use_CAS
-#endif
-
+#include "record.h"
 #include <Arduino.h>
 #include "sdfat_config.h"
 #include <SdFat.h>
@@ -16,11 +11,9 @@
 #include "file_utils.h"
 #include "current_settings.h"
 
-#if defined(RECORD_CAS_MSX) && defined(Use_CAS)
+#if defined(RECORD_CAS_MSX)
 #include "casProcessing.h"
 #endif
-
-extern SdFat sd;
 
 static constexpr uint16_t kRecordPageSize = 512;
 static constexpr uint16_t kMsxHeaderMinDurationMs = 500;
@@ -32,10 +25,11 @@ static volatile bool pageReadyA = false;
 static volatile bool pageReadyB = false;
 static volatile uint32_t droppedBytes = 0;
 
-static volatile bool gRecording = false;
-static volatile bool gRecordPaused = false;
-static char gRecName[32] = {0};
-static volatile byte gActiveRecordFormat = static_cast<byte>(RecordFormat::TZX_ID15);
+static bool gRecording = false;
+static bool gRecordPaused = false;
+static const char prefix[] PROGMEM = "MaxSave";
+static char gRecName[17];  // "MaxSavennnnn.ext" needs only 17 bytes incl NUL terminator. Be careful if you change prefix of course!
+static const char * ext3;  // required file extension for a given recording format. This is set when beginning recording.
 
 static SdBaseFile recFile;
 static uint32_t filePos_usedBits = 0;
@@ -44,8 +38,8 @@ static uint32_t dataBytesWritten = 0;
 
 static inline bool active_recording_is_cas()
 {
-  #if defined(RECORD_CAS_MSX) && defined(Use_CAS)
-    return gActiveRecordFormat == static_cast<byte>(RecordFormat::CAS_MSX);
+  #if defined(RECORD_CAS_MSX)
+    return recordFormat == RecordFormat::CAS_MSX;
   #else
     return false;
   #endif
@@ -54,7 +48,7 @@ static inline bool active_recording_is_cas()
 static inline bool active_recording_is_mzf()
 {
   #if defined(RECORD_SHARP_MZF)
-    return gActiveRecordFormat == static_cast<byte>(RecordFormat::SHARP_MZF);
+    return recordFormat == RecordFormat::SHARP_MZF;
   #else
     return false;
   #endif
@@ -63,177 +57,110 @@ static inline bool active_recording_is_mzf()
 static inline bool active_recording_is_zx_spectrum()
 {
   #if defined(RECORD_ZX_SPECTRUM)
-    return gActiveRecordFormat == static_cast<byte>(RecordFormat::ZX_SPECTRUM);
+    return recordFormat == RecordFormat::ZX_SPECTRUM;
   #else
     return false;
   #endif
 }
 
-static bool is_record_format_enabled(const RecordFormat format)
+
+bool isRecordFormatSupported(const RecordFormat format)
 {
   switch (format) {
-    case RecordFormat::TZX_ID15:
-      #if defined(RECORD_TZX_ID15)
+    #if defined(RECORD_TZX_ID15)
+      case RecordFormat::TZX_ID15:
         return true;
-      #else
-        return false;
-      #endif
-    case RecordFormat::CAS_MSX:
-      #if defined(RECORD_CAS_MSX) && defined(Use_CAS)
+    #endif
+    #if defined(RECORD_CAS_MSX)
+      case RecordFormat::CAS_MSX:
         return true;
-      #else
-        return false;
-      #endif
-    case RecordFormat::ZX_SPECTRUM:
-      #if defined(RECORD_ZX_SPECTRUM)
+    #endif
+    #if defined(RECORD_ZX_SPECTRUM)
+      case RecordFormat::ZX_SPECTRUM:
         return true;
-      #else
-        return false;
-      #endif
-    case RecordFormat::SHARP_MZF:
-      #if defined(RECORD_SHARP_MZF)
+    #endif
+    #if defined(RECORD_SHARP_MZF)
+      case RecordFormat::SHARP_MZF:
         return true;
-      #else
+    #endif
+      default:
         return false;
-      #endif
   }
-
-  return false;
 }
 
-static RecordFormat select_record_format()
+RecordFormat defaultRecordFormat()
 {
-  if (is_record_format_enabled(recordFormat)) {
-    return recordFormat;
-  }
-
   #if defined(RECORD_TZX_ID15)
     return RecordFormat::TZX_ID15;
   #elif defined(RECORD_ZX_SPECTRUM)
     return RecordFormat::ZX_SPECTRUM;
-  #elif defined(RECORD_CAS_MSX) && defined(Use_CAS)
+  #elif defined(RECORD_CAS_MSX)
     return RecordFormat::CAS_MSX;
   #elif defined(RECORD_SHARP_MZF)
     return RecordFormat::SHARP_MZF;
   #else
-    return RecordFormat::TZX_ID15;
+    // this check here means we don't need to duplicate such check in configs_sanity.h
+    #error Either missing case in defaultRecordFormat or you are building with no record formats defined
   #endif
 }
 
-static void drawRecordingScreenOnce(const char* filename, RecordFormat format)
+const char TXT_RECORDING[] PROGMEM = "Recording";
+static void drawRecordingScreenOnce()
 {
-  char l1[17];
-  char l2[17];
-  memset(l1, ' ', 16);
-  memset(l2, ' ', 16);
-  l1[16] = '\0';
-  l2[16] = '\0';
-
-  const char* msg = "Recording";
-  for (uint8_t i = 0; msg[i] && i < 16; ++i) l1[i] = msg[i];
-  for (uint8_t i = 0; filename && filename[i] && i < 16; ++i) l2[i] = filename[i];
-
-  #if defined(OLED1306) && defined(XY2)
-    sendStrXY(l1, 0, 0);
-    sendStrXY(l2, 0, lineaxy);
-  #else
-    printtext(l1, 0);
-    printtext(l2, lineaxy);
-  #endif
+  printtextF(TXT_RECORDING, 0);
+  printtext(gRecName, lineaxy);
 }
 
-static bool has_ext_ci(const char *name, const char *ext3) {
-  if (!name || !ext3) return false;
-  const char *dot = strrchr(name, '.');
-  if (!dot) return false;
-  if (!dot[1] || !dot[2] || !dot[3] || dot[4]) return false;
-
-  auto up = [](char c) -> char {
-    if (c >= 'a' && c <= 'z') return (char)(c - 'a' + 'A');
-    return c;
-  };
-
-  return (up(dot[1]) == up(ext3[0]) && up(dot[2]) == up(ext3[1]) && up(dot[3]) == up(ext3[2]));
+static bool has_ext_ci() {
+  const char * filenameExt = strrchr(fileName,'.') + 1;
+  return (strcasecmp_P(filenameExt, ext3) == 0);
 }
 
-static uint16_t count_files_with_ext_in_current_dir(const char *ext3) {
-  if (!currentDir) return 0;
-
-  const uint32_t savedPos = currentDir->curPosition();
+static uint16_t count_files_with_ext_in_current_dir() {
   currentDir->rewind();
 
   uint16_t count = 0;
   SdBaseFile tmp;
-  char name[64];
 
   while (tmp.openNext(currentDir, O_RDONLY)) {
     if (tmp.isFile()) {
-      name[0] = 0;
-      tmp.getName(name, sizeof(name));
-      if (has_ext_ci(name, ext3)) {
+      tmp.getName(fileName,filenameLength);
+      if (has_ext_ci()) {
         count++;
       }
     }
     tmp.close();
   }
 
-  currentDir->seekSet(savedPos);
   return count;
 }
 
 static bool file_exists_in_current_dir(const char *name) {
-  if (!currentDir || !name || !name[0]) return false;
-
-  const uint32_t savedPos = currentDir->curPosition();
   SdBaseFile tmp;
   const bool exists = tmp.open(currentDir, name, O_RDONLY);
   if (exists) {
     tmp.close();
   }
-  currentDir->seekSet(savedPos);
   return exists;
 }
 
-static void format_recording_name(char *out, size_t outSize, uint16_t index, const char *ext3) {
-  if (!out || outSize == 0) return;
-
-  static const char prefix[] = "MaxSave";
-  size_t pos = 0;
-  for (; pos < sizeof(prefix) - 1 && pos + 1 < outSize; ++pos) {
-    out[pos] = prefix[pos];
-  }
-
-  char digits[5];
-  uint8_t digitCount = 0;
-  do {
-    digits[digitCount++] = (char)('0' + (index % 10));
-    index /= 10;
-  } while (index && digitCount < sizeof(digits));
-
-  while (digitCount && pos + 1 < outSize) {
-    out[pos++] = digits[--digitCount];
-  }
-
-  if (pos + 5 < outSize) {
-    out[pos++] = '.';
-    out[pos++] = ext3[0];
-    out[pos++] = ext3[1];
-    out[pos++] = ext3[2];
-  }
-
-  out[pos] = '\0';
+static void format_recording_name(char *out, uint16_t index) {
+  strncpy_P(out, prefix, sizeof(prefix) - 1);
+  out += sizeof(prefix) - 1;
+  ultoa(index, out, 10);
+  strcat_P(out, PSTR("."));
+  strcat_P(out, ext3);
 }
 
-static uint16_t next_recording_index(const char *ext3) {
-  char name[32];
+static uint16_t next_recording_index() {
   for (uint16_t index = 0; index < 10000; ++index) {
-    format_recording_name(name, sizeof(name), index, ext3);
-    if (!file_exists_in_current_dir(name)) {
+    format_recording_name(fileName, index);
+    if (!file_exists_in_current_dir(fileName)) {
       return index;
     }
   }
 
-  return count_files_with_ext_in_current_dir(ext3);
+  return count_files_with_ext_in_current_dir();
 }
 
 static inline uint8_t* active_page_ptr() {
@@ -283,8 +210,6 @@ static void write_ready_page(uint8_t which) {
   dataBytesWritten += kRecordPageSize;
 }
 
-#if defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__)
-
 static constexpr uint16_t kMsxSampleRate = 50000;
 static constexpr uint16_t kTzxSampleRate = 44100;
 #if defined(__AVR_ATmega4809__)
@@ -300,7 +225,7 @@ static constexpr uint8_t kWeakZxCenterTrackShift = 3;
 static constexpr uint8_t kWeakZxMinHysteresis = 2;
 static constexpr uint8_t kWeakZxMaxHysteresis = 8;
 #endif
-#if defined(RECORD_CAS_MSX) && defined(Use_CAS)
+#if defined(RECORD_CAS_MSX)
 
 static constexpr uint8_t kMsxRecordCenterTrackShift = 6;
 static constexpr uint8_t kMsxRecordHysteresis = 4;
@@ -411,7 +336,7 @@ static inline bool msx_is_long_cycle(uint8_t cycleSamples) {
 
 static inline void msx_write_cas_header() {
   for (uint8_t i = 0; i < 8; ++i) {
-    queue_output_byte(pgm_read_byte(&HEADER[i]));
+    queue_output_byte(pgm_read_byte(&CAS_HEADER[i]));
   }
 }
 
@@ -932,6 +857,11 @@ static inline void tzx_reset_capture_state() {
   tzxRecordCenterPrimed = false;
 }
 
+inline void recorder_isr();
+
+#if defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__)
+
+
 static void adc_start_freerun_record_pin() {
   ADC0.CTRLA = 0;
   ADC0.CTRLB = 0;
@@ -983,45 +913,50 @@ static void timer_stop_recording() {
 
 ISR(REC_TCB_INT_vect) {
   REC_TCB.INTFLAGS = TCB_CAPT_bm;
+  recorder_isr();
+}
 
-  if (!gRecording) return;
-
-#if defined(RECORD_SHARP_MZF)
-  if (active_recording_is_mzf()) {
-    const uint16_t sample = ADC0.RES;
-    const uint8_t level = (sample >= 512) ? 1 : 0;
-
-    if (mzfSamplesSinceEdge < 0xFF) mzfSamplesSinceEdge++;
-
-    if (level == mzfRecordLevel) {
-      if (mzfSamplesSinceEdge >= kMzfResetSilenceSamples) {
-        mzfHavePendingHalf = false;
-        if (mzfRecordStage == MzfRecStage::SEEK_LTM || mzfRecordStage == MzfRecStage::SEEK_STM) {
-          mzfGapShortRun = 0;
-          mzfMarkerCount = 0;
-          mzfSeekPhase = 0;
-        } else if (mzfRecordStage != MzfRecStage::DONE) {
-          mzf_reset_byte_decoder();
-        }
-        mzfSamplesSinceEdge = kMzfResetSilenceSamples;
-      }
-      return;
-    }
-
-    const uint8_t halfCycleSamples = mzfSamplesSinceEdge;
-    if (halfCycleSamples == 0) return;
-    if (halfCycleSamples < kMzfMinAcceptedEdgeSamples) return;
-
-    mzfRecordLevel = level;
-    mzfSamplesSinceEdge = 0;
-    mzf_process_half_cycle(halfCycleSamples);
-    return;
-  }
+#else
+#error Missing recording timer and isr definition for this MCU
 #endif
 
-#if defined(RECORD_CAS_MSX) && defined(Use_CAS)
-  if (active_recording_is_cas()) {
-    const uint16_t sample = ADC0.RES;
+#if defined(RECORD_SHARP_MZF)
+inline void isr_mzf()
+{
+  const uint16_t sample = ADC0.RES;
+  const uint8_t level = (sample >= 512) ? 1 : 0;
+
+  if (mzfSamplesSinceEdge < 0xFF) mzfSamplesSinceEdge++;
+
+  if (level == mzfRecordLevel) {
+    if (mzfSamplesSinceEdge >= kMzfResetSilenceSamples) {
+      mzfHavePendingHalf = false;
+      if (mzfRecordStage == MzfRecStage::SEEK_LTM || mzfRecordStage == MzfRecStage::SEEK_STM) {
+        mzfGapShortRun = 0;
+        mzfMarkerCount = 0;
+        mzfSeekPhase = 0;
+      } else if (mzfRecordStage != MzfRecStage::DONE) {
+        mzf_reset_byte_decoder();
+      }
+      mzfSamplesSinceEdge = kMzfResetSilenceSamples;
+    }
+    return;
+  }
+
+  const uint8_t halfCycleSamples = mzfSamplesSinceEdge;
+  if (halfCycleSamples == 0) return;
+  if (halfCycleSamples < kMzfMinAcceptedEdgeSamples) return;
+
+  mzfRecordLevel = level;
+  mzfSamplesSinceEdge = 0;
+  mzf_process_half_cycle(halfCycleSamples);
+}
+#endif
+
+#if defined(RECORD_CAS_MSX)
+inline void isr_cas()
+{
+      const uint16_t sample = ADC0.RES;
     int16_t center = (int16_t)msxRecordCenter;
     uint8_t level = msxRecordLevel;
 
@@ -1052,10 +987,12 @@ ISR(REC_TCB_INT_vect) {
     msxRecordLevel = level;
     msxSamplesSinceEdge = 0;
     msx_process_cycle(halfCycleSamples);
-    return;
-  }
+}
 #endif
 
+#if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
+inline void isr_tzx()
+{
   const uint16_t sample = ADC0.RES;
   uint8_t bit;
 
@@ -1151,15 +1088,33 @@ ISR(REC_TCB_INT_vect) {
   tzxBitByte = bb;
   tzxBitCount = bc;
 }
-
-#else
-
-static void adc_start_freerun_record_pin() {}
-static void adc_stop() {}
-static void timer_start_recording() {}
-static void timer_stop_recording() {}
-
 #endif
+
+inline void recorder_isr()
+{
+  if (!gRecording) return;
+
+  #if defined(RECORD_SHARP_MZF)
+    if (recordFormat==RecordFormat::SHARP_MZF)
+    {
+      isr_mzf();
+      return;
+    }
+  #endif
+  
+  #if defined(RECORD_CAS_MSX)
+    if (recordFormat==RecordFormat::CAS_MSX)
+    {
+      isr_cas();
+      return;
+    }
+  #endif
+  
+  #if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
+  isr_tzx();
+  #endif
+}
+
 
 bool is_recording() {
   return gRecording;
@@ -1173,14 +1128,14 @@ void pause_recording() {
   if (!gRecording || gRecordPaused) return;
   timer_stop_recording();
   gRecordPaused = true;
-  printtextF(PSTR("Paused"),0);
+  printtextF(TXT_PAUSED,0);
 }
 
 void resume_recording() {
   if (!gRecording || !gRecordPaused) return;
   gRecordPaused = false;
   timer_start_recording();
-  printtextF(PSTR("Recording"),0);
+  printtextF(TXT_RECORDING, 0);
 }
 
 static void tzx_write_u16_le(SdBaseFile &f, uint16_t v) {
@@ -1196,20 +1151,16 @@ static void tzx_write_u24_le(SdBaseFile &f, uint32_t v) {
 bool start_recording() {
   if (gRecording) return true;
 
-  const RecordFormat activeFormat = select_record_format();
-  const bool activeCas = (activeFormat == RecordFormat::CAS_MSX);
-  const bool activeMzf = (activeFormat == RecordFormat::SHARP_MZF);
-  const char *ext3 = activeCas ? "cas" : (activeMzf ? "mzf" : "tzx");
+  const bool activeCas = (recordFormat == RecordFormat::CAS_MSX);
+  const bool activeMzf = (recordFormat == RecordFormat::SHARP_MZF);
+  ext3 = activeCas ? PSTR("cas") : activeMzf ? PSTR("mzf") : PSTR("tzx");
 
-  const uint16_t filecount = next_recording_index(ext3);
+  const uint16_t filecount = next_recording_index();
 
-  char recName[32];
-  format_recording_name(recName, sizeof(recName), filecount, ext3);
-  strncpy(gRecName, recName, sizeof(gRecName) - 1);
-  gRecName[sizeof(gRecName) - 1] = 0;
+  format_recording_name(gRecName, filecount);
 
   recFile.close();
-  if (!recFile.open(currentDir, recName, O_RDWR | O_CREAT | O_TRUNC)) {
+  if (!recFile.open(currentDir, gRecName, O_RDWR | O_CREAT | O_TRUNC)) {
     printtextF(PSTR("SD open fail"), 0);
     return false;
   }
@@ -1220,9 +1171,9 @@ bool start_recording() {
   pageReadyA = false;
   pageReadyB = false;
   droppedBytes = 0;
-  gActiveRecordFormat = static_cast<byte>(activeFormat);
+  
   if (activeCas) {
-    #if defined(RECORD_CAS_MSX) && defined(Use_CAS)
+    #if defined(RECORD_CAS_MSX)
     msx_reset_capture_state();
     #endif
   } else if (activeMzf) {
@@ -1237,7 +1188,7 @@ bool start_recording() {
   dataBytesWritten = 0;
   gRecordPaused = false;
 
-  drawRecordingScreenOnce(recName, activeFormat);
+  drawRecordingScreenOnce();
 
   if (!activeCas && !activeMzf) {
     recFile.write(kTzxHeader, sizeof(kTzxHeader));
@@ -1344,6 +1295,3 @@ void stop_recording() {
 }
 
 #endif // RECORD
-
-
-

@@ -23,7 +23,7 @@ CAS_TYPE cas_currentType = CAS_TYPE::Nothing;
 byte cas_scale; // gets set when you call setBaud
 byte cas_period; // gets set when you call setBaud
 
-PROGMEM const byte HEADER[8] = { 0x1F, 0xA6, 0xDE, 0xBA, 0xCC, 0x13, 0x7D, 0x74 };
+PROGMEM const byte CAS_HEADER[8] = { 0x1F, 0xA6, 0xDE, 0xBA, 0xCC, 0x13, 0x7D, 0x74 };
 
 bool cas_file_match(const byte matchval)
 {
@@ -208,7 +208,7 @@ void process()
   {
     if(readfile(8,bytesRead))
     {
-      if(!memcmp_P(filebuffer, HEADER,8)) {
+      if(!memcmp_P(filebuffer, CAS_HEADER,8)) {
         if(fileStage==0) 
         {
           currentTask = TASK::CAS_lookType;

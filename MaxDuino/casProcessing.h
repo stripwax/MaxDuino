@@ -6,7 +6,7 @@
 #include "constants.h"
 
 /* Header Definitions */
-extern PROGMEM const byte HEADER[8];
+extern PROGMEM const byte CAS_HEADER[8];
 const byte CAS_ASCII = 0xEA;
 const byte CAS_BINF = 0xD0;
 const byte CAS_BASIC = 0xD3;

@@ -36,5 +36,12 @@ extern _readout_type readout;
 #define outWord readout.outword
 #define outLong readout.outlong
 
+#ifdef FREERAM
+  #define filenameLength 160
+  #define nMaxPrevSubDirs 7  
+#else 
+  #define filenameLength 255
+  #define nMaxPrevSubDirs 10  
+#endif
 
 #endif // FILE_UTILS_H_INCLUDED

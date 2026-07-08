@@ -62,14 +62,6 @@ SdBaseFile _tmpdirs[2]; // internal file pointers.  (*currentDir points to eithe
 SdBaseFile *currentDir = &_tmpdirs[0];  // SD card directory
 byte _alt_tmp_dir = 1; // which of the _tmpdirs is scratch (we flip this between 0 and 1)
 
-#ifdef FREERAM
-  #define filenameLength 160
-  #define nMaxPrevSubDirs 7  
-#else 
-  #define filenameLength 255
-  #define nMaxPrevSubDirs 10  
-#endif
-
 char fileName[filenameLength + 1];    //Current filename
 char prevSubDir[SCREENSIZE+1];
 uint16_t DirFilePos[nMaxPrevSubDirs];  //File Positions in Directory to be restored (also, history of subdirectories)
@@ -316,6 +308,7 @@ void loop(void) {
         stop_recording();
         debounce(button_stop);
         getMaxFile();
+        currentFile = maxFile; // this should be the file we just created - so UI shows the recorded file after recording
         seekFile();
         printtext(PlayBytes,0);
         #ifdef LCDSCREEN16x2
@@ -386,6 +379,11 @@ void loop(void) {
             oldMotorState = 0;
           }
         #endif
+      }
+      else
+      {
+        // reload directory state from before (since recording reuses currentDir/etc)
+        seekFile();
       }
       debounce(button_rec);
       return;

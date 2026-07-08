@@ -9,6 +9,16 @@
 #if (defined(BLOCKID_INTO_MEM)) && (defined(BLOCKID_NOMEM_SEARCH))
 #error Cannot define both BLOCKID_INTO_MEM and BLOCKID_NOMEM_SEARCH
 #endif
+
+#ifdef RECORD
+
+#if defined(RECORD_CAS_MSX) && !defined(Use_CAS)
+#error RECORD_CAS_MSX requires Use_CAS
+#endif
+
+#endif // RECORD
+
 /* END SANITY CHECKS FOR INVALID CONFIGURATION */
+
 
 #endif

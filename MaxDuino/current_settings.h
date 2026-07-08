@@ -5,15 +5,7 @@
 #include "configs.h"
 
 #if defined(RECORD)
-enum class RecordFormat : byte {
-  TZX_ID15 = 0,
-  CAS_MSX = 1,
-  ZX_SPECTRUM = 2,
-  SHARP_MZF = 3,
-  _COUNT,  /* put this after the end, so it's always equals one after the last one */
-  _NONE
-};
-#define RECORD_FORMAT_MASK 0x07  /* bit mask for record format settings within eeprom stored byte */
+#include "record.h"
 extern RecordFormat recordFormat;
 #endif
 
