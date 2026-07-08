@@ -18,6 +18,10 @@ void EEPROM_read_configbyte(byte &data);
 void EEPROM_write_configbyte(byte data);
 void EEPROM_read_logo_byte(uint16_t address, byte& data);
 void EEPROM_write_logo_byte(uint16_t address, byte data);
+#if defined(RECORD)
+void EEPROM_read_record_configbyte(byte &data);
+void EEPROM_write_record_configbyte(byte data);
+#endif
 #endif
 
 #endif // EEPROM_H_INCLUDED

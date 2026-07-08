@@ -128,7 +128,11 @@ bool button_any() {
 bool button_play()
 {
   int sensorValue = readButtonADC();
+#ifdef RECORD
+  return(sensorValue>=btnADCPlayLow && sensorValue<btnADCRecLow);
+#else
   return(sensorValue>=btnADCPlayLow);
+#endif
 }
 
 bool button_stop()
@@ -155,15 +159,11 @@ bool button_up()
   return(sensorValue>=btnADCUpLow && sensorValue<btnADCDownLow);
 }
 
-#ifdef Use_Rec
+#ifdef RECORD
 bool button_rec()
 {
-  // Record is a dedicated digital pin even when the rest of the UI uses ADC buttons.
-  #ifdef btnRec
-    return (digitalRead(btnRec) == LOW);
-  #else
-    return false;
-  #endif
+  int sensorValue = readButtonADC();
+  return(sensorValue>=btnADCRecLow);
 }
 #endif
 
@@ -202,13 +202,9 @@ bool button_up() {
   return(digitalRead(btnUp) == LOW);
 }
 
-#ifdef Use_Rec
+#ifdef RECORD
 bool button_rec() {
-  #ifdef btnRec
-    return (digitalRead(btnRec) == LOW);
-  #else
-    return false;
-  #endif
+  return (digitalRead(btnRec) == LOW);
 }
 #endif
 

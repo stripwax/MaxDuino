@@ -6,7 +6,6 @@
 #define AYPLAY
 #define MenuBLK2A
 #define ID11CDTspeedup
-#define Use_Rec
 #define Use_c64
 #define ZX81SPEEDUP
 #define Use_MZF
@@ -26,6 +25,24 @@
         //#define Use_c114                // security cycles replaced with carrier tone
         //#define Use_c116                // floating point gap chunk for .hq.uef
         #define Use_c117                // data encoding format change for 300 bauds
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*  Configure your RECORDING settings - whether enabled, and if so which file types are supported for recording           */
+// Canonical recorder feature flags:
+//   RECORD                 master on/off switch for the recorder subsystem
+//   RECORD_TZX_ID15        generic TZX direct-recording mode
+//   RECORD_ZX_SPECTRUM     Spectrum-tuned TZX recording mode
+//   RECORD_CAS_MSX         native MSX .cas recording mode
+//   RECORD_SHARP_MZF       native Sharp MZ .mzf recording mode
+// Also (if LOAD_EEPROM_SETTINGS is defined), you need to specify what address to save the record settings (since EEPROM
+// size and how its used is device specific)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#define RECORD                         // master switch for all recording support
+    #define RECORD_TZX_ID15                // generic TZX direct-recording (ID15)
+    #define RECORD_ZX_SPECTRUM             // Spectrum-tuned TZX recording
+    #define RECORD_CAS_MSX                 // native MSX .cas recording
+    #define RECORD_SHARP_MZF               // native Sharp MZ .mzf recording
+    #define EEPROM_RECORD_CONFIG_BYTEPOS    254
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*                                   Configure your screen settings here                                                  */
