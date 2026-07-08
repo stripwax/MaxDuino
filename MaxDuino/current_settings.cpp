@@ -5,13 +5,96 @@
 #include "EEPROM_wrappers.h"
 
 word BAUDRATE = DEFAULT_BAUDRATE;
-// TODO really the following should only be defined ifndef NO_MOTOR
-// but the order of #includes is wrong and we only define NO_MOTOR later :-/
+
+#if defined(RECORD)
+static RecordFormat defaultRecordFormat()
+{
+  #if defined(RECORD) && defined(RECORD_TZX_ID15)
+    return RecordFormat::TZX_ID15;
+  #elif defined(RECORD) && defined(RECORD_ZX_SPECTRUM)
+    return RecordFormat::ZX_SPECTRUM;
+  #elif defined(RECORD) && defined(RECORD_CAS_MSX) && defined(Use_CAS)
+    return RecordFormat::CAS_MSX;
+  #elif defined(RECORD) && defined(RECORD_SHARP_MZF)
+    return RecordFormat::SHARP_MZF;
+  #else
+    return RecordFormat::TZX_ID15;
+  #endif
+}
+
+RecordFormat recordFormat = defaultRecordFormat();
+
+static void encodeRecordFormat(byte &settings)
+{
+  settings &= ~RECORD_FORMAT_MASK;
+  settings |= static_cast<byte>(recordFormat);
+}
+
+static bool decodeRecordFormat(const byte settings_byte, RecordFormat &format)
+{
+  byte record_format = settings_byte & RECORD_FORMAT_MASK;
+
+  switch (record_format) {
+    case static_cast<byte>(RecordFormat::TZX_ID15):
+      format = RecordFormat::TZX_ID15;
+      return true;
+    case static_cast<byte>(RecordFormat::CAS_MSX):
+      format = RecordFormat::CAS_MSX;
+      return true;
+    case static_cast<byte>(RecordFormat::ZX_SPECTRUM):
+      format = RecordFormat::ZX_SPECTRUM;
+      return true;
+    case static_cast<byte>(RecordFormat::SHARP_MZF):
+      format = RecordFormat::SHARP_MZF;
+      return true;
+    default:
+      return false;
+  }
+}
+#endif
+
+#ifndef NO_MOTOR
 bool mselectMask = DEFAULT_MSELECTMASK;
+#endif
 bool TSXCONTROLzxpolarityUEFSWITCHPARITY = DEFAULT_TSXzxpUEF;
 bool skip2A = DEFAULT_SKIP2A;
 
 #ifdef LOAD_EEPROM_SETTINGS
+
+  #if defined(RECORD)
+  static bool isRecordFormatSupported(const RecordFormat format)
+  {
+    switch (format) {
+      case RecordFormat::TZX_ID15:
+        #if defined(RECORD) && defined(RECORD_TZX_ID15)
+          return true;
+        #else
+          return false;
+        #endif
+      case RecordFormat::CAS_MSX:
+        #if defined(RECORD) && defined(RECORD_CAS_MSX) && defined(Use_CAS)
+          return true;
+        #else
+          return false;
+        #endif
+      case RecordFormat::ZX_SPECTRUM:
+        #if defined(RECORD) && defined(RECORD_ZX_SPECTRUM)
+          return true;
+        #else
+          return false;
+        #endif
+      case RecordFormat::SHARP_MZF:
+        #if defined(RECORD) && defined(RECORD_SHARP_MZF)
+          return true;
+        #else
+          return false;
+        #endif
+    }
+
+    return false;
+  }
+  #endif
+
 void updateEEPROM()
 {
     /* Setting Byte: 
@@ -55,6 +138,13 @@ void updateEEPROM()
     #endif
 
     EEPROM_write_configbyte(settings);
+
+    #if defined(RECORD)
+    byte recordsettings;
+    encodeRecordFormat(recordsettings);
+    EEPROM_write_record_configbyte(recordsettings);
+    #endif
+
     #ifdef Use_CAS
     setCASBaud();
     #endif
@@ -92,5 +182,23 @@ void loadEEPROM()
     if(bitRead(settings,4)) {
       BAUDRATE=3850;  
     }
+    
+    #if defined(RECORD)
+    byte rawRecordSettings;
+    EEPROM_read_record_configbyte(rawRecordSettings);
+    RecordFormat loadedRecordFormat;
+    if (decodeRecordFormat(rawRecordSettings, loadedRecordFormat) &&
+        isRecordFormatSupported(loadedRecordFormat)) {
+      recordFormat = loadedRecordFormat;
+    }
+    else
+    {
+      recordFormat = defaultRecordFormat();
+    }
+    #endif
+
+    #if defined(Use_CAS)
+      setCASBaud();
+    #endif
 }
 #endif

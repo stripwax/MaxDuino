@@ -10,7 +10,6 @@
 #define MenuBLK2A
 #define ID11CDTspeedup
 //#define Use_c64
-//#define Use_Rec  for atmega 4808/4809
 //#define Use_MTX
 #define ZX81SPEEDUP
 //#define Use_MZF

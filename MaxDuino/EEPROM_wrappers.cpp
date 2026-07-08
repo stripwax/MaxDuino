@@ -20,6 +20,16 @@
     EEPROM_put(EEPROM_CONFIG_BYTEPOS, data);
   }
 
+  #if defined(RECORD)
+  void EEPROM_read_record_configbyte(byte &data) {
+    EEPROM_get(EEPROM_RECORD_CONFIG_BYTEPOS, data);
+  }
+
+  void EEPROM_write_record_configbyte(byte data) {
+    EEPROM_put(EEPROM_RECORD_CONFIG_BYTEPOS, data);
+  }
+  #endif
+
   void EEPROM_read_logo_byte(uint16_t address, byte& data) {
     EEPROM_get(address, data);
   }

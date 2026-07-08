@@ -11,7 +11,6 @@
 #define AYPLAY
 #define MenuBLK2A
 #define ID11CDTspeedup
-//#define Use_Rec
 #define Use_c64
 #define ZX81SPEEDUP
 #define Use_MZF
