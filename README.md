@@ -10,6 +10,7 @@ MaxDuino firmware is free and open-source.
 
 ## LATEST NEWS
 
+* V4.00 Adds full-featured recording support!
 * V3.08 Adds support for SEEED XIAO RP2040 and SEEED XIAO RP2350 boards
 * V3.07 Adds support for ESP32-WROOM boards (D1 Mini32)
 * V3.06 Adds support for Raspberry Pi Pico boards
@@ -49,6 +50,17 @@ MaxDuino firmware is free and open-source.
 
 More information at [FILE TYPES](./FILE_TYPES.md)
 
+## RECORDING FILETYPES SUPPORTED BY MAXDUINO
+
+This feature is introduced in v4.00 onwards, and is initially enabled only for the ATMEGA4808/ATMEGA4809 MCUs (Thinary Nano Every or Arduino Nano Every) .  Using the recording feature you can capture and save to SD in one of the following formats:
+
+* Generic TZX ID15 (.TZX)
+* ZX Spectrum optimised TZX ID15 (.TZX)
+* Sharp MZ (.MZF)
+* MSX (.CAS)
+
+For more information, please read [RECORDING](./RECORDING.md)
+
 ## SUPPORTED MAXDUINO/TZXDUINO DEVICES
 
 Various MaxDuino and TZXDuino devices have been manufactured over the last 15 years or so, and these have been constructed with different combinations of hardware components (microcontroller type, LCD type, etc).  We provide MaxDuino software intended to be compatible with all of them and more.
@@ -67,7 +79,7 @@ Various MaxDuino and TZXDuino devices have been manufactured over the last 15 ye
 *  STMicroelectonics STM32 (experimental, needs testing)
 *  .. and others
 
-The above are included in GitHub releases: https://github.com/stripwax/MaxDuino/releases
+Prebuilt downloadable firmware files for all of the above are available in the GitHub releases page: https://github.com/stripwax/MaxDuino/releases
 
 More information at [MAXDUINO DEVICES](./MAXDUINO_DEVICES.md)
 
