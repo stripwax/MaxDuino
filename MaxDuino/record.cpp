@@ -23,7 +23,7 @@ static volatile uint16_t pagePos = 0;
 static volatile uint8_t activePage = 0;
 static volatile bool pageReadyA = false;
 static volatile bool pageReadyB = false;
-static volatile uint32_t droppedBytes = 0;
+static uint32_t droppedBytes = 0;
 
 static bool gRecording = false;
 static bool gRecordPaused = false;
@@ -234,26 +234,26 @@ static constexpr uint8_t kMsxMinShortCycle = 2;
 static constexpr uint8_t kMsxMaxHeaderShortCycle = 40;
 static constexpr uint8_t kMsxMinBitCellsBeforeHeader = 50;
 
-static volatile uint16_t msxRecordCenter = 512;
-static volatile uint8_t msxRecordLevel = 0;
-static volatile uint8_t msxSamplesSinceEdge = 0;
-static volatile uint16_t msxHeaderShortRun = 0;
-static volatile uint16_t msxHeaderShortSum = 0;
-static volatile uint8_t msxShortCycleAvg = 0;
-static volatile bool msxHeaderArmed = false;
-static volatile bool msxHeaderPending = false;
-static volatile bool msxBlockOpen = false;
-static volatile bool msxInByte = false;
-static volatile uint8_t msxCurrentByte = 0;
-static volatile uint8_t msxFrameBitIndex = 0;
-static volatile uint8_t msxBitCellCount = 0;
-static volatile uint8_t msxBitEdgeCount = 0;
-static volatile uint8_t msxExpectedShortMin = 0;
-static volatile uint8_t msxExpectedShortMax = 0;
-static volatile uint8_t msxExpectedLongMin = 0;
-static volatile uint8_t msxExpectedLongMax = 0;
-static volatile uint8_t msxSilenceSamples = 0;
-static volatile uint16_t msxHeaderShortSamplesNeeded = 4000;
+static uint16_t msxRecordCenter = 512;
+static uint8_t msxRecordLevel = 0;
+static uint8_t msxSamplesSinceEdge = 0;
+static uint16_t msxHeaderShortRun = 0;
+static uint16_t msxHeaderShortSum = 0;
+static uint8_t msxShortCycleAvg = 0;
+static bool msxHeaderArmed = false;
+static bool msxHeaderPending = false;
+static bool msxBlockOpen = false;
+static bool msxInByte = false;
+static uint8_t msxCurrentByte = 0;
+static uint8_t msxFrameBitIndex = 0;
+static uint8_t msxBitCellCount = 0;
+static uint8_t msxBitEdgeCount = 0;
+static uint8_t msxExpectedShortMin = 0;
+static uint8_t msxExpectedShortMax = 0;
+static uint8_t msxExpectedLongMin = 0;
+static uint8_t msxExpectedLongMax = 0;
+static uint8_t msxSilenceSamples = 0;
+static uint16_t msxHeaderShortSamplesNeeded = 4000;
 
 static inline void msx_restore_header_detection() {
   msxShortCycleAvg = 0;
@@ -512,28 +512,28 @@ enum class MzfPulseKind : uint8_t {
 };
 
 static byte mzfRecordHeader[128];
-static volatile MzfRecStage mzfRecordStage = MzfRecStage::SEEK_LTM;
-static volatile uint8_t mzfRecordLevel = 0;
-static volatile uint8_t mzfSamplesSinceEdge = 0;
-static volatile uint8_t mzfPendingHalfKind = static_cast<uint8_t>(MzfPulseKind::INVALID);
-static volatile bool mzfHavePendingHalf = false;
-static volatile uint16_t mzfGapShortRun = 0;
-static volatile uint8_t mzfMarkerCount = 0;
-static volatile uint8_t mzfSeekPhase = 0;
-static volatile uint8_t mzfBitMask = 0x80;
-static volatile uint8_t mzfCurrentByte = 0;
-static volatile bool mzfExpectLeadLong = true;
-static volatile uint8_t mzfHeaderIndex = 0;
-static volatile uint16_t mzfHeaderChecksumCalc = 0;
-static volatile uint16_t mzfChecksumRead = 0;
-static volatile uint8_t mzfChecksumBytesRead = 0;
+static MzfRecStage mzfRecordStage = MzfRecStage::SEEK_LTM;
+static uint8_t mzfRecordLevel = 0;
+static uint8_t mzfSamplesSinceEdge = 0;
+static uint8_t mzfPendingHalfKind = static_cast<uint8_t>(MzfPulseKind::INVALID);
+static bool mzfHavePendingHalf = false;
+static uint16_t mzfGapShortRun = 0;
+static uint8_t mzfMarkerCount = 0;
+static uint8_t mzfSeekPhase = 0;
+static uint8_t mzfBitMask = 0x80;
+static uint8_t mzfCurrentByte = 0;
+static bool mzfExpectLeadLong = true;
+static uint8_t mzfHeaderIndex = 0;
+static uint16_t mzfHeaderChecksumCalc = 0;
+static uint16_t mzfChecksumRead = 0;
+static uint8_t mzfChecksumBytesRead = 0;
 static volatile bool mzfHeaderAccepted = false;
 static volatile bool mzfHeaderOutputPending = false;
-static volatile bool mzfHeaderWritten = false;
-static volatile uint16_t mzfFileLength = 0;
-static volatile uint16_t mzfFileBytesDecoded = 0;
-static volatile uint16_t mzfFileChecksumCalc = 0;
-static volatile bool mzfDecodeComplete = false;
+static bool mzfHeaderWritten = false;
+static uint16_t mzfFileLength = 0;
+static uint16_t mzfFileBytesDecoded = 0;
+static uint16_t mzfFileChecksumCalc = 0;
+static bool mzfDecodeComplete = false;
 
 static inline uint8_t mzf_popcount8(byte v) {
   v = v - ((v >> 1) & 0x55);
@@ -833,13 +833,13 @@ static const uint8_t kTzxHeader[10] = {
 
 static volatile uint8_t tzxBitByte = 0;
 static volatile uint8_t tzxBitCount = 0;
-static volatile uint16_t tzxRecordCenter = 512;
-static volatile uint16_t tzxRecordFiltered = 512;
-static volatile uint8_t tzxRecordDeviation = 8;
-static volatile uint16_t tzxRecordFloor = 512;
-static volatile uint16_t tzxRecordCeil = 512;
-static volatile uint8_t tzxRecordLevel = 0;
-static volatile bool tzxRecordCenterPrimed = false;
+static uint16_t tzxRecordCenter = 512;
+static uint16_t tzxRecordFiltered = 512;
+static uint8_t tzxRecordDeviation = 8;
+static uint16_t tzxRecordFloor = 512;
+static uint16_t tzxRecordCeil = 512;
+static uint8_t tzxRecordLevel = 0;
+static bool tzxRecordCenterPrimed = false;
 
 static inline void tzx_reset_capture_state() {
   tzxBitByte = 0;
