@@ -706,10 +706,14 @@ static inline void mzf_process_decoded_byte(const byte value) {
 
     case MzfRecStage::CHKH1:
     case MzfRecStage::CHKH2:
+    case MzfRecStage::CHKF1:
       mzfChecksumRead = (uint16_t)((mzfChecksumRead << 8) | value);
       mzfChecksumBytesRead++;
       if (mzfChecksumBytesRead >= 2) {
-        mzf_finish_header_checksum();
+        if (mzfRecordStage == MzfRecStage::CHKF1)
+          mzf_finish_file_checksum();
+        else
+          mzf_finish_header_checksum();
       }
       return;
 
@@ -724,14 +728,6 @@ static inline void mzf_process_decoded_byte(const byte value) {
         mzfChecksumRead = 0;
         mzfChecksumBytesRead = 0;
         mzf_reset_byte_decoder();
-      }
-      return;
-
-    case MzfRecStage::CHKF1:
-      mzfChecksumRead = (uint16_t)((mzfChecksumRead << 8) | value);
-      mzfChecksumBytesRead++;
-      if (mzfChecksumBytesRead >= 2) {
-        mzf_finish_file_checksum();
       }
       return;
 
@@ -1062,31 +1058,13 @@ inline void isr_tzx()
   bc++;
 
   if (bc >= 8) {
-    uint16_t pos = pagePos;
-    uint8_t* p = active_page_ptr();
-    p[pos] = bb;
-    pos++;
-
-    bb = 0;
-    bc = 0;
-
-    if (pos >= kRecordPageSize) {
-      if (other_page_ready()) {
-        droppedBytes++;
-        pos = kRecordPageSize - 1;
-      } else {
-        pagePos = pos;
-        tzxBitByte = bb;
-        tzxBitCount = bc;
-        mark_active_ready_and_swap();
-        return;
-      }
-    }
-    pagePos = pos;
+    tzxBitByte = 0;
+    tzxBitCount = 0;
+    queue_output_byte(bb);
+  } else {
+    tzxBitByte = bb;
+    tzxBitCount = bc;
   }
-
-  tzxBitByte = bb;
-  tzxBitCount = bc;
 }
 #endif
 
