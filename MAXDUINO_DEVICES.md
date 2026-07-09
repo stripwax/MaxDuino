@@ -21,6 +21,9 @@ MaxDuino firmware is itself an open-source project and remains free for everybod
 * MaxDuino Every (from You Make Robots)
   * Nano Every + 128x64 OLED + tape motor control
   * Release build available: `NanoEvery_MaxduinoUltimate`
+* MaxDuino Everstore (from You Make Robots)
+  * Indentical to MaxDuino Ultimate/Every but additionally includes the recording circuit and additional audio input.
+  * The above firmware release builds (Thinary or NanoEvery) are already compatible with MaxDuino Everstore and include the Recording functionality
 * MaxDuino and Miniduino - ATMEGA328P based (from Antonio Villena)
   * (This entry is missing details, can you supply more info?)
 * MaxDuino and Miniduino - STM32 based (from Antonio Villena)
