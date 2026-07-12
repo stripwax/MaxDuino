@@ -109,9 +109,10 @@
 
 //#define COMPRESS_REPEAT_ROW
 //#define EEPROM_LOGO_COMPRESS
-#define LOAD_MEM_LOGO             // legacy, logo is not in EEPROM then wasting memory.
+#define LOAD_MEM_LOGO             // 4808/4809 don't have as much eeprom as other devices, and they have more flash, so usually you load mem logo, not eeprom
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
 //#define LOAD_EEPROM_LOGO 
+#define LOGO_FADE_IN 2500 /* Number of milliseconds for logo animation */
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO

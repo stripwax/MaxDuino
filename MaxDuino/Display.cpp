@@ -259,7 +259,171 @@ char fline[17];
       }
     }
   }
-    
+
+  #if defined(LOAD_EEPROM_LOGO) || defined(LOAD_MEM_LOGO)
+  #if defined(LOGO_FADE_IN)
+  byte attract_mask(word screen_address, byte frame)
+  {
+    // compute some bitwise mask that converges at 255 for all bits but
+    // could otherwise be any kind of pattern based on frame number and screen address
+    // screen_address in 0..1023
+    // frame in 0..128
+    if (frame<64)
+    {
+      if((screen_address&0xff)<128)
+        return frame*2 <= (screen_address&0xff)?0:(screen_address&0x01)?170:85;
+      else
+        return frame*2 <= (255-(screen_address&0xff))?0:(screen_address&0x01)?170:85;
+    }
+    else
+    {
+      if((screen_address&0xff)<128)
+        return (frame-64)*2 <= (screen_address&0xff)?(screen_address&0x01)?170:85:255;
+      else
+        return (frame-64)*2 <= (255-(screen_address&0xff))?(screen_address&0x01)?170:85:255;
+    }
+  }
+  #endif
+
+  void load_logo()
+  {
+    // read logo from eeprom and write to screen
+    byte t;
+    #if defined(LOGO_FADE_IN)
+    unsigned long start_time = millis();
+    for(byte frame=0; frame<=128;)
+    {
+    #endif
+
+    #if defined(OLED1306_128_64) || defined(video64text32)
+      for(byte j=0;j<8;j++) {
+    #else
+      for(byte j=0;j<4;j++) {
+    #endif
+      setXY(0,j);
+      for(byte i=0;i<128;i++)     // show 128* 32 Logo
+      {
+
+      #if defined(LOAD_EEPROM_LOGO)
+        #if not defined(EEPROM_LOGO_COMPRESS)
+          EEPROM_read_logo_byte(j*128+i, t);
+        #elif defined(EEPROM_LOGO_COMPRESS)
+          if (i%2 == 0){
+            t=0;
+            #ifdef OLED1306_128_64
+              if (j%2 == 0) {
+                byte ril=0;
+                byte ib=0;
+                EEPROM_read_logo_byte((j/2)*64+i/2, ril);
+
+                for(ib=0;ib<4;ib++) {
+                  if (bitRead (ril,ib)) {
+                    t |= (1 << ib*2);
+                    #ifdef COMPRESS_REPEAT_ROW
+                      t |= (1 << (ib*2)+1);
+                    #endif
+                  }
+                }
+              } else {
+                byte rih=0;
+                byte ic=0;
+                EEPROM_read_logo_byte((j/2)*64+i/2, rih);
+
+                for(ic=4;ic<8;ic++) {
+                  if (bitRead (rih,ic)) {
+                    t |= (1 << (ic-4)*2);
+                    #ifdef COMPRESS_REPEAT_ROW
+                      t |= (1 << ((ic-4)*2)+1);
+                    #endif
+                  }
+                }
+              }
+            #else
+              EEPROM_read_logo_byte(j*64+i/2, t);
+            #endif
+          }
+        #endif
+      #else
+        t = pgm_read_byte(logo+j*128+i);
+      #endif
+
+        #if defined(LOGO_FADE_IN)
+        byte mask = attract_mask(j*128+i, frame);
+        t &= mask;
+        #endif
+        SendByte(t);
+      }  
+    }
+    #if defined(LOGO_FADE_IN)
+    // LOGO_FADE_IN defines the number of millseconds for the animation
+    const unsigned long millis_per_frame = (LOGO_FADE_IN/128);
+    byte next_frame = ((millis() - start_time) / millis_per_frame); // if we could do 64 fps the animation takes 2 seconds
+    if (next_frame == frame)
+    {
+      delay(millis_per_frame);
+      next_frame = frame+1;
+    } 
+    if (frame < 128 && next_frame > 128)
+      // always make sure we hit final frame
+      next_frame = 128;
+    frame = next_frame;
+    }  
+    #endif
+  }
+  #endif // LOAD_EEPROM_LOGO || LOAD_MEM_LOGO
+
+  #if defined(RECORD_EEPROM_LOGO)
+  void record_eeprom_logo()
+  {
+    // read logo from firmware and write to eeprom
+    EEPROM_write_logo_begin();
+    #if defined(OLED1306_128_64) || defined(video64text32)
+      for(byte j=0;j<8;j++) {
+    #else
+      for(byte j=0;j<4;j++) {
+    #endif
+      setXY(0,j);
+      for(byte i=0;i<128;i++)     // show 128* 32 Logo
+      {
+        #if not defined(EEPROM_LOGO_COMPRESS)
+          EEPROM_write_logo_byte(j*128+i, pgm_read_byte(logo+j*128+i));
+        #else
+          if (i%2 == 0){
+            #ifdef OLED1306_128_64
+              if (j%2 == 0){
+                byte nl=0;
+                byte rnl=0;
+                byte nb=0;
+                rnl = pgm_read_byte(logo+j*128+i);
+                for(nb=0;nb<4;nb++) {
+                  if (bitRead (rnl,nb*2)) {
+                    nl |= (1 << nb);
+                  }
+                }
+                byte nh=0;
+                byte rnh=0;
+                byte nc=0;
+                rnh = pgm_read_byte(logo+(j+1)*128+i);
+                for(nc=0;nc<4;nc++) {
+                  if (bitRead (rnh,nc*2)) {
+                    nh |= (1 << nc);
+                  }
+                }
+
+                EEPROM_write_logo_byte((j/2)*64+i/2,nl+nh*16);
+              } 
+
+            #else
+              EEPROM_write_logo_byte(j*64+i/2, pgm_read_byte(logo+j*128+i));
+            #endif
+          }
+        #endif   
+      }  
+    }
+    EEPROM_write_logo_end();
+  }
+  #endif
+
   //==========================================================//
   // Inits oled and draws logo at startup
   void init_OLED(void)
@@ -342,117 +506,17 @@ char fline[17];
     // sendcommand(0xA6); // SSD1306_NORMALDISPLAY
     // sendcommand(0x2E); // SSD1306_DEACTIVATE_SCROLL
 
-    #if defined(LOAD_EEPROM_LOGO)
-      byte t;
-    #endif
-
-    #if defined(RECORD_EEPROM_LOGO)
-    EEPROM_write_logo_begin();
-    #endif
-
-    #if defined(OLED1306_128_64) || defined(video64text32)
-      for(byte j=0;j<8;j++) {
-    #else
-      for(byte j=0;j<4;j++) {
-    #endif
-      setXY(0,j);
-      for(byte i=0;i<128;i++)     // show 128* 32 Logo
-      {
-        #ifdef LOAD_MEM_LOGO
-          SendByte(pgm_read_byte(logo+j*128+i));
-        #endif
-
-        #if defined(RECORD_EEPROM_LOGO) && not defined(EEPROM_LOGO_COMPRESS)
-          EEPROM_write_logo_byte(j*128+i, pgm_read_byte(logo+j*128+i));
-        #endif
-
-        #if defined(RECORD_EEPROM_LOGO) && defined(EEPROM_LOGO_COMPRESS)
-          if (i%2 == 0){
-            #ifdef OLED1306_128_64
-              if (j%2 == 0){
-                byte nl=0;
-                byte rnl=0;
-                byte nb=0;
-                rnl = pgm_read_byte(logo+j*128+i);
-                for(nb=0;nb<4;nb++) {
-                  if (bitRead (rnl,nb*2)) {
-                    nl |= (1 << nb);
-                  }
-                }
-                byte nh=0;
-                byte rnh=0;
-                byte nc=0;
-                rnh = pgm_read_byte(logo+(j+1)*128+i);
-                for(nc=0;nc<4;nc++) {
-                  if (bitRead (rnh,nc*2)) {
-                    nh |= (1 << nc);
-                  }
-                }
-
-                EEPROM_write_logo_byte((j/2)*64+i/2,nl+nh*16);
-              } 
-
-            #else
-              EEPROM_write_logo_byte(j*64+i/2, pgm_read_byte(logo+j*128+i));
-            #endif
-          }
-        #endif   
-
-        #if defined(LOAD_EEPROM_LOGO) && not defined(EEPROM_LOGO_COMPRESS)
-          EEPROM_read_logo_byte(j*128+i, t);
-          SendByte(t);
-        #endif
-
-        #if defined(LOAD_EEPROM_LOGO) && defined(EEPROM_LOGO_COMPRESS)
-          if (i%2 == 0){
-            t=0;
-            #ifdef OLED1306_128_64
-              if (j%2 == 0) {
-                byte ril=0;
-                byte ib=0;
-                EEPROM_read_logo_byte((j/2)*64+i/2, ril);
-
-                for(ib=0;ib<4;ib++) {
-                  if (bitRead (ril,ib)) {
-                    t |= (1 << ib*2);
-                    #ifdef COMPRESS_REPEAT_ROW
-                      t |= (1 << (ib*2)+1);
-                    #endif
-                  }
-                }
-              } else {
-                byte rih=0;
-                byte ic=0;
-                EEPROM_read_logo_byte((j/2)*64+i/2, rih);
-
-                for(ic=4;ic<8;ic++) {
-                  if (bitRead (rih,ic)) {
-                    t |= (1 << (ic-4)*2);
-                    #ifdef COMPRESS_REPEAT_ROW
-                      t |= (1 << ((ic-4)*2)+1);
-                    #endif
-                  }
-                }
-              }
-            #else
-              EEPROM_read_logo_byte(j*64+i/2, t);
-            #endif
-          }
-          SendByte(t);
-        #endif   
-    
-      }  
-    }
-
-    #if defined(RECORD_EEPROM_LOGO)
-    EEPROM_write_logo_end();
-    #endif
-
     #if defined(LOAD_MEM_LOGO) || defined(LOAD_EEPROM_LOGO)
       sendcommand(0xAF);    //display on
+      load_logo();
+    #endif
+
+    #if defined(RECORD_EEPROM_LOGO)
+    record_eeprom_logo();
     #endif
   }
 
+  
 //==========================================================//
 //END #if defined(OLED1306)
 

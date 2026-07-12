@@ -7,6 +7,7 @@
 //  exposing the filesystem from your SD card)
 // e.g. This works well with Seeeduino Xiao M0 but cannot be used with many standard AVR devices
 #define USB_STORAGE_ENABLED
+#define I2CCLOCK 1000000
 
 //**************************************  OPTIONAL USE TO SAVE SPACE  ***************************************************//
 #define Use_MENU                          // removing menu saves space
@@ -98,9 +99,10 @@
 
 //#define COMPRESS_REPEAT_ROW
 //#define EEPROM_LOGO_COMPRESS
-#define LOAD_MEM_LOGO             // Xiao M0 doesn't have eeprom
+#define LOAD_MEM_LOGO
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
-//#define LOAD_EEPROM_LOGO 
+//#define LOAD_EEPROM_LOGO          // Xiao M0 uses emulated eeprom and a custom build script to preserve across reflash, so you can now use LOAD_EEPROM_LOGO if you want to!
+#define LOGO_FADE_IN 2500 /* Number of milliseconds for logo animation */
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO

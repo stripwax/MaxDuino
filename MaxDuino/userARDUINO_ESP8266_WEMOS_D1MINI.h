@@ -100,6 +100,7 @@
 #define LOAD_MEM_LOGO             
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
 //#define LOAD_EEPROM_LOGO 
+#define LOGO_FADE_IN 2500 /* Number of milliseconds for logo animation */
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO
