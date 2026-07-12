@@ -9,6 +9,9 @@
 #ifdef Use_TRS80
 #include "trs80cas.h"
 #endif
+#ifdef Use_CG
+#include "cg.h"
+#endif
 #ifdef Use_MZF
   #include "mzf.h"
 #endif
@@ -93,6 +96,11 @@ else if (!strcasecmp_P(filenameExt, PSTR("caq"))) {
 #ifdef Use_MTX
   else if (!strcasecmp_P(filenameExt, PSTR("mtx"))) {
     mtx_init();
+  }
+#endif
+#ifdef Use_CG
+  else if ((!strcasecmp_P(filenameExt, PSTR("cgc")) || !strcasecmp_P(filenameExt, PSTR("cas"))) && cgcas_detect_and_init()) {
+    return;
   }
 #endif
 #ifdef Use_CAS

@@ -17,6 +17,7 @@
 //#define Use_MZF
 //#define Use_MTX
 //#define Use_CAQ
+//#define Use_CG                      // Colour Genie .cas/.cgc files playback
 //#define Use_c64
 //#define tapORIC
 //    #define ORICSPEEDUP

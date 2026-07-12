@@ -39,6 +39,9 @@
 #ifdef Use_TRS80
 #include "trs80cas.h"
 #endif
+#ifdef Use_CG
+#include "cg.h"
+#endif
 
 //Temporarily store for a pulse period before loading it into the buffer.
 word currentPeriod=1;
@@ -882,6 +885,12 @@ void TZXProcess() {
       #if defined(Use_CAS) && defined(Use_TRS80)
         case BLOCKID::TRS80CAS:
           trs80cas_process();
+          break;
+      #endif
+
+      #ifdef Use_CG
+        case BLOCKID::CGCAS:
+          cgcas_process();
           break;
       #endif
 
