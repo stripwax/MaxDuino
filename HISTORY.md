@@ -14,6 +14,7 @@
 
 # HISTORY NOTES
 
+* V4.01 Adds EACA EG2000 Colour Genie .CAS/.CGC implementation
 * V4.00 Adds full-featured recording support!
 * V3.08 Adds support for SEEED XIAO RP2040 and SEEED XIAO RP2350 boards
 * V3.07 Adds support for ESP32-WROOM boards (D1 Mini32)

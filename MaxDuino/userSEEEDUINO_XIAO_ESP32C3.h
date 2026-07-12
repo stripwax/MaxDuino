@@ -23,7 +23,7 @@
 #define Use_MZF
 #define Use_MTX
 #define Use_CAQ
-//#define Use_CG                      // Colour Genie .cas/.cgc files playback
+#define Use_CG                      // Colour Genie .cas/.cgc files playback
 #define tapORIC
     #define ORICSPEEDUP
 #define Use_CAS                           // .cas files playback on MSX / Dragon / CoCo Tandy computers

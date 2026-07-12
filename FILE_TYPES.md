@@ -164,3 +164,9 @@ We support Sharp MZ tape images stored as `.mzf`, `.mzt`, or `.m12`.
 ### .MTX
 
 We support MTX files but only test in a emulator as of now. 
+
+## EACA EG2000 Colour Genie
+
+### .CAS / CGC
+
+We support Color Genie .CAS files (which are not related to other .CAS files), which can also have .CGC extension.  These have a fixed 1200 baud.  Accuracy and reliability tested via converting MaxDuino output to .wav and loading into Genieous emulator.
