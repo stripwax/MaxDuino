@@ -10,6 +10,11 @@
 #error Cannot define both BLOCKID_INTO_MEM and BLOCKID_NOMEM_SEARCH
 #endif
 
+#if defined(DoubleFont) && !defined(XY2)
+#error DoubleFont can only be used with XY2 , not XY
+#endif
+
+
 #ifdef RECORD
 
 #if defined(RECORD_CAS_MSX) && !defined(Use_CAS)
