@@ -81,6 +81,26 @@ char fline[17];
     mx_i2c_end();         
   }   
 
+  #if defined(EEPROM_LOGO_BMP_LOADER)
+  //==========================================================//
+  // Set the address to a pixel X and pixelrow row
+  void setByteXY(unsigned char x, unsigned char row)
+  {
+    mx_i2c_start(OLED_address);
+    mx_i2c_write(0x80);  
+    mx_i2c_write(0xb0+(row)); //set page address (row)
+    mx_i2c_write(0x80); //command mode
+    #ifdef OLED1106_1_3            
+      mx_i2c_write( 0x02+(x%16)); //set low col address
+    #else
+      mx_i2c_write( 0x00+(x%16)); //set low col address
+    #endif
+    mx_i2c_write(0x80); 
+    mx_i2c_write(0x10+(x/16)); //set high col address 
+    mx_i2c_end();         
+  }
+  #endif
+
   //==========================================================//
   // Prints a string regardless the cursor position.
   void sendStr(const __FlashStringHelper *string)

@@ -84,15 +84,11 @@ word TickToUs(word ticks) {
 void UniPlay(){
   // initialise scale and period based on current BAUDRATE
   // (although these could be overridden later e.g. during checkForEXT, depending on file type)
+  // on entry, the variable named "entry" is a file handle already opened for the file you want to play
+  // and filename and filenameExt are already set
   #ifdef Use_CAS
   setCASBaud();
   #endif
-
-  // on entry, currentFile is already pointing to the file entry you want to play
-  // and fileName is already set
-  if(!entry.open(currentDir, currentFile, O_RDONLY)) {
-  //  printtextF(PSTR("Error Opening File"),0);
-  }
 
 #ifdef ID11CDTspeedup
   AMScdt = false;
@@ -101,8 +97,7 @@ void UniPlay(){
   currentBit=0;                               // fallo reproducción de .tap tras .tzx
   bytesRead=0;                                //start of file
   currentTask=TASK::INIT;                     //
-  const char * filenameExt = strrchr(fileName,'.') + 1;
-  checkForEXT(filenameExt);
+  checkForEXT();
   isStopped=false;
   
   clearBuffer();

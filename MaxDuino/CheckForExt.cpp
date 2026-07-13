@@ -25,7 +25,7 @@
   #include "c64tap.h"
 #endif
 
-void checkForEXT(const char * const filenameExt) {
+void checkForEXT() {
   //Check for .xxx file extension as these have no header
 
 #ifdef Use_CAS
@@ -127,6 +127,6 @@ else if (!strcasecmp_P(filenameExt, PSTR("caq"))) {
   else if (!strcasecmp_P(filenameExt, PSTR("cdt"))) {
     AMScdt = true;
   }
-#endif  
+#endif
 }
 

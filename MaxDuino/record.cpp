@@ -112,7 +112,7 @@ static void drawRecordingScreenOnce()
 }
 
 static bool has_ext_ci() {
-  const char * filenameExt = strrchr(fileName,'.') + 1;
+  filenameExt = strrchr(fileName,'.') + 1;
   return (strcasecmp_P(filenameExt, ext3) == 0);
 }
 

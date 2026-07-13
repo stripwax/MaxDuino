@@ -1,0 +1,8 @@
+#ifndef EEPROM_BMP_LOADER_H_INCLUDED
+#define EEPROM_BMP_LOADER_H_INCLUDED
+
+#ifdef EEPROM_LOGO_BMP_LOADER
+bool EEPROM_bmp_load_file();
+#endif
+
+#endif // EEPROM_BMP_LOADER_H_INCLUDED
