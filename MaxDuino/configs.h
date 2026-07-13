@@ -61,17 +61,17 @@
     #ifndef CONFIGFILE
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_XIAO_ESP32C3
     #endif
-    #define CONFIG_PATH userSEEEDUINO_XIAO_ESP32C3
+    #define CONFIG_PATH userSEEEDUINO_XIAO_ESP32C3config
   #elif defined(ARDUINO_ESP8266_WEMOS_D1MINI)
     #ifndef CONFIGFILE
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_WEMOS_D1MINI_ESP8266
     #endif
-    #define CONFIG_PATH userARDUINO_ESP8266_WEMOS_D1MINI
+    #define CONFIG_PATH userARDUINO_ESP8266_WEMOS_D1MINIconfig
   #elif defined(__AVR_ATmega32U4__)
     #ifndef CONFIGFILE
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_ATMEGA32U4
     #endif
-    #define CONFIG_PATH userATMEGA32U4
+    #define CONFIG_PATH userATMEGA32U4config
   #elif defined(__AVR_ATmega328P__)
     #include "userconfig.h" // legacy
     #ifndef CONFIGFILE
