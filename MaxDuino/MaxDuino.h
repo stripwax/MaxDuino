@@ -137,10 +137,11 @@ extern bool pauseOn;                   //Pause state
 extern byte start;                     //Currently playing flag
 
 #ifdef BLKBIGSIZE
-  extern word block;
+typedef word block_type;
 #else
-  extern byte block;
+typedef byte block_type;
 #endif
+extern block_type block;
 
 extern byte jblks;
 extern byte oldMinBlock;

@@ -101,12 +101,7 @@ char PlayBytes[17];
 unsigned long blockOffset[maxblock];
 byte blockID[maxblock];
 #endif
-
-#ifdef BLKBIGSIZE
-  word block = 0;
-#else
-  byte block = 0;
-#endif
+block_type block = 0;
 
 byte jblks = 1;
 byte oldMinBlock = 0;
@@ -1109,11 +1104,7 @@ void GetAndPlayBlock()
         bytesRead=10;   //TZX with blocks skip TZXHeader
         break;
     }       
-    #ifdef BLKBIGSIZE
-      unsigned int i = 0;
-    #else
-      byte i = 0;
-    #endif      
+    block_type i = 0;
 
     while (i<= block) {
       if(ReadByte()) {      
