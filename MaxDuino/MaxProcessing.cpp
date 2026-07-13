@@ -72,7 +72,6 @@ word sync2Length=0;
 word zeroPulse=0;
 word onePulse=0;
 byte uefpassforZero=2;
-//byte passforOne=4;
 byte jtapflag=255;
 byte jpass=0;
 
@@ -119,7 +118,6 @@ void UniPlay(){
   count_r = 255;                                //End of file buffer flush 
   EndOfFile=false;
   uefpassforZero=2;
-  //passforOne=4;
   jtapflag=255;
 
   reset_output_state();

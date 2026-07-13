@@ -28,7 +28,6 @@ extern word sync2Length;
 extern word zeroPulse;
 extern word onePulse;
 extern byte uefpassforZero;
-//extern byte passforOne;
 
 
 #ifdef ID11CDTspeedup

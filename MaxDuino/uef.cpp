@@ -283,11 +283,9 @@ void tzx_process_taskid_uef_processchunkid() {
         if(ReadWord()) {
           if (outWord == 300) {
             uefpassforZero = 8;
-            //passforOne = 16;
             currentTask = TASK::GETCHUNKID;
           } else {
             uefpassforZero = 2;
-            //passforOne =  4;              
             currentTask = TASK::GETCHUNKID;
           }     
         }           
