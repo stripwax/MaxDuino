@@ -262,7 +262,7 @@ char fline[17];
 
   #if defined(LOAD_EEPROM_LOGO) || defined(LOAD_MEM_LOGO)
   #if defined(LOGO_FADE_IN)
-  byte attract_mask(word screen_address, byte frame)
+  inline byte attract_mask(word screen_address, byte frame)
   {
     // compute some bitwise mask that converges at 255 for all bits but
     // could otherwise be any kind of pattern based on frame number and screen address
