@@ -52,6 +52,9 @@
 #include "power.h"
 #include "EEPROM_wrappers.h"
 #include "record.h"
+#ifdef EEPROM_LOGO_BMP_LOADER
+  #include "EEPROM_bmp_loader.h"
+#endif
 
 
 const char TXT_PAUSED[] PROGMEM =  "Paused  ";
@@ -63,6 +66,7 @@ SdBaseFile *currentDir = &_tmpdirs[0];  // SD card directory
 byte _alt_tmp_dir = 1; // which of the _tmpdirs is scratch (we flip this between 0 and 1)
 
 char fileName[filenameLength + 1];    //Current filename
+const char * filenameExt;             //File extension of the current filename (after the .), if any
 char prevSubDir[SCREENSIZE+1];
 uint16_t DirFilePos[nMaxPrevSubDirs];  //File Positions in Directory to be restored (also, history of subdirectories)
 byte subdir = 0;
@@ -886,19 +890,35 @@ void playFile() {
     //If selected file is a directory move into directory
     changeDir();
   }
-  else if (!dirEmpty) 
+  else if (!dirEmpty && entry.open(currentDir, currentFile, O_RDONLY))
   {
-    printtextF(TXT_PLAYING,0);
-    pauseOn = false;
-    scrollText(fileName, isDir, 0);
-    currpct=100;
-    lcdsegs=0;
-    UniPlay();
+    filenameExt = strrchr(fileName,'.') + 1;
+    #ifdef EEPROM_LOGO_BMP_LOADER
+      if (!strcasecmp_P(filenameExt, PSTR("bmp")) && EEPROM_bmp_load_file())
+      {
+        // done
+        entry.close();
+        seekFile(); 
+        #if defined(OLED1306) && defined(OSTATUSLINE)
+          OledStatusLine();
+        #endif
+        return;
+      }
+      else
+    #endif
+    {
+      printtextF(TXT_PLAYING,0);
+      pauseOn = false;
+      scrollText(fileName, isDir, 0);
+      currpct=100;
+      lcdsegs=0;
+      UniPlay();
       #ifdef P8544
         lcd.gotoRc(3,38);
         lcd.bitmap(Play, 1, 6);
-      #endif      
-    start=1;       
+      #endif
+      start=1;
+    }
   }    
 }
 

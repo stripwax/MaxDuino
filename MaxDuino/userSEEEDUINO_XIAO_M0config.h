@@ -99,10 +99,11 @@
 
 //#define COMPRESS_REPEAT_ROW
 //#define EEPROM_LOGO_COMPRESS
-#define LOAD_MEM_LOGO
+//#define LOAD_MEM_LOGO
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
-//#define LOAD_EEPROM_LOGO          // Xiao M0 uses emulated eeprom and a custom build script to preserve across reflash, so you can now use LOAD_EEPROM_LOGO if you want to!
+#define LOAD_EEPROM_LOGO          // Xiao M0 uses emulated eeprom and a custom build script to preserve across reflash, so you can now use LOAD_EEPROM_LOGO if you want to!
 #define LOGO_FADE_IN 2500 /* Number of milliseconds for logo animation */
+#define EEPROM_LOGO_BMP_LOADER  // Adds support for file browser to load .bmp file and write it to EEPROM
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO

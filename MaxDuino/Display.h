@@ -23,6 +23,9 @@
   void displayOff(void);
   void clear_display(void);
   void init_OLED(void);
+  #if defined(EEPROM_LOGO_BMP_LOADER)
+  void setByteXY(unsigned char x, unsigned char row);
+  #endif
 
   #if defined(XY2) && not defined(DoubleFont)
     PROGMEM const byte DFONT[16] = { 0x00, 0x03, 0x0C, 0x0F, 0x30, 0x33, 0x3C, 0x3F, 0xC0, 0xC3, 0xCC, 0xCF, 0xF0, 0xF3, 0xFC, 0xFF };
