@@ -6,7 +6,7 @@
 #include "Arduino.h"
 #include "configs.h"
 
-#if defined(RECORD_EEPROM_LOGO) || defined(LOAD_EEPROM_LOGO) || defined(EEPROM_LOGO_BMP_LOADER)
+#if defined(RECORD_EEPROM_LOGO) || defined(LOAD_EEPROM_LOGO) || defined(LOAD_EEPROM_LOGO_MEM_FALLBACK) || defined(EEPROM_LOGO_BMP_LOADER)
 #define HAS_EEPROM_LOGO
 #endif
 
@@ -22,6 +22,9 @@ void EEPROM_read_configbyte(byte &data);
 void EEPROM_write_configbyte(byte data);
 void EEPROM_read_logo_byte(uint16_t address, byte& data);
 void EEPROM_write_logo_byte(uint16_t address, byte data);
+#if defined(LOAD_EEPROM_LOGO_MEM_FALLBACK)
+bool EEPROM_check_logo_valid();
+#endif
 #if defined(RECORD)
 void EEPROM_read_record_configbyte(byte &data);
 void EEPROM_write_record_configbyte(byte data);

@@ -280,7 +280,7 @@ char fline[17];
     }
   }
 
-  #if defined(LOAD_EEPROM_LOGO) || defined(LOAD_MEM_LOGO)
+#if defined(HAS_LOGO)
   #if defined(LOGO_FADE_IN)
   inline byte attract_mask(word screen_address, byte frame)
   {
@@ -305,9 +305,68 @@ char fline[17];
   }
   #endif
 
+  #if defined(LOAD_EEPROM_LOGO) || defined(LOAD_EEPROM_LOGO_MEM_FALLBACK)
+  inline byte load_eeprom_logo_byte(byte i, byte j)
+  {
+    byte t;
+    #if not defined(EEPROM_LOGO_COMPRESS)
+      EEPROM_read_logo_byte(j*128+i, t);
+    #elif defined(EEPROM_LOGO_COMPRESS)
+      if (i%2 == 0){
+        t=0;
+        #ifdef OLED1306_128_64
+          if (j%2 == 0) {
+            byte ril=0;
+            byte ib=0;
+            EEPROM_read_logo_byte((j/2)*64+i/2, ril);
+
+            for(ib=0;ib<4;ib++) {
+              if (bitRead (ril,ib)) {
+                t |= (1 << ib*2);
+                #ifdef COMPRESS_REPEAT_ROW
+                  t |= (1 << (ib*2)+1);
+                #endif
+              }
+            }
+          } else {
+            byte rih=0;
+            byte ic=0;
+            EEPROM_read_logo_byte((j/2)*64+i/2, rih);
+
+            for(ic=4;ic<8;ic++) {
+              if (bitRead (rih,ic)) {
+                t |= (1 << (ic-4)*2);
+                #ifdef COMPRESS_REPEAT_ROW
+                  t |= (1 << ((ic-4)*2)+1);
+                #endif
+              }
+            }
+          }
+        #else
+          EEPROM_read_logo_byte(j*64+i/2, t);
+        #endif
+      }
+    #endif
+    return t;
+  }
+  #endif
+
+  #if defined(LOAD_MEM_LOGO) || defined(LOAD_EEPROM_LOGO_MEM_FALLBACK)
+  inline byte load_mem_logo_byte(byte i, byte j)
+  {
+    return pgm_read_byte(logo+j*128+i);
+  }
+  #endif
+
   void load_logo()
   {
     // read logo from eeprom and write to screen
+    #if defined(LOAD_EEPROM_LOGO_MEM_FALLBACK)
+    bool found_eeprom_logo = EEPROM_check_logo_valid();
+    Serial.print("found_eeprom_logo=");
+    Serial.println(found_eeprom_logo);
+    #endif
+
     byte t;
     #if defined(LOGO_FADE_IN)
     unsigned long start_time = millis();
@@ -323,49 +382,16 @@ char fline[17];
       setXY(0,j);
       for(byte i=0;i<128;i++)     // show 128* 32 Logo
       {
-
-      #if defined(LOAD_EEPROM_LOGO)
-        #if not defined(EEPROM_LOGO_COMPRESS)
-          EEPROM_read_logo_byte(j*128+i, t);
-        #elif defined(EEPROM_LOGO_COMPRESS)
-          if (i%2 == 0){
-            t=0;
-            #ifdef OLED1306_128_64
-              if (j%2 == 0) {
-                byte ril=0;
-                byte ib=0;
-                EEPROM_read_logo_byte((j/2)*64+i/2, ril);
-
-                for(ib=0;ib<4;ib++) {
-                  if (bitRead (ril,ib)) {
-                    t |= (1 << ib*2);
-                    #ifdef COMPRESS_REPEAT_ROW
-                      t |= (1 << (ib*2)+1);
-                    #endif
-                  }
-                }
-              } else {
-                byte rih=0;
-                byte ic=0;
-                EEPROM_read_logo_byte((j/2)*64+i/2, rih);
-
-                for(ic=4;ic<8;ic++) {
-                  if (bitRead (rih,ic)) {
-                    t |= (1 << (ic-4)*2);
-                    #ifdef COMPRESS_REPEAT_ROW
-                      t |= (1 << ((ic-4)*2)+1);
-                    #endif
-                  }
-                }
-              }
-            #else
-              EEPROM_read_logo_byte(j*64+i/2, t);
-            #endif
-          }
+        #if defined(LOAD_EEPROM_LOGO_MEM_FALLBACK)
+          if (found_eeprom_logo)
+            t = load_eeprom_logo_byte(i, j);
+          else
+            t = load_mem_logo_byte(i, j);
+        #elif defined(LOAD_EEPROM_LOGO)
+          t = load_eeprom_logo_byte(i, j);
+        #else
+          t = load_mem_logo_byte(i, j);
         #endif
-      #else
-        t = pgm_read_byte(logo+j*128+i);
-      #endif
 
         #if defined(LOGO_FADE_IN)
         byte mask = attract_mask(j*128+i, frame);
@@ -374,6 +400,7 @@ char fline[17];
         SendByte(t);
       }  
     }
+
     #if defined(LOGO_FADE_IN)
     // LOGO_FADE_IN defines the number of millseconds for the animation
     const unsigned long millis_per_frame = (LOGO_FADE_IN/128);
@@ -390,7 +417,7 @@ char fline[17];
     }  
     #endif
   }
-  #endif // LOAD_EEPROM_LOGO || LOAD_MEM_LOGO
+#endif // HAS_LOGO
 
   #if defined(RECORD_EEPROM_LOGO)
   void record_eeprom_logo()
@@ -526,7 +553,7 @@ char fline[17];
     // sendcommand(0xA6); // SSD1306_NORMALDISPLAY
     // sendcommand(0x2E); // SSD1306_DEACTIVATE_SCROLL
 
-    #if defined(LOAD_MEM_LOGO) || defined(LOAD_EEPROM_LOGO)
+    #if defined(HAS_LOGO)
       sendcommand(0xAF);    //display on
       load_logo();
     #endif

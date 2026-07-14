@@ -3,6 +3,7 @@
 /*                 Add // at the beginning of lines to comment and remove selected option                                */
 //**************************************  OPTIONAL USE TO SAVE SPACE  ***************************************************//
 #define Use_MENU                          // removing menu saves space
+//#define MENU_HAS_REBOOT  // Add an entry to reboot device from menu
 #define AYPLAY
 #define MenuBLK2A
 #define ID11CDTspeedup
@@ -97,7 +98,9 @@
 #define LOAD_MEM_LOGO             // legacy, logo is not in EEPROM then wasting memory.
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
 //#define LOAD_EEPROM_LOGO 
+//#define LOAD_EEPROM_LOGO_MEM_FALLBACK  // Try loading logo from eeprom, but if it looks like no logo is stored then fallback to the compiled-in mem logo
 #define LOGO_FADE_IN 2500 /* Number of milliseconds for logo animation */
+//#define EEPROM_LOGO_BMP_LOADER  // Adds support for file browser to load .bmp file and write it to EEPROM
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO

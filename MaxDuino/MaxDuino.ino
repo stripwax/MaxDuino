@@ -113,12 +113,33 @@ byte oldMaxBlock = maxblock-1;
 
 bool firstBlockPause = false;
 
-#if (SPLASH_SCREEN && TIMEOUT_RESET)
+#if (SPLASH_SCREEN && TIMEOUT_RESET) || defined(MENU_HAS_REBOOT)
+  #if defined(__AVR__)
+    // Restarts program from beginning but does not reset the peripherals and registers
     void(* resetFunc) (void) = 0;//declare reset function at adress 0
-    /*void resetFunc() // Restarts program from beginning but does not reset the peripherals and registers
-    {
-    asm volatile ("  jmp 0");
-    }*/
+   #elif defined(__SAMD21__)
+   void _resetFunc(void)
+   {
+      noInterrupts(); 
+      NVIC_SystemReset(); 
+      while (1); 
+   }
+   void(* resetFunc) (void) = _resetFunc;
+   #elif defined(ESP32_XTENSA) || defined(ESP32_RISCV) || defined(ESP8266)
+   void _resetFunc(void)
+   {
+     ESP.restart();
+   }
+   void(* resetFunc) (void) = _resetFunc;
+   #elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350)
+   void _resetFunc(void)
+   {
+     rp2040.reboot(); 
+   }
+   void(* resetFunc) (void) = _resetFunc;
+   #else
+   #error resetFunc not implemented for this device
+   #endif
 #endif
 
 void setup() {
@@ -148,7 +169,7 @@ void setup() {
   #ifdef OLED1306
     init_OLED();
     #if (!SPLASH_SCREEN)
-      #if defined(LOAD_MEM_LOGO) || defined(LOAD_EEPROM_LOGO)
+      #if defined(HAS_LOGO)
         delay(1500);             // Show logo
       #endif
       reset_display();           // Clear logo and load saved mode
