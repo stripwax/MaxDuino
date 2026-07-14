@@ -15,6 +15,10 @@
 #endif
 
 
+#if (defined(LOAD_EEPROM_LOGO) && defined(LOAD_MEM_LOGO)) || (defined(LOAD_EEPROM_LOGO) && defined(LOAD_EEPROM_LOGO_MEM_FALLBACK)) || (defined(LOAD_MEM_LOGO) && defined(LOAD_EEPROM_LOGO_MEM_FALLBACK))
+#error Can only define one of: LOAD_EEPROM_LOGO, LOAD_MEM_LOGO, LOAD_EEPROM_LOGO_MEM_FALLBACK
+#endif
+
 #ifdef RECORD
 
 #if defined(RECORD_CAS_MSX) && !defined(Use_CAS)

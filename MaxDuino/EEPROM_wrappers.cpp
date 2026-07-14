@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "configs.h"
 #include "EEPROM_wrappers.h"
+#include "Display.h"
 
 #ifdef USES_EEPROM
 
@@ -46,7 +47,6 @@
       EEPROM_put(address, data);
     }
   }
-
 
 #elif defined(__arm__) && defined(__STM32F1__)
   #include <EEPROM.h>
@@ -218,6 +218,25 @@
 
 #else
   #error "EEPROM support required but no EEPROM library or compatibility layer has been implemented for this target"
+#endif
+
+#if defined(LOAD_EEPROM_LOGO_MEM_FALLBACK)
+  bool EEPROM_check_logo_valid()
+  {
+    // returns true if we believe there is a saved logo, and false if not.
+    // Because some config bytes are saved at the end of the logo on some devices,
+    // we skip the last two bytes.  It's good enough for now.
+    byte value;
+    EEPROM_read_logo_byte(0, value);
+    byte test_value;
+    for(uint16_t address=1; address<LOGO_SIZE_BYTES-2; address++)
+    {
+      EEPROM_read_logo_byte(address, test_value);
+      if(test_value != value)
+        return true;
+    }
+    return false;
+  }
 #endif
 
 #endif // USES_EEPROM

@@ -25,6 +25,10 @@
 #include "product_strings.h"
 #include "current_settings.h"
 
+#ifdef MENU_HAS_REBOOT
+extern void (*resetFunc) (void);
+#endif
+
 #if defined(lineaxy)
 #define M_LINE2 lineaxy
 #else
@@ -44,6 +48,9 @@ enum MenuItems{
 #ifdef MenuBLK2A
   BLK2A,
 #endif
+#ifdef MENU_HAS_REBOOT
+  REBOOT,
+#endif
   _Num_Menu_Items
 };
 
@@ -59,6 +66,10 @@ const char MENU_ITEM_TSX[] PROGMEM = "TSXCzxpUEFSW ?";
 #ifdef MenuBLK2A
 const char MENU_ITEM_BLK2A[] PROGMEM = "Skip BLK:2A ?";
 #endif
+#ifdef MENU_HAS_REBOOT
+const char MENU_ITEM_REBOOT[] PROGMEM = "REBOOT?";
+#endif
+
 const char* const MENU_ITEMS[] PROGMEM = {
   MENU_ITEM_VERSION,
   MENU_ITEM_BAUD_RATE,
@@ -71,6 +82,9 @@ const char* const MENU_ITEMS[] PROGMEM = {
   MENU_ITEM_TSX,
 #ifdef MenuBLK2A
   MENU_ITEM_BLK2A,
+#endif
+#ifdef MENU_HAS_REBOOT
+  MENU_ITEM_REBOOT
 #endif
 };
 
@@ -315,7 +329,14 @@ void menuMode()
           case MenuItems::BLK2A:
             doOnOffSubmenu(skip2A);
             break;
-        #endif     
+        #endif    
+
+        #ifdef MENU_HAS_REBOOT
+          case MenuItems::REBOOT:
+            clear_display();
+            resetFunc();
+        #endif
+
       }
       lastbtn=true;
       updateScreen=true;

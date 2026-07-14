@@ -39,6 +39,16 @@
     #endif
   #endif
 
+  #if defined(LOAD_MEM_LOGO) || defined(LOAD_EEPROM_LOGO) || defined(LOAD_EEPROM_LOGO_MEM_FALLBACK)
+  #define HAS_LOGO
+  #endif
+
+  #if defined(OLED1306_128_64) || defined(video64text32)
+  #define LOGO_SIZE_BYTES 1024 /* 128x64 */
+  #else
+  #define LOGO_SIZE_BYTES 512 /* 128x32 */
+  #endif
+
 
 #elif defined(P8544)
   #define SCREENSIZE 14
