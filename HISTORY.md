@@ -14,6 +14,7 @@
 
 # HISTORY NOTES
 
+* V4.02 Adds 'animated' startup logo, ability to load .bmp files and write to EEPROM logo, and default logo if EEPROM logo is absent
 * V4.01 Adds EACA EG2000 Colour Genie .CAS/.CGC implementation
 * V4.00 Adds full-featured recording support!
 * V3.08 Adds support for SEEED XIAO RP2040 and SEEED XIAO RP2350 boards
