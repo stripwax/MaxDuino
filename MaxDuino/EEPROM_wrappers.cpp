@@ -35,7 +35,16 @@
   }
 
   void EEPROM_write_logo_byte(uint16_t address, byte data) {
-    EEPROM_put(address, data);
+    // protect config bytes, don't overwrite them
+    // should optimise to a no-op for devices where EEPROM_CONFIG_BYTES doesn't overlap with logo storage
+    #if defined(RECORD)
+    if (address%1023 != EEPROM_CONFIG_BYTEPOS && address%1023 != EEPROM_RECORD_CONFIG_BYTEPOS)
+    #else
+    if (address%1023 != EEPROM_CONFIG_BYTEPOS)
+    #endif
+    {
+      EEPROM_put(address, data);
+    }
   }
 
 
@@ -65,7 +74,16 @@
   }
 
   void EEPROM_write_logo_byte(uint16_t address, byte data) {
-    EEPROM_put(address, data);
+    // protect config bytes, don't overwrite them
+    // should optimise to a no-op for devices where EEPROM_CONFIG_BYTES doesn't overlap with logo storage
+    #if defined(RECORD)
+    if (address%1023 != EEPROM_CONFIG_BYTEPOS && address%1023 != EEPROM_RECORD_CONFIG_BYTEPOS)
+    #else
+    if (address%1023 != EEPROM_CONFIG_BYTEPOS)
+    #endif
+    {
+      EEPROM_put(address, data);
+    }
   }
 
 #elif defined(__SAMD21__) || defined(__SAMD21G18A__) || defined(ESP8266) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
@@ -138,19 +156,28 @@
   }
 
   void EEPROM_write_logo_byte(uint16_t address, byte data) {
-    EEPROM_put(address, data);
+    // protect config bytes, don't overwrite them
+    // should optimise to a no-op for devices where EEPROM_CONFIG_BYTES doesn't overlap with logo storage
+    #if defined(RECORD)
+    if (address%1023 != EEPROM_CONFIG_BYTEPOS && address%1023 != EEPROM_RECORD_CONFIG_BYTEPOS)
+    #else
+    if (address%1023 != EEPROM_CONFIG_BYTEPOS)
+    #endif
+    {
+      EEPROM_put(address, data);
+    }
   }
 
 #elif defined(ESP32_XTENSA) || defined(ESP32_RISCV)
   #include <Preferences.h>
   Preferences prefs;
   
-  #if defined(LOAD_EEPROM_LOGO) || defined(RECORD_EEPROM_LOGO)
+  #if defined(HAS_EEPROM_LOGO)
   byte EEPROM_logo_bytes[1024];
   #endif
 
   void EEPROM_init() {
-  #if defined(LOAD_EEPROM_LOGO) || defined(RECORD_EEPROM_LOGO)
+  #if defined(HAS_EEPROM_LOGO)
     prefs.begin("maxduino", true);
     prefs.getBytes("logo", EEPROM_logo_bytes, 1024);
     prefs.end();
@@ -169,7 +196,7 @@
     prefs.end();
   }
 
-  #if defined(LOAD_EEPROM_LOGO) || defined(RECORD_EEPROM_LOGO)
+  #if defined(HAS_EEPROM_LOGO)
   void EEPROM_write_logo_begin() {
   }
 

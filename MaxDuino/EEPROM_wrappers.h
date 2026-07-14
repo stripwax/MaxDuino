@@ -6,7 +6,11 @@
 #include "Arduino.h"
 #include "configs.h"
 
-#if defined(LOAD_EEPROM_SETTINGS) || defined(RECORD_EEPROM_LOGO) || defined(LOAD_EEPROM_LOGO) || defined(EEPROM_LOGO_BMP_LOADER)
+#if defined(RECORD_EEPROM_LOGO) || defined(LOAD_EEPROM_LOGO) || defined(EEPROM_LOGO_BMP_LOADER)
+#define HAS_EEPROM_LOGO
+#endif
+
+#if defined(LOAD_EEPROM_SETTINGS) || defined(HAS_EEPROM_LOGO)
 #define USES_EEPROM
 #endif
 
