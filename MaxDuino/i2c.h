@@ -47,7 +47,8 @@
   #define SDA_PORT PORTC
   #define SDA_PIN 4 
   #define SCL_PORT PORTC
-  #define SCL_PIN 5 
+  #define SCL_PIN 5
+  #define I2C_HARDWARE 1
 #endif
 
 #if (I2C_Library_Used == _I2C_Impl_SoftI2CMaster)
