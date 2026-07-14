@@ -77,7 +77,7 @@
 #define BLOCKTAP_IN
 #define OLEDPRINTBLOCK 
 #define LOAD_EEPROM_SETTINGS
-#define EEPROM_CONFIG_BYTEPOS  1023     // Byte position to save configuration
+#define EEPROM_CONFIG_BYTEPOS  1024     // Byte position to save configuration - AFTER the logo since this device has plenty of EEPROM (4K)
 #define OSTATUSLINE
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // EEPROM LOGO. How to move to EEPROM, saving memory:
@@ -94,6 +94,7 @@
 //#define RECORD_EEPROM_LOGO        // Uncommenting RECORD_EEPROM deactivates #define Use_MENU
 #define LOAD_EEPROM_LOGO 
 #define LOGO_FADE_IN 2500 /* Number of milliseconds for logo animation */
+#define EEPROM_LOGO_BMP_LOADER  // Adds support for file browser to load .bmp file and write it to EEPROM
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO
