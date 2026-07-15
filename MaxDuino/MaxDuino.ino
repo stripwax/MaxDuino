@@ -680,9 +680,9 @@ void loop(void) {
       #ifdef OLED1306
         #ifdef XY2
           if (jblks==BM_BLKSJUMP) {
-            sendStrXY(PSTR("^"),15,0);
+            sendStrXY(F("^"),15,0);
           } else {
-            sendStrXY(PSTR("\'"),15,0);
+            sendStrXY(F("\'"),15,0);
           }
         #else
           setXY(15,0);
@@ -1064,13 +1064,13 @@ void SetPlayBlock()
         }
       #endif                         
 
-      sendStrXY(PSTR("BLK:"),0,0);
+      sendStrXY(F("BLK:"),0,0);
       sendStrXY((char *)input,4,0);
         
       if (block < 100) {
-        sendStrXY(PSTR(" ID:"), 6,0);
+        sendStrXY(F(" ID:"), 6,0);
       } else {
-        sendStrXY(PSTR(" ID:"), 7,0);
+        sendStrXY(F(" ID:"), 7,0);
       }
           
       input[0]=HEX_CHAR(currentID>>4);
@@ -1097,9 +1097,9 @@ void SetPlayBlock()
         }
       #endif                           
       setXY(0,0);
-      sendStr(PSTR("BLK:"));
+      sendStr(F("BLK:"));
       sendStr((char *)input);
-      sendStr(PSTR(" ID:"));
+      sendStr(F(" ID:"));
 
       input[0]=HEX_CHAR(currentID>>4);
       input[1]=HEX_CHAR(currentID&0x0f);
