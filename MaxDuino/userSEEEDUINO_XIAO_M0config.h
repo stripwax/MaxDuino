@@ -79,7 +79,7 @@
 //#define SPLASH_SCREEN   1  // Displays the logo and welcome text at the initialization and remains until a button is pressed.
 #define TIMEOUT_RESET   60 // Timeout for reset tzxduino (without pause or play activated), comment to not reset.
 #define BLOCKID_INTO_MEM              // enable for blockid recording and later rewinding - uses RAM
-#define maxblock 255
+#define maxblock 99
 //#define BLOCKID_NOMEM_SEARCH          // Loop and search for a block, if BLOCKID_INTO_MEM is disabled, uses less RAM
 //#define BLOCKID15_IN 
 #define BLOCKID19_IN                  // trace id19 block for zx81 .tzx to be rewinded
