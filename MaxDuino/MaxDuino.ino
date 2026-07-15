@@ -1052,16 +1052,22 @@ void SetPlayBlock()
     #if defined(XY2)
       ultoa(block, (char *)input, 10);
       #if defined(OLEDBLKMATCH)              
-        if (block<10) {
-          input[1]=input[0];
-          input[0]='0';
-          input[2]=0;
-        }
-        if (block < 100) {
-          sendStrXY((char *)input,14,4);
-        } else {
-          sendStrXY((char *)(input+1),14,4);
-        }
+        #if defined(XY2force)
+          if (block<10) {
+            input[1]=input[0];
+            input[0]='0';
+            input[2]=0;
+          }
+          if (block < 100) {
+            sendStrXY((char *)input,14,4);
+          } else {
+            sendStrXY((char *)(input+1),14,4);
+          }
+        #else
+          setXY(14,4);
+          sendChar('0'+((block/10)/10));
+          sendChar('0'+(block%10));
+        #endif
       #endif                         
 
       sendStrXY(F("BLK:"),0,0);
