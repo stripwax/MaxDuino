@@ -70,30 +70,10 @@ void lcdTime() {
 
       #else // not XY2force
 
-        if (counter % 10 != 0) {
-          // ultima cifra 1,2,3,4,5,6,7,8,9
-          setXY(15,0);
-          sendChar(48+counter%10);
-        }
-        else if (counter % CNTRBASE != 0) {
-          // es 10,20,30,40,50,60,70,80,90,110,120,..
-          setXY(14,0);
-          sendChar(48+(counter%CNTRBASE)/10);
-          sendChar('0');
-        } else if (counter % (CNTRBASE*10) != 0) {
-          // es 100,200,300,400,500,600,700,800,900,1100,..
-          setXY(13,0);
-          sendChar(48+(counter % (CNTRBASE*10))/CNTRBASE);
-          sendChar('0');
-          sendChar('0');
-        } else {
-          // es 000,1000,2000,...
-          setXY(13,0);
-          sendChar('0');
-          sendChar('0');
-          sendChar('0');
-        }
-
+        setXY(13,0);
+        sendChar('0'+((counter % (CNTRBASE*10))/CNTRBASE));
+        sendChar('0'+((counter % CNTRBASE)/10));
+        sendChar('0'+(counter % 10));
         counter++; 
 
       #endif
@@ -159,23 +139,12 @@ void lcdPercent() {
         sendStrXY(PlayBytes, 8, 0);
                                           
       #else // not XY2force
-        if (newpct <10) {
-          setXY(8,0);
-          sendChar(' ');
-          sendChar(48+newpct%10);
-        }
-        else if (newpct <100) {
-          setXY(8,0);
-          sendChar(48+newpct/10);
-          sendChar(48+newpct%10);
-        }
-        else {
-          setXY(8,0);
+        setXY(8,0);
+        if (newpct>=100)
           sendChar('1');
-          sendChar('0');
-          sendChar('0');
-        }
-
+        if (newpct>=10)
+          sendChar('0'+(newpct/10)%10);
+        sendChar('0'+(newpct%10));
         sendChar('%');             
       #endif                   
     #endif
