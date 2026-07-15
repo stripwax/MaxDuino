@@ -17,15 +17,9 @@ void lcdTime() {
 // Playing 95%  000
 //              ^^^
 //
-// Not all characters will be redrawn - essentially just the ones that
-// need to change - e.g. if countervalue is now a multiple of ten,
-// it must mean previously it was one less than a multiple of ten,
-// so redraw the tens digit and overwrite the ones digit as '0'.
-// It makes for more complex logic, which takes up more space, 
-// and there is no definite benefit (slightly less i2c interference
-// perhaps - but for one update per second, some of those (e.g. transition
-// 99 -> 100) need to update all the digits anyway - so for robustness this
-// MUST work worst case.).  This function should probably be greatly simplified.
+// All three characters will be redrawn even if value unchanged
+// (This is a recent change to simplify logic and reduce firmware size)
+// However this will only be redrawn once per second in any case.
 //
     if (millis() - timeDiff2 > 1000) {   // check switch every second 
     timeDiff2 = millis();           // get current millisecond count
@@ -115,14 +109,12 @@ void lcdPercent() {
   // Playing 95%  000
   //         ^^^^
   //
-  // These four characters will all be redrawn.  Alignment looks like this:
-  // 0-9:     9% 
+  // These four characters will all be redrawn.  Alignment looks like this (recently changed)
+  // 0-9:    0% 
   // 10-99:  99%
   // 100%:   100%
   //
-  // Note that setting currpct=100 (prior to calling lcdPercent) seems to be a hack
-  // used in a few places in MaxDuino processing, but it's not clear why this would be
-  // necessary, and in any case this function just sets to 0 before using it anyway.
+  // Characters only redrawn when pct changes. To 'force' a redraw set currpct to 255
 
   newpct=(100 * bytesRead)/filesize;
 
