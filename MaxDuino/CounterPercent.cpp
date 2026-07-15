@@ -12,7 +12,22 @@ static unsigned long timeDiff2 = 0;
 static byte newpct = 0;
 
 void lcdTime() {
-  if (millis() - timeDiff2 > 1000) {   // check switch every second 
+// on a 16-column screen, this function redraws just this part:
+//
+// Playing 95%  000
+//              ^^^
+//
+// Not all characters will be redrawn - essentially just the ones that
+// need to change - e.g. if countervalue is now a multiple of ten,
+// it must mean previously it was one less than a multiple of ten,
+// so redraw the tens digit and overwrite the ones digit as '0'.
+// It makes for more complex logic, which takes up more space, 
+// and there is no definite benefit (slightly less i2c interference
+// perhaps - but for one update per second, some of those (e.g. transition
+// 99 -> 100) need to update all the digits anyway - so for robustness this
+// MUST work worst case.).  This function should probably be greatly simplified.
+//
+    if (millis() - timeDiff2 > 1000) {   // check switch every second 
     timeDiff2 = millis();           // get current millisecond count
 
     #ifdef LCDSCREEN16x2
@@ -135,6 +150,20 @@ void lcdTime() {
 }
 
 void lcdPercent() {
+  // on a 16-column screen, this function redraws just this part:
+  //
+  // Playing 95%  000
+  //         ^^^^
+  //
+  // These four characters will all be redrawn.  Alignment looks like this:
+  // 0-9:     9% 
+  // 10-99:  99%
+  // 100%:   100%
+  //
+  // Note that setting currpct=100 (prior to calling lcdPercent) seems to be a hack
+  // used in a few places in MaxDuino processing, but it's not clear why this would be
+  // necessary, and in any case this function just sets to 0 before using it anyway.
+
   newpct=(100 * bytesRead)/filesize;                   
   if (currpct==100) {
       currpct= 0;
