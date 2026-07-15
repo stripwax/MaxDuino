@@ -378,7 +378,7 @@ void loop(void) {
           firstBlockPause = true;
         } else  {
           printtext2F(TXT_PLAYING,0);
-          currpct=100;
+          currpct=255;
           firstBlockPause = false;      
         }
         pauseOn = !pauseOn;
@@ -931,7 +931,7 @@ void playFile() {
       printtextF(TXT_PLAYING,0);
       pauseOn = false;
       scrollText(fileName, isDir, 0);
-      currpct=100;
+      currpct=255;
       lcdsegs=0;
       UniPlay();
       #ifdef P8544
@@ -1113,7 +1113,7 @@ void SetPlayBlock()
   #endif
 
   clearBuffer();
-  currpct=100; 
+  currpct=255; 
   lcdsegs=0;       
   currentBit=0;                               // fallo reproducción de .tap tras .tzx
 

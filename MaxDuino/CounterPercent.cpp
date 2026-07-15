@@ -5,7 +5,7 @@
 #include "utils.h"
 #include "file_utils.h"
 
-byte currpct = 100;
+byte currpct;
 unsigned int lcdsegs = 0;
 
 static unsigned long timeDiff2 = 0;
@@ -61,31 +61,11 @@ void lcdTime() {
 
     #ifdef OLED1306
       #ifdef XY2force
-        if (lcdsegs % 10 != 0) {
-          // ultima cifra 1,2,3,4,5,6,7,8,9
-          ultoa(lcdsegs%10,(char *)input,10);
-          sendStrXY((char *)input,15,0);
-        }
-        else if (lcdsegs % CNTRBASE != 0) {
-          // es 10,20,30,40,50,60,70,80,90,110,120,..
-          ultoa((lcdsegs % CNTRBASE)/10,(char *)input,10);
-          input[1]='0';
-          input[2]=0;
-          sendStrXY((char *)input,14,0);
-        }
-        else if (lcdsegs % (CNTRBASE*10) != 0) {
-          // es 100,200,300,400,500,600,700,800,900,1100,..
-          ultoa((lcdsegs % (CNTRBASE*10))/CNTRBASE,(char *)input,10);
-          input[1]='0';
-          input[2]='0';
-          input[3]=0;
-          sendStrXY((char *)input,13,0);
-        }
-        else {
-          // es 000,1000,2000,...
-          sendStrXY(F("000"),13,0);
-        }
-
+        input[0] = '0'+((lcdsegs % (CNTRBASE*10))/CNTRBASE);
+        input[1] = '0'+((lcdsegs % CNTRBASE)/10);
+        input[2] = '0'+(lcdsegs % 10);
+        input[3] = 0;
+        sendStrXY((char *)input,13,0);
         lcdsegs++;
 
       #else // not XY2force
@@ -164,12 +144,9 @@ void lcdPercent() {
   // used in a few places in MaxDuino processing, but it's not clear why this would be
   // necessary, and in any case this function just sets to 0 before using it anyway.
 
-  newpct=(100 * bytesRead)/filesize;                   
-  if (currpct==100) {
-      currpct= 0;
-  }
+  newpct=(100 * bytesRead)/filesize;
 
-  if (((newpct>currpct) || currpct==0) && (newpct % 1 == 0)) {
+  if (newpct != currpct || currpct==255) {
     #ifdef LCDSCREEN16x2            
       lcd.setCursor(8,0);
       lcd.print(newpct);lcd.print('%');
@@ -177,28 +154,9 @@ void lcdPercent() {
 
     #ifdef OLED1306
       #ifdef XY2force
-        if (newpct <10) {
-          input[0]=' ';
-          input[1]=48+(newpct%10);
-          input[2]='%';
-          input[3]=0;
-          sendStrXY((char *)input,8,0);
-        }
-        else if (newpct <100) {
-          input[0]=48+(newpct/10);
-          input[1]=48+(newpct%10);
-          input[2]='%';
-          input[3]=0;
-          sendStrXY((char *)input,8,0);
-        }
-        else {
-          input[0]='1';
-          input[1]='0';
-          input[2]='0';
-          input[3]='%';
-          input[4]=0;
-          sendStrXY((char *)input,8,0);
-        }
+        ultoa(newpct, PlayBytes, 10);
+        strcat_P(PlayBytes, PSTR("%"));
+        sendStrXY(PlayBytes, 8, 0);
                                           
       #else // not XY2force
         if (newpct <10) {
