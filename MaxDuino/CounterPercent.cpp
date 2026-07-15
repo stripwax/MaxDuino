@@ -6,7 +6,7 @@
 #include "file_utils.h"
 
 byte currpct;
-unsigned int lcdsegs = 0;
+unsigned int counter = 0;
 
 static unsigned long timeDiff2 = 0;
 static byte newpct = 0;
@@ -32,21 +32,21 @@ void lcdTime() {
 
     #ifdef LCDSCREEN16x2
 
-      if (lcdsegs % 10 != 0) {
+      if (counter % 10 != 0) {
         // ultima cifra 1,2,3,4,5,6,7,8,9
-        ultoa(lcdsegs%10,PlayBytes,10);
+        ultoa(counter%10,PlayBytes,10);
         lcd.setCursor(15,0);
         lcd.print(PlayBytes);
       }
-      else if (lcdsegs % CNTRBASE != 0) {
+      else if (counter % CNTRBASE != 0) {
         // es 10,20,30,40,50,60,70,80,90,110,120,..
-        ultoa(lcdsegs%CNTRBASE,PlayBytes,10);
+        ultoa(counter%CNTRBASE,PlayBytes,10);
         lcd.setCursor(14,0);
         lcd.print(PlayBytes);
       }
-      else if (lcdsegs % (CNTRBASE*10) != 0) {
+      else if (counter % (CNTRBASE*10) != 0) {
         // es 100,200,300,400,500,600,700,800,900,1100,..
-        ultoa(lcdsegs%(CNTRBASE*10)/CNTRBASE*100,PlayBytes,10);
+        ultoa(counter%(CNTRBASE*10)/CNTRBASE*100,PlayBytes,10);
         lcd.setCursor(13,0);
         lcd.print(PlayBytes);
       } 
@@ -56,34 +56,34 @@ void lcdTime() {
         lcd.print(F("000"));
       }
 
-      lcdsegs++;
+      counter++;
     #endif
 
     #ifdef OLED1306
       #ifdef XY2force
-        input[0] = '0'+((lcdsegs % (CNTRBASE*10))/CNTRBASE);
-        input[1] = '0'+((lcdsegs % CNTRBASE)/10);
-        input[2] = '0'+(lcdsegs % 10);
+        input[0] = '0'+((counter % (CNTRBASE*10))/CNTRBASE);
+        input[1] = '0'+((counter % CNTRBASE)/10);
+        input[2] = '0'+(counter % 10);
         input[3] = 0;
         sendStrXY((char *)input,13,0);
-        lcdsegs++;
+        counter++;
 
       #else // not XY2force
 
-        if (lcdsegs % 10 != 0) {
+        if (counter % 10 != 0) {
           // ultima cifra 1,2,3,4,5,6,7,8,9
           setXY(15,0);
-          sendChar(48+lcdsegs%10);
+          sendChar(48+counter%10);
         }
-        else if (lcdsegs % CNTRBASE != 0) {
+        else if (counter % CNTRBASE != 0) {
           // es 10,20,30,40,50,60,70,80,90,110,120,..
           setXY(14,0);
-          sendChar(48+(lcdsegs%CNTRBASE)/10);
+          sendChar(48+(counter%CNTRBASE)/10);
           sendChar('0');
-        } else if (lcdsegs % (CNTRBASE*10) != 0) {
+        } else if (counter % (CNTRBASE*10) != 0) {
           // es 100,200,300,400,500,600,700,800,900,1100,..
           setXY(13,0);
-          sendChar(48+(lcdsegs % (CNTRBASE*10))/CNTRBASE);
+          sendChar(48+(counter % (CNTRBASE*10))/CNTRBASE);
           sendChar('0');
           sendChar('0');
         } else {
@@ -94,27 +94,27 @@ void lcdTime() {
           sendChar('0');
         }
 
-        lcdsegs++; 
+        counter++; 
 
       #endif
     #endif
 
     #ifdef P8544
-      if (lcdsegs % 10 != 0) {
+      if (counter % 10 != 0) {
         // ultima cifra 1,2,3,4,5,6,7,8,9
-        ultoa(lcdsegs%10,PlayBytes,10);
+        ultoa(counter%10,PlayBytes,10);
         lcd.setCursor(13,3);
         lcd.print(PlayBytes);
       }
-      else if (lcdsegs % CNTRBASE != 0) {
+      else if (counter % CNTRBASE != 0) {
         // es 10,20,30,40,50,60,70,80,90,110,120,..
-        ultoa(lcdsegs%CNTRBASE,PlayBytes,10);
+        ultoa(counter%CNTRBASE,PlayBytes,10);
         lcd.setCursor(12,3);
         lcd.print(PlayBytes);
       }
-      else if (lcdsegs % (CNTRBASE*10) != 0) {
+      else if (counter % (CNTRBASE*10) != 0) {
         // es 100,200,300,400,500,600,700,800,900,1100,..
-        ultoa(lcdsegs%(CNTRBASE*10)/CNTRBASE*100,PlayBytes,10);
+        ultoa(counter%(CNTRBASE*10)/CNTRBASE*100,PlayBytes,10);
         lcd.setCursor(11,3);
         lcd.print(PlayBytes);
       }

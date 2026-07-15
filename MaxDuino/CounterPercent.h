@@ -5,6 +5,6 @@ void lcdTime();
 void lcdPercent();
 
 extern byte currpct;
-extern unsigned int lcdsegs;
+extern unsigned int counter;
 
 #endif // COUNTER_PERCENT_H_INCLUDED

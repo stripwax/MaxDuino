@@ -932,7 +932,7 @@ void playFile() {
       pauseOn = false;
       scrollText(fileName, isDir, 0);
       currpct=255;
-      lcdsegs=0;
+      counter=0;
       UniPlay();
       #ifdef P8544
         lcd.gotoRc(3,38);
@@ -1114,7 +1114,7 @@ void SetPlayBlock()
 
   clearBuffer();
   currpct=255; 
-  lcdsegs=0;       
+  counter=0;       
   currentBit=0;                               // fallo reproducción de .tap tras .tzx
 
   if (block%2 == 0) jtapflag = 255;
