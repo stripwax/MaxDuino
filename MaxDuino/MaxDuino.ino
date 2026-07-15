@@ -57,8 +57,8 @@
 #endif
 
 
-const char TXT_PAUSED[] PROGMEM =  "Paused  ";
-const char TXT_PLAYING[] PROGMEM = "Playing ";
+const char TXT_PAUSED[] PROGMEM =  "Paused ";
+const char TXT_PLAYING[] PROGMEM = "Playing     ";   // sufficient trailing spaces here to clear the top line but WITHOUT clearing the counter's leading zeros.. (a bit of a hack)
 
 SdFat sd;                           //Initialise Sd card 
 SdBaseFile _tmpdirs[2]; // internal file pointers.  (*currentDir points to either _tmpdirs[0] or _tmpdirs[1] and the other is 'scratch')
