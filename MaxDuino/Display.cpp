@@ -265,9 +265,9 @@ char fline[17];
   {
     unsigned char i,k;
     #if defined(OLED1306_128_64) || defined(video64text32)
-      for(k=8;k>0;k--) // 8 LINES
+      for(k=0;k<8;k++) // 8 LINES
     #else
-      for(k=4;k>0;k--) // 4 LINES  
+      for(k=0;k<4;k++) // 4 LINES  
     #endif
     { 
       setXY(0,k);    
