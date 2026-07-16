@@ -48,7 +48,7 @@
   #define SDA_PIN 4 
   #define SCL_PORT PORTC
   #define SCL_PIN 5
-  #define I2C_HARDWARE 1
+//  #define I2C_HARDWARE 1   // requires more thorough testing. Needs additional delay in init_OLED e.g. 100ms after sendcommand(0xAF)
 #endif
 
 #if (I2C_Library_Used == _I2C_Impl_SoftI2CMaster)
