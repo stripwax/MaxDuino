@@ -6,6 +6,7 @@
 #define _I2C_Impl_SoftI2CMaster (0)
 #define _I2C_Impl_SoftWire (1)
 #define _I2C_Impl_Wire (2)
+#define _I2C_Impl_AceWire (3)
 
 
 enum class CASDUINO_FILETYPE : byte {
