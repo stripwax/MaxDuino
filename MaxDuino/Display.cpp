@@ -90,11 +90,10 @@ char fline[17];
     mx_i2c_write(0x80);  
     mx_i2c_write(0xb0+(row)); //set page address (row)
     mx_i2c_write(0x80); //command mode
-    #ifdef OLED1106_1_3            
-      mx_i2c_write( 0x02+(x%16)); //set low col address
-    #else
-      mx_i2c_write( 0x00+(x%16)); //set low col address
+    #ifdef OLED1106_1_3
+    x+=2;
     #endif
+    mx_i2c_write(0x00+(x%16)); //set low col address
     mx_i2c_write(0x80); 
     mx_i2c_write(0x10+(x/16)); //set high col address 
     mx_i2c_end();         
