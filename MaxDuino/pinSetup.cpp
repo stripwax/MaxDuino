@@ -8,8 +8,10 @@
 
 #if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
 #include <SPI.h>
-#include <Wire.h>
 #include "i2c.h"
+#if (I2C_Library_Preference == _I2C_Impl_Wire) || (I2C_Library_Preference == _I2C_Impl_SoftWire)
+#include <Wire.h>
+#endif
 #endif
 
 void pinsetup()
@@ -218,8 +220,10 @@ void pinsetup()
   pinMode(btnMotor, INPUT_PULLUP);
   #endif
 
+#if (I2C_Library_Preference == _I2C_Impl_Wire) || (I2C_Library_Preference == _I2C_Impl_SoftWire)
   I2C_WIRE_CLASS.setSDA(RP2040_I2C_SDA_PIN);
   I2C_WIRE_CLASS.setSCL(RP2040_I2C_SCL_PIN);
+#endif
 
   // XIAO boards use SPI0 (SD pins D8/D9/D10 = GPIO 2/4/3 match default SPI0 pins).
   // Pico and others use SPI1 with default pins (GPIO 10/11/12).
