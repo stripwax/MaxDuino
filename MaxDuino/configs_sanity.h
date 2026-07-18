@@ -10,10 +10,19 @@
 #error Cannot define both BLOCKID_INTO_MEM and BLOCKID_NOMEM_SEARCH
 #endif
 
-#if defined(DoubleFont) && !defined(XY2)
-#error DoubleFont can only be used with XY2 , not XY
-#endif
+#if defined(OLED1306)
+    #if (!defined(XY) && !defined(XY2)) || (defined(XY) && defined(XY2))
+    #error Need to define one of XY or XY2
+    #endif
 
+    #if defined(DoubleFont) && !defined(XY2)
+    #error DoubleFont can only be used with XY2 , not XY
+    #endif
+
+    #if defined(XY2force) && !defined(XY2)
+    #error XY2force can only be used with XY2 , not XY
+    #endif
+#endif
 
 #if (defined(LOAD_EEPROM_LOGO) && defined(LOAD_MEM_LOGO)) || (defined(LOAD_EEPROM_LOGO) && defined(LOAD_EEPROM_LOGO_MEM_FALLBACK)) || (defined(LOAD_MEM_LOGO) && defined(LOAD_EEPROM_LOGO_MEM_FALLBACK))
 #error Can only define one of: LOAD_EEPROM_LOGO, LOAD_MEM_LOGO, LOAD_EEPROM_LOGO_MEM_FALLBACK
