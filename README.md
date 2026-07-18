@@ -79,7 +79,7 @@ Various MaxDuino and TZXDuino devices have been manufactured over the last 15 ye
 *  Espressif ESP32-WROOM (D1 Mini32)
 *  Atmel (Microchip) SAMD21 (SEEED XIAO M0 SAMD21)
 *  Espressif ESP32C3 (SEEED XIAO ESP32-C3)
-*  STMicroelectonics STM32 (experimental, needs testing)
+*  STMicroelectronics STM32 (experimental, needs testing)
 *  .. and others
 
 Prebuilt downloadable firmware files for all of the above are available in the GitHub releases page: https://github.com/stripwax/MaxDuino/releases

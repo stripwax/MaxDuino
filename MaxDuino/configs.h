@@ -2,10 +2,10 @@
 
 // The configs are used for multiple things and there is currently overlap:
 //  * whether EEPROM logo is supported by target hardware or not;
-//  * what prefernces you might have for EEPROM logo and fonts, etc
+//  * what preferences you might have for EEPROM logo and fonts, etc
 //  * what hardware capabilities are supported by a standard circuit using this board (e.g. is there a motor output)
 //  * which different file types can all be enabled simultaneously and still fit into firmware
-//  * how much RAM can be devoted to the various buffer
+//  * how much RAM can be devoted to the various buffers
 
 // Some of these are related to the specific MCU, some related to the board that uses a certain MCU
 // (e.g. Seeed form-factor has fewer available GPIOs), some related to the overall MaxDuino device circuit

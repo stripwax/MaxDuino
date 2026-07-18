@@ -12,7 +12,6 @@ void HeaderFail();
 void ForcePauseAfter0();
 word TickToUs(word ticks);
 
-extern word currentPeriod;
 extern word pauseLength;
 extern unsigned long bytesToRead;
 extern bool EndOfFile;

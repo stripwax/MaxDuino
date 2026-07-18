@@ -20,7 +20,7 @@ MaxDuino can be run on custom PCBs built using any of the following microcontrol
 *  Espressif ESP32-WROOM (D1 Mini32)
 *  Atmel (Microchip) SAMD21 (SEEED XIAO M0 SAMD21)
 *  Espressif ESP32C3 (SEEED XIAO ESP32-C3)
-*  STMicroelectonics STM32F (possibly incomplete, needs testing)
+*  STMicroelectronics STM32F (possibly incomplete, needs testing)
 *  .. and others
 
 ## LCD type
@@ -94,7 +94,7 @@ MaxDuino firmware is itself an open-source project and remains free for everybod
   * Thinary Nano Every or Arduino Nano Every, respectively.  128x64 OLED (could be 0.96" or 1.3" variant) + tape motor control
   * Release builds available: `ThinaryNanoEvery_MaxduinoUltimate` and `NanoEvery_MaxduinoUltimate`
 * MaxDuino Everstore (from You Make Robots)
-  * Indentical to MaxDuino Ultimate/Every but additionally includes the recording circuit and additional audio input.
+  * Identical to MaxDuino Ultimate/Every but additionally includes the recording circuit and additional audio input.
   * The above firmware release builds (Thinary or NanoEvery) are already compatible with MaxDuino Everstore and include the Recording functionality
 
 ### ATMEGA32U4 - based
@@ -141,7 +141,7 @@ There are some experimental forks available for various ESP and other devices, e
  
 Several commercial devices uses custom PCBs without USB connectivity for uploading new firmware (even if they use USB for DC power).  For these you will need a USBASP or similar ICSP programmer to upload MaxDuino onto the device.
 
-In this case, you may prefer to use one of the `Nano328p_NO_BOOTLOADER` envs (`platformio.ini`) and corresponding configuration file (e.g. see `userconfig11.h`) - optimised to cram in more features and filetypes by freeing up firmware space by removing the bootloader entirely.  Since the bootloader is typically used for USB programming, no functionality is lost on devices without USB progammability.  This frees up the full 32KB flash for MaxDuino.  You can still customize these builds in the usual way if you so wish.
+In this case, you may prefer to use one of the `Nano328p_NO_BOOTLOADER` envs (`platformio.ini`) and corresponding configuration file (e.g. see `userconfig11.h`) - optimised to cram in more features and filetypes by freeing up firmware space by removing the bootloader entirely.  Since the bootloader is typically used for USB programming, no functionality is lost on devices without USB programmability.  This frees up the full 32KB flash for MaxDuino.  You can still customize these builds in the usual way if you so wish.
 
 **IMPORTANT**  To successfully flash and run one of the "NO_BOOTLOADER" images on ATMEGA328P, you will need to ensure you have set the e-fuses on the board.  You can do this from PlatformIO (`Project Tasks` -> `(env name)` -> `Platform` -> `Set Fuses`) or by a separate utility such as AVRDUDESS.  The correct values to set are listed in the `platformio.ini` file.
 

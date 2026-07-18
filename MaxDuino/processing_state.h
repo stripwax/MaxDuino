@@ -15,6 +15,6 @@ extern BLOCKTASK currentBlockTask;
 extern byte pass;
 extern long count_r;
 extern byte currentBit;
-extern word currenPeriod;
+extern word currentPeriod;
 
 #endif // PROCESSING_STATE_H_INCLUDED

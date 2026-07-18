@@ -401,7 +401,7 @@ char fline[17];
     }
 
     #if defined(LOGO_FADE_IN)
-    // LOGO_FADE_IN defines the number of millseconds for the animation
+    // LOGO_FADE_IN defines the number of milliseconds for the animation
     const unsigned long millis_per_frame = (LOGO_FADE_IN/128);
     byte next_frame = ((millis() - start_time) / millis_per_frame); // if we could do 64 fps the animation takes 2 seconds
     if (next_frame == frame)

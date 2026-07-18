@@ -10,12 +10,12 @@
 #if defined(I2CFAST)
   #define I2C_FASTMODE  1
   #if !defined(I2CCLOCK)
-  #define I2CCLOCK  400000L   //100000L for StandarMode, 400000L for FastMode and 1000000L for FastModePlus
+  #define I2CCLOCK  400000L   //100000L for StandardMode, 400000L for FastMode and 1000000L for FastModePlus
   #endif
 #else
   #define I2C_FASTMODE  0
   #if !defined(I2CCLOCK)
-  #define I2CCLOCK  100000L   //100000L for StandarMode, 400000L for FastMode and 1000000L for FastModePlus
+  #define I2CCLOCK  100000L   //100000L for StandardMode, 400000L for FastMode and 1000000L for FastModePlus
   #endif
 #endif
 

@@ -17,7 +17,7 @@
 #elif defined(IRAM_ATTR)
 #define ISR_ATTR IRAM_ATTR
 #elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
-// earlephilhower core: linker puts .time_criticl* in RAM, avoiding flash-cache-miss jitter
+// earlephilhower core: linker puts .time_critical* in RAM, avoiding flash-cache-miss jitter
 #define ISR_ATTR __attribute__((section(".time_critical")))
 #else
 #define ISR_ATTR

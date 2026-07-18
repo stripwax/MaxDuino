@@ -1,4 +1,4 @@
-/* This file contains inital preferences that are not device specific.
+/* This file contains initial preferences that are not device specific.
 You can change these here and they will affect every device you build.
 You can also override these in your userconfigs, or via platformio.ini using -D flags (e.g. -DDEFAULT_BAUDRATE 3850 etc),
 since each flag below is guarded with #ifndef .  maxduino_prefs.h is included AFTER configs.h (which loads your userconfigs)

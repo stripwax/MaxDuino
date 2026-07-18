@@ -17,7 +17,7 @@ You can choose which to enable - you may wish to enable only one or two, to redu
 
 Support for recording requires dedicated external components, not least an additional audio input and amplifier, but also requires available ADC pins on the MCU board.
 Currently the firmware support is only implemented for the ATMEGA4808 and ATMEGA4809 boards. It is likely to be added to other boards in the future - but only those
-that have sufficient firmware and ram capacity (It is extremely unlikely that we will every add support for recording to the ATMEGA328P firmware builds).
+that have sufficient firmware and ram capacity (It is extremely unlikely that we will ever add support for recording to the ATMEGA328P firmware builds).
 
 ## ADDITIONAL MENU
 

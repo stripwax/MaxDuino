@@ -20,7 +20,7 @@ extern bool invert;
 void casduinoLoop();
 
 void setCASBaud();
-extern byte cas_scale; // gets set when you call setCAsBaud
+extern byte cas_scale; // gets set when you call setCASBaud
 extern byte cas_period; // gets set when you call setCASBaud
 
 #endif // Use_CAS

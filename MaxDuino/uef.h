@@ -16,11 +16,11 @@ void tzx_process_taskid_uef_processchunkid();
 #define ID0100              0x0100 // implicit start/stop bit tape data block
 #define ID0104              0x0104 // defined tape format data block: data bits per packet/parity/stop bits
 #define ID0110              0x0110 // carrier tone (previously high tone) 
-#define ID0111              0x0111 // carrier tone (previously high tone) with dummy byte at byte
+#define ID0111              0x0111 // carrier tone (previously high tone) with dummy byte at end
 #define ID0112              0x0112 // Integer gap: cycles = (this.baud/1000)*2*n
 #define ID0114              0x0114 // Security Cycles replaced with carrier tone
 #define ID0116              0x0116 // floating point gap: cycles = floatGap * this.baud
-#define ID0117              0x0117 // data encoding format change for 300 bauds
+#define ID0117              0x0117 // data encoding format change for 300 baud
 #define IDCHUNKEOF          0xffff
 
 // UEF stuff
