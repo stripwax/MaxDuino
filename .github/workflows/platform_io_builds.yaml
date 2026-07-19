@@ -62,13 +62,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build CLI
+      - name: Install MinGW cross-compiler
+        run: sudo apt-get install -y g++-mingw-w64-x86-64
+      - name: Build CLI (Linux)
         run: make -C cli
-      - name: Upload CLI binary
+      - name: Build CLI (Windows)
+        run: make -C cli win
+      - name: Upload CLI binaries
         uses: actions/upload-artifact@v4
         with:
           name: maxduino-cli
-          path: cli/build/maxduino
+          path: |
+            cli/build/maxduino
+            cli/build/maxduino.exe
 
   latest-dev-build:
     runs-on: ubuntu-latest

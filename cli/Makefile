@@ -26,7 +26,11 @@ $(BUILD)/%.o: $(MAX)/%.cpp
 $(BUILD)/main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
+win: CXX = x86_64-w64-mingw32-g++
+win: TARGET = $(BUILD)/maxduino.exe
+win: $(BUILD) $(TARGET)
+
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all clean
+.PHONY: all clean win
