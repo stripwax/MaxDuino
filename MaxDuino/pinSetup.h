@@ -3,6 +3,15 @@
 
 #include "Arduino.h"
 
+#ifdef CLI
+  // CLI builds: no hardware pin operations needed
+  #define INIT_OUTPORT
+  #define WRITE_LOW
+  #define WRITE_HIGH
+  #define outputPin 0
+  #define NO_MOTOR
+#else // !CLI
+
 #ifdef __AVR_ATmega2560__
 #define outputPin           23 
 #define INIT_OUTPORT        DDRA |=  _BV(1)         // El pin23 es el bit1 del PORTA
@@ -367,5 +376,7 @@ void pinsetup();
 #endif
 
 #endif // BUTTON_ADC
+
+#endif // !CLI
 
 #endif // #define PINSETUP_H_INCLUDED

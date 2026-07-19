@@ -15,6 +15,10 @@ class TimerCounter
     static unsigned long currentMicroseconds;
     static void _initialize();
     static void ISR_ATTR _setPeriod(unsigned long microseconds);
+#ifdef CLI
+  public:
+    static unsigned long getCurrentMicroseconds() { return currentMicroseconds; }
+#endif
 };
 extern TimerCounter& Timer;
 extern const unsigned long MAXPAUSE_PERIOD;

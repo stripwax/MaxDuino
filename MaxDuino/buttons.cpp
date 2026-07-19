@@ -1,3 +1,4 @@
+#ifndef CLI
 #include "configs.h"
 #include "Arduino.h"
 #include "buttons.h"
@@ -235,3 +236,4 @@ void checkLastButton()
   if(!button_down() && !button_up() && !button_play() && !button_stop()) lastbtn=false; 
   delay(50);
 }
+#endif

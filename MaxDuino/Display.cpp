@@ -1,3 +1,4 @@
+#ifndef CLI
 #include "configs.h"
 #include "compat.h"
 #include "Arduino.h"
@@ -913,3 +914,4 @@ void scrollTextReset()
   scrollTime=millis()+scrollWait;
   scrollPos=0;
 }
+#endif

@@ -3,6 +3,21 @@
 #include "TimerCounter.h"
 #include "isr.h"
 
+unsigned long TimerCounter::currentMicroseconds=0;
+TimerCounter::TimerCounter() {}
+
+#ifdef CLI
+
+#define __TIMER_MAXPAUSE_PERIOD 8191
+
+void TimerCounter::initialize() {}
+void TimerCounter::stop() {}
+void ISR_ATTR TimerCounter::setPeriod(unsigned long microseconds) {
+  currentMicroseconds = microseconds;
+}
+
+#else // !CLI
+
 #if defined(ESP32_RISCV)
 #include "driver/timer.h"
 #include "esp_intr_alloc.h"
@@ -19,12 +34,7 @@ static bool IRAM_ATTR timer_isr_wrapper(void *arg) {
  *  Original code by Jesse Tane for http://labs.ideo.com August 2008
  */
 
-unsigned long TimerCounter::currentMicroseconds=0;
-
 // standard timer class for all devices, constructed in the same way
-TimerCounter::TimerCounter()
-{}
-
 
 void TimerCounter::initialize()
 {
@@ -690,6 +700,8 @@ void TimerCounter::_attachInterrupt()
 #else
 #error Missing definition of TimerCounter / unsupported device
 #endif
+
+#endif // !CLI
 
 static class TimerCounter _TimerInstance;
 class TimerCounter &Timer = _TimerInstance;

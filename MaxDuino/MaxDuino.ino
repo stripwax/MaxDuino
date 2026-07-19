@@ -65,8 +65,6 @@ SdBaseFile _tmpdirs[2]; // internal file pointers.  (*currentDir points to eithe
 SdBaseFile *currentDir = &_tmpdirs[0];  // SD card directory
 byte _alt_tmp_dir = 1; // which of the _tmpdirs is scratch (we flip this between 0 and 1)
 
-char fileName[filenameLength + 1];    //Current filename
-const char * filenameExt;             //File extension of the current filename (after the .), if any
 char prevSubDir[SCREENSIZE+1];
 uint16_t DirFilePos[nMaxPrevSubDirs];  //File Positions in Directory to be restored (also, history of subdirectories)
 byte subdir = 0;
@@ -76,9 +74,6 @@ byte motorState = 1;                //Current motor control state
 byte oldMotorState = 1;             //Last motor control state
 #endif
 
-byte start = 0;                     //Currently playing flag
-
-bool pauseOn = false;                   //Pause state
 uint16_t currentFile;               //File index (per filesystem) of current file, relative to current directory (pointed to by currentDir)
 uint16_t maxFile;                   //Total number of files in directory
 bool dirEmpty;                      //flag if directory is completely empty

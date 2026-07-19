@@ -9,3 +9,9 @@
 
 # Temporary file created by PlatformIO when building Arduino projects (the main .ino is converted to a single .cpp during build)
 MaxDuino.ino.cpp
+
+idf_component.yml
+
+# object files for compilation output
+**/*.o
+cli/build

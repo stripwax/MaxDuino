@@ -1,3 +1,4 @@
+#ifndef CLI
 #include "configs.h"
 #include "i2c_config.h"
 #include "i2c.h"
@@ -11,4 +12,5 @@
   SoftWire Wire = SoftWire();  
 #else
   #include <Wire.h>
+#endif
 #endif

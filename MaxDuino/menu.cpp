@@ -17,6 +17,7 @@
  *  Save settings to eeprom on exit. 
  */
 
+#ifndef CLI
 #include "configs.h"
 #include "Arduino.h"
 #include "compat.h"
@@ -349,3 +350,4 @@ void menuMode()
 
   debounce(button_stop);
 }
+#endif

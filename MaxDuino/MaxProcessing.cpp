@@ -1118,13 +1118,17 @@ void TZXProcess() {
             lcd.print(PlayBytes) ;  lcd.print(" - L: "); lcd.print(loopCount);
           #endif
 
-          noInterrupts();  
-          while(!button_stop()) {
-            //waits until the button Stop is pressed.
-            //delay(50);
-          }
-          interrupts();
-          stopFile();
+          #ifdef CLI
+            stopFile();
+          #else
+            noInterrupts();  
+            while(!button_stop()) {
+              //waits until the button Stop is pressed.
+              //delay(50);
+            }
+            interrupts();
+            stopFile();
+          #endif
           break;
       
       } // end of CurrentID switch statement

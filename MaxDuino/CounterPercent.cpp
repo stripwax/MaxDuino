@@ -1,3 +1,4 @@
+#ifndef CLI
 #include "configs.h"
 #include "Arduino.h"
 #include "compat.h"
@@ -149,3 +150,4 @@ void lcdPercent() {
     currpct = newpct;
   }
 }
+#endif

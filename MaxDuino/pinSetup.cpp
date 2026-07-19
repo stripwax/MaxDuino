@@ -1,3 +1,4 @@
+#ifndef CLI
 #include "configs.h"
 #include "Arduino.h"
 #include "pinSetup.h"
@@ -263,3 +264,4 @@ void pinsetup()
 #error Unknown device type or missing definition in pinSetup.h
 #endif
 }
+#endif

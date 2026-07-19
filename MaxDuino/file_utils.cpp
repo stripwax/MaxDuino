@@ -9,6 +9,9 @@ unsigned long filesize;
 byte lastByte;
 _readout_type readout;
 
+char fileName[filenameLength + 1];
+const char * filenameExt = nullptr;
+
 byte filebuffer[FILEBUFFER_SIZE]; // used for small reads from files (readfile, ReadByte, etc use this), sized for the largest header read
 byte readfile(byte nbytes, unsigned long p)
 {
@@ -37,7 +40,7 @@ byte ReadWord() {
   if(readfile(2, bytesRead)==2)
   {
     bytesRead += 2;
-    outWord = word(filebuffer[1], filebuffer[0]);
+    outWord = ((uint16_t)filebuffer[1] << 8) | filebuffer[0];
     return true;
   }
   return false;
@@ -49,7 +52,7 @@ byte ReadLong() {
   if(readfile(3, bytesRead)==3)
   {
     bytesRead += 3;
-    outLong = ((unsigned long) word(filebuffer[2], filebuffer[1]) << 8) | filebuffer[0];
+    outLong = ((unsigned long)(((uint16_t)filebuffer[2] << 8) | filebuffer[1]) << 8) | filebuffer[0];
     return true;
   }
   return false;
@@ -61,7 +64,7 @@ byte ReadDword() {
   if(readfile(4, bytesRead)==4)
   {
     bytesRead += 4;
-    outLong = ((unsigned long)word(filebuffer[3], filebuffer[2]) << 16) | word(filebuffer[1], filebuffer[0]);
+    outLong = ((unsigned long)(((uint16_t)filebuffer[3] << 8) | filebuffer[2]) << 16) | ((uint16_t)filebuffer[1] << 8) | filebuffer[0];
     return true;
   }
   return false;

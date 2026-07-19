@@ -145,8 +145,8 @@ static bool detect_raw_mode(TRS80Mode &mode, uint16_t &payload_start) {
     return true;
   }
 
-  const uint16_t start = word(filebuffer[1], filebuffer[2]);
-  const uint16_t end = word(filebuffer[3], filebuffer[4]);
+  const uint16_t start = ((uint16_t)filebuffer[1] << 8) | filebuffer[2];
+  const uint16_t end = ((uint16_t)filebuffer[3] << 8) | filebuffer[4];
   if (end < start) {
     return false;
   }
@@ -371,7 +371,7 @@ bool trs80cas_detect_and_init() {
 void trs80cas_process() {
   if (!trs80_sent_direct_header) {
     trs80_sent_direct_header = true;
-    currentPeriod = word(0x6000 | TRS80_SAMPLE_US);
+    currentPeriod = 0x6000 | TRS80_SAMPLE_US;
     return;
   }
 
@@ -395,7 +395,7 @@ void trs80cas_process() {
   }
 
   bits <<= (8 - count);
-  currentPeriod = word(0x4000 | ((count - 1) << 8) | bits);
+  currentPeriod = 0x4000 | ((count - 1) << 8) | bits;
 }
 
 #endif // defined(Use_CAS) && defined(Use_TRS80)
