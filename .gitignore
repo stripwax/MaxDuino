@@ -1,4 +1,6 @@
 *
+test/README
+test/maxduinobatch.sh
 
 !.gitignore
 !test
@@ -7,4 +9,3 @@
 !test/inputs/*
 !test/outputs/*
 
-test/maxduinoscript.sh
