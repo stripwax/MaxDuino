@@ -1,0 +1,10 @@
+*
+
+!.gitignore
+!test
+!test/inputs
+!test/outputs
+!test/inputs/*
+!test/outputs/*
+
+test/maxduinoscript.sh
