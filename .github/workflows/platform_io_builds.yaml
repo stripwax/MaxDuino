@@ -22,15 +22,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
           key: ${{ runner.os }}-pio
-          
-      - uses: actions/setup-python@v5
+
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -52,7 +52,7 @@ jobs:
         run: find . -regextype posix-basic -regex './.pio/build/\(.*\)/.*\.\(hex\|bin\)$' -print | grep -v '_test_' | sed s':\(./.pio/build/\)\([^/]*\)/\(.*\):echo copying \2_\3 \&\& cp .pio/build/\2/\3 for_release/\2_\3:' | bash
 
       - name: archive releasable files as output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: releaseable-files
           path: |
@@ -61,7 +61,7 @@ jobs:
   cli-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install MinGW cross-compiler
         run: sudo apt-get install -y g++-mingw-w64-x86-64
       - name: Build CLI (Linux)
@@ -69,7 +69,7 @@ jobs:
       - name: Build CLI (Windows)
         run: make -C cli win
       - name: Upload CLI binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: maxduino-cli
           path: |
@@ -81,16 +81,16 @@ jobs:
     needs: [cli-build]
     steps:
       - name: Checkout master branch (default)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Checkout test-cases-resources branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: test-cases-resources
           path: testing
 
       - name: pull CLI binary
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: maxduino-cli
           path: testing
@@ -111,7 +111,7 @@ jobs:
 
       - name: Upload outputs for debugging
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-outputs
           path: /tmp/maxduino-testing-outputs/*
@@ -127,13 +127,13 @@ jobs:
     steps:
       # download archive (just created by build process)
       - name: pull releasable files
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: releaseable-files
           path: for_release
 
       - name: pull CLI binary
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: maxduino-cli
           path: for_release
@@ -173,13 +173,13 @@ jobs:
     steps:
       # download archive (just created by build process)
       - name: pull releasable files
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: releaseable-files
           path: for_release
 
       - name: pull CLI binary
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: maxduino-cli
           path: for_release
