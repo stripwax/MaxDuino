@@ -15,3 +15,9 @@ idf_component.yml
 # object files for compilation output
 **/*.o
 cli/build
+
+# "test" inputs and outputs are now in a separate branch, so 'hide' them via .gitignore
+test/inputs
+test/outputs
+# "testing" folder is where the github action has been setup to run; if you run it locally you end up with copies of stuff in that folder, don't commit those to git!
+testing/
