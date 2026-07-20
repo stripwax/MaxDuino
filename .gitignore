@@ -1,0 +1,11 @@
+*
+test/docs
+test/bin
+
+!.gitignore
+!test
+!test/inputs
+!test/outputs
+!test/inputs/*
+!test/outputs/*
+
