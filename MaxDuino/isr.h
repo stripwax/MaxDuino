@@ -30,9 +30,6 @@ void ISR_ATTR isrCallback();
 extern volatile byte isStopped;
 extern volatile byte pinState;
 extern volatile bool isPauseBlock;
-#ifdef CLI
-extern bool cli_output_value;
-#endif
 
 void reset_output_state();
 

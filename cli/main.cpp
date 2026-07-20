@@ -16,6 +16,9 @@
 #include <cstdlib>
 #include <cstring>
 
+// This is our pseduo pin output. WRITE_HIGH and WRITE_LOW are the only things that change this
+byte cli_output_value=0;
+
 // --- Globals required by compiled source files ---
 block_type block = 0;
 
@@ -106,7 +109,10 @@ int main(int argc, char **argv) {
 
   // Set up globals for the processing code
   filesize = entry.fileSize();
-  strncpy(fileName, inputPath, filenameLength);
+  const char *baseName = strrchr(inputPath, '/');
+  if (!baseName) baseName = strrchr(inputPath, '\\');
+  if (baseName) baseName++; else baseName = inputPath;
+  strncpy(fileName, baseName, filenameLength);
   fileName[filenameLength] = '\0';
   filenameExt = strrchr(fileName, '.');
   if (filenameExt) filenameExt++; else filenameExt = "";
@@ -139,33 +145,40 @@ int main(int argc, char **argv) {
     accumulatedUs += durationUs;
   };
 
+  unsigned long periodUs = Timer.getCurrentMicroseconds();
+  if (periodUs == 0) periodUs = 1;
+  unsigned long samples = (periodUs * sampleRate + 500000) / 1000000;
+
   while (!isStopped) {
     UniLoop();
-    isrCallback();
 
-    // Handle pauses: ForcePauseAfter0 and ID2A set pauseOn=true.
-    // In CLI mode, emit silence instead of waiting for user input.
-    if (pauseOn) {
-      unsigned long pauseUs = 5000000UL; // default 5 seconds for forcepause
-      emitSilence(pauseUs);
-      pauseOn = false;
-      fprintf(stderr, "Pause: %.1fs silence\n", pauseUs / 1000000.0);
+    if (samples==0)
+    {
+      isrCallback();
+      periodUs = Timer.getCurrentMicroseconds();
+      if (periodUs == 0) periodUs = 1;
+      samples = (periodUs * sampleRate + 500000) / 1000000;
+
+      // Handle pauses: ForcePauseAfter0 and ID2A set pauseOn=true.
+      // In CLI mode, emit silence instead of waiting for user input.
+      if (pauseOn) {
+        unsigned long pauseUs = 5000000UL; // default 5 seconds for forcepause
+        emitSilence(pauseUs);
+        pauseOn = false;
+        fprintf(stderr, "Pause: %.1fs silence\n", pauseUs / 1000000.0);
+      }
+    }
+    else
+    {
+      samples--;
     }
 
-    unsigned long periodUs = Timer.getCurrentMicroseconds();
-    if (periodUs == 0) periodUs = 1;
 
-    // Convert period to sample count
-    unsigned long samples = (periodUs * sampleRate + 500000) / 1000000;
-    if (samples == 0) samples = 1;
+    // Output samples at the current cli_output_value level
+    unsigned char level = cli_output_value ? 192 : 64;
+    wavWriteSample(level);
 
-    // Output samples at the current pinState level
-    unsigned char level = (pinState == HIGH) ? 192 : 64;
-    for (unsigned long s = 0; s < samples; s++) {
-      wavWriteSample(level);
-    }
-
-    accumulatedUs += periodUs;
+    accumulatedUs += (sampleRate + 500000) / 1000000;
     iterations++;
 
     // Safety: if we've been running for an absurdly long time, break
@@ -187,7 +200,7 @@ int main(int argc, char **argv) {
       if (periodUs == 0) periodUs = 1;
       unsigned long samples = (periodUs * sampleRate + 500000) / 1000000;
       if (samples == 0) samples = 1;
-      unsigned char level = (pinState == HIGH) ? 192 : 64;
+      unsigned char level = cli_output_value ? 192 : 64;
       for (unsigned long s = 0; s < samples; s++) {
         wavWriteSample(level);
       }

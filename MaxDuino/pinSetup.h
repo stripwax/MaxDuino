@@ -4,10 +4,11 @@
 #include "Arduino.h"
 
 #ifdef CLI
-  // CLI builds: no hardware pin operations needed
+  // CLI builds: no hardware pin operations needed, but track output state
+  extern byte cli_output_value;
   #define INIT_OUTPORT
-  #define WRITE_LOW
-  #define WRITE_HIGH
+  #define WRITE_LOW  (cli_output_value = 0)
+  #define WRITE_HIGH (cli_output_value = 1)
   #define outputPin 0
   #define NO_MOTOR
 #else // !CLI
