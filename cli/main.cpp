@@ -84,16 +84,33 @@ static void wavWriteHeader(FILE *f, unsigned long sampleRate, unsigned long tota
   fwrite(buf, 1, 4, f);
 }
 
+static unsigned long periodUsToSamples(unsigned long periodUs, unsigned long sampleRate,
+                                       unsigned long overSample, double &error)
+{
+  if (periodUs == 0) periodUs = 1;
+  double exact = (double(periodUs) * double(overSample) / 1000000.0) * sampleRate;
+  unsigned long n = (unsigned long)exact;
+  error += exact - double(n);
+  if (error >= 1.0) {
+    n++;
+    error -= 1.0;
+  }
+  if (n == 0) n = 1;
+  return n;
+}
+
 // --- Main ---
 int main(int argc, char **argv) {
   const char *inputPath = nullptr;
   const char *outputPath = nullptr;
   unsigned long sampleRate = 44100;
+  unsigned long overSample = 64;
 
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-i") == 0 && i+1 < argc) inputPath = argv[++i];
     else if (strcmp(argv[i], "-o") == 0 && i+1 < argc) outputPath = argv[++i];
     else if (strcmp(argv[i], "-s") == 0 && i+1 < argc) sampleRate = strtoul(argv[++i], nullptr, 10);
+    else if (strcmp(argv[i], "-f") == 0 && i+1 < argc) overSample = strtoul(argv[++i], nullptr, 10);
   }
 
   if (!inputPath || !outputPath) {
@@ -118,7 +135,7 @@ int main(int argc, char **argv) {
   if (filenameExt) filenameExt++; else filenameExt = "";
   start = 1;
 
-  fprintf(stderr, "Converting: %s (%lu bytes)\n", inputPath, filesize);
+  fprintf(stderr, "Converting: %s (%lu bytes) to .wav (%g kHz sample rate)\n", inputPath, filesize, sampleRate/1000.0);
   UniSetup();
   UniPlay();
 
@@ -134,7 +151,6 @@ int main(int argc, char **argv) {
   wavWriteHeader(wavOut, sampleRate, 0);
 
   // Main conversion loop
-  unsigned long accumulatedUs = 0;
   unsigned long iterations = 0;
 
   auto emitSilence = [&](unsigned long durationUs) {
@@ -142,74 +158,68 @@ int main(int argc, char **argv) {
     for (unsigned long s = 0; s < samples; s++) {
       wavWriteSample(64); // silence = midpoint
     }
-    accumulatedUs += durationUs;
   };
 
   unsigned long periodUs = Timer.getCurrentMicroseconds();
-  if (periodUs == 0) periodUs = 1;
-  unsigned long samples = (periodUs * sampleRate + 500000) / 1000000;
+  double isrError = 0.0;
+  unsigned long samples = periodUsToSamples(periodUs, sampleRate, overSample, isrError);
+  float average;
+  bool fileFinished = false;
+  volatile uint16_t *savedWriteBuffer = nullptr;
 
-  while (!isStopped) {
-    UniLoop();
+  while (!fileFinished) {
 
-    if (samples==0)
-    {
-      isrCallback();
-      periodUs = Timer.getCurrentMicroseconds();
-      if (periodUs == 0) periodUs = 1;
-      samples = (periodUs * sampleRate + 500000) / 1000000;
-
-      // Handle pauses: ForcePauseAfter0 and ID2A set pauseOn=true.
-      // In CLI mode, emit silence instead of waiting for user input.
-      if (pauseOn) {
-        unsigned long pauseUs = 5000000UL; // default 5 seconds for forcepause
-        emitSilence(pauseUs);
-        pauseOn = false;
-        fprintf(stderr, "Pause: %.1fs silence\n", pauseUs / 1000000.0);
+    if(!isStopped) {
+      UniLoop();
+      if(isStopped) {
+        fileFinished = true;
+        isStopped = false;
+        savedWriteBuffer = writeBuffer;
       }
     }
-    else
+
+    average = 0;
+    for(unsigned long o = 0; o<overSample; o++)
     {
-      samples--;
+      unsigned char level = cli_output_value ? 192 : 64;
+      average += level;
+      if (samples<=0)
+      {
+        isrCallback();
+        periodUs = Timer.getCurrentMicroseconds();
+        samples += periodUsToSamples(periodUs, sampleRate, overSample, isrError);
+
+        // Handle pauses: ForcePauseAfter0 and ID2A set pauseOn=true.
+        // In CLI mode, emit silence instead of waiting for user input.
+        if (pauseOn) {
+          unsigned long pauseUs = 5000000UL; // default 5 seconds for forcepause
+          emitSilence(pauseUs);
+          pauseOn = false;
+          fprintf(stderr, "Pause: %.1fs silence\n", pauseUs / 1000000.0);
+        }
+
+        if (fileFinished && readpos == writepos && readBuffer == savedWriteBuffer) {
+          break;
+        }
+      }
+      samples -= 1;
     }
 
-
-    // Output samples at the current cli_output_value level
-    unsigned char level = cli_output_value ? 192 : 64;
-    wavWriteSample(level);
-
-    accumulatedUs += (sampleRate + 500000) / 1000000;
-    iterations++;
-
-    // Safety: if we've been running for an absurdly long time, break
-    if (accumulatedUs > 600UL * 1000000UL) {
-      fprintf(stderr, "Timeout: exceeded 10 minutes\n");
+    if (fileFinished && readpos == writepos && readBuffer == savedWriteBuffer) {
       break;
     }
-  }
 
-  // Drain remaining periods from the read buffer after processing stopped.
-  // Temporarily clear isStopped so the ISR can advance readpos through remaining data.
-  {
-    unsigned long drainCount = 0;
-    isStopped = false;
-    buffsize_t startReadpos = readpos;
-    while (drainCount < buffsize) {
-      isrCallback();
-      unsigned long periodUs = Timer.getCurrentMicroseconds();
-      if (periodUs == 0) periodUs = 1;
-      unsigned long samples = (periodUs * sampleRate + 500000) / 1000000;
-      if (samples == 0) samples = 1;
-      unsigned char level = cli_output_value ? 192 : 64;
-      for (unsigned long s = 0; s < samples; s++) {
-        wavWriteSample(level);
-      }
-      accumulatedUs += periodUs;
-      drainCount++;
-      // Stop when ISR wraps the buffer (readpos went backwards or wrapped)
-      if (drainCount > 1 && readpos < startReadpos) break;
+    average /= overSample;
+    // Output samples at the current cli_output_value level (averaged over >= oversamples)
+    wavWriteSample(average);
+
+    iterations++;
+
+    // Safety: Cap output file at 30 minutes
+    if (wavSampleCount/sampleRate > 30*60) {
+      fprintf(stderr, "Aborted: output .wav is greater than 30 minutes, possible maxduino deadlock?\n");
+      break;
     }
-    isStopped = true;
   }
 
   // Seek back and write the correct data size
