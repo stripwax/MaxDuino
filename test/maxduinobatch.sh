@@ -38,6 +38,11 @@ MATCH_DIR="${3:-}"
 # Default to 'maxduino' if not specified
 [ -z "$MAXDUINO" ] && MAXDUINO="maxduino"
 
+# Extract sample rate from a WAV file header (bytes 24-27, little-endian)
+get_wav_sample_rate() {
+    od -A n -t u4 -j 24 -N 4 "$1" | tr -d ' '
+}
+
 mismatches=0
 done_count=0
 
@@ -58,8 +63,17 @@ for input_file in "$INPUT_DIR"/*; do
     
     done_count=$((done_count + 1))
     
+    # Build maxduino command, passing sample rate from match file if available
+    MAXDUINO_CMD=("$MAXDUINO" -i "$input_file" -o "$output_file")
+    if [ -n "$MATCH_DIR" ] && [ -f "$MATCH_DIR/$filename.wav" ]; then
+        sr=$(get_wav_sample_rate "$MATCH_DIR/$filename.wav")
+        if [ -n "$sr" ] && [ "$sr" -gt 0 ] 2>/dev/null; then
+            MAXDUINO_CMD+=(-s "$sr")
+        fi
+    fi
+    
     # Run maxduino (count failures as mismatches)
-    if ! "$MAXDUINO" -i "$input_file" -o "$output_file"; then
+    if ! "${MAXDUINO_CMD[@]}"; then
         echo "Mismatch: $filename.wav (maxduino failed)" >&2
         mismatches=$((mismatches + 1))
         continue
