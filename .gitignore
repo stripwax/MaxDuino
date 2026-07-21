@@ -1,6 +1,6 @@
 *
-test/README
-test/maxduinobatch.sh
+test/docs
+test/bin
 
 !.gitignore
 !test
