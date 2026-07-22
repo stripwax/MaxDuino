@@ -105,7 +105,7 @@ static unsigned long periodUsToSamples(unsigned long periodUs, unsigned long sam
   }
   if (!warnedShort && (periodUs < (1000000.0 / sampleRate - 1.0) || n == 0)) {
     warnedShort = true;
-    fprintf(stderr, "Warning: Encoountered periodUs %lu that is likely too short for %lu Hz sample rate. Advise regenerating with higher samplerate.\n", periodUs, sampleRate);
+    fprintf(stderr, "Warning: Encountered periodUs %lu that is likely too short for %lu Hz sample rate. Advise regenerating with higher samplerate.\n", periodUs, sampleRate);
   }
   if (n == 0) n = 1;
 
