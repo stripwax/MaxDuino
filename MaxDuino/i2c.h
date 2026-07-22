@@ -81,10 +81,15 @@
   #endif
 
     
-  // XIAO boards: D4/D5 = GPIO 6/7 are on i2c1 (Wire1), not i2c0 (Wire).
-  #if defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
+  #if defined(ARDUINO_SEEED_XIAO_RP2350)
+    // XIAO RP2350 is the awekward one here:
+    // XIAO RP2350: D4/D5 = GPIO 6/7 are on i2c1 (Wire1), not i2c0 (Wire).
     #define I2C_WIRE_CLASS Wire1
   #else
+    // Everything else: Wire defaults to working configuration
+    // Pico and other RP2040 boards: Wire defaults to i2c0 which is fine.
+    // XIAO RP2040: D4/D5 = GPIO 6/7 are on i2c1, same as RP2350,
+    // but the earlephilhower core maps Wire→i2c1 . So Wire "just works".
     #define I2C_WIRE_CLASS Wire
   #endif
 
