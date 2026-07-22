@@ -89,6 +89,8 @@ static unsigned long periodUsToSamples(unsigned long periodUs, unsigned long sam
 {
   static bool warnedZero = false;
   static bool warnedShort = false;
+  static bool warnedLatched = false;
+
   if (!warnedZero && periodUs <= 1) {
     warnedZero = true;
     fprintf(stderr, "Warning: periodUs is %lu - probably this is a MaxDuino bug\n", periodUs);
@@ -106,6 +108,18 @@ static unsigned long periodUsToSamples(unsigned long periodUs, unsigned long sam
     fprintf(stderr, "Warning: Encoountered periodUs %lu that is likely too short for %lu Hz sample rate. Advise regenerating with higher samplerate.\n", periodUs, sampleRate);
   }
   if (n == 0) n = 1;
+
+  if (periodUs == (unsigned long)((1000000.0 / sampleRate)) || periodUs == (unsigned long)((1000000.0 / (double)sampleRate) + 0.5))
+  {
+    // in particular for things like OTLA, latch directly onto this period with no fractional part, otherwise
+    // you get aliasing effects between the 'real' (fractional) sample periods and the 'integer only' periodUs that Maxduino gives to us.
+    // If loading the .wav file fails, pick a different (higher) sample rate
+    error = 0;
+    if (!warnedLatched) {
+      warnedLatched = true;
+      fprintf(stderr, "Detected periodUs %lu that is likely directly linked to sample rate %lu Hz - using directly and assuming no fractional remainder.\n", periodUs, sampleRate);
+    }
+  }
   return n;
 }
 
