@@ -3,39 +3,14 @@
 #include "TimerCounter.h"
 #include "isr.h"
 
-unsigned long TimerCounter::currentMicroseconds=0;
-TimerCounter::TimerCounter() {}
-
-#ifdef CLI
-
-#define __TIMER_MAXPAUSE_PERIOD 8191
-
-void TimerCounter::initialize() {}
-void TimerCounter::stop() {}
-void ISR_ATTR TimerCounter::setPeriod(unsigned long microseconds) {
-  currentMicroseconds = microseconds;
-}
-
-#else // !CLI
-
 #if defined(ESP32_RISCV)
 #include "driver/timer.h"
 #include "esp_intr_alloc.h"
-
-static bool IRAM_ATTR timer_isr_wrapper(void *arg) {
-    void (*fn)(void) = (void (*)(void))arg;
-    fn();
-    return false;
-}
 #endif
 
-/*
- *  Interrupt and PWM utilities for 16 bit Timer1 on ATmega168/328
- *  Original code by Jesse Tane for http://labs.ideo.com August 2008
- */
-
 // standard timer class for all devices, constructed in the same way
-
+unsigned long TimerCounter::currentMicroseconds=0;
+TimerCounter::TimerCounter() {}
 void TimerCounter::initialize()
 {
   _initialize();
@@ -58,7 +33,16 @@ void ISR_ATTR TimerCounter::setPeriod(unsigned long microseconds)
   _setPeriod(microseconds);
 }
 
-#if defined(__arm__) && defined(__STM32F1__)
+#if defined(CLI)
+
+#define __TIMER_MAXPAUSE_PERIOD 8191
+
+void TimerCounter::_initialize() {}
+void TimerCounter::_attachInterrupt() {}
+void TimerCounter::_setPeriod(unsigned long) {}
+void TimerCounter::stop() {}
+
+#elif defined(__arm__) && defined(__STM32F1__)
 
 #define __TIMER_MAXPAUSE_PERIOD 8191
 
@@ -307,6 +291,11 @@ ISR(TCA0_OVF_vect)
 }  
 
 #elif defined(__AVR_ATmega328P__) || defined ( __AVR_ATmega2560__) || defined(__AVR_ATmega32U4__)
+
+/*
+ *  Interrupt and PWM utilities for 16 bit Timer1 on ATmega168/328
+ *  Original code by Jesse Tane for http://labs.ideo.com August 2008
+ */
 
 #define __TIMER_MAXPAUSE_PERIOD 8191
 
@@ -565,6 +554,14 @@ void TimerCounter::_attachInterrupt()
 
 hw_timer_t * timer = NULL;
 
+#if defined(ESP32_RISCV)
+static bool IRAM_ATTR timer_isr_wrapper(void *arg) {
+    void (*fn)(void) = (void (*)(void))arg;
+    fn();
+    return false;
+}
+#endif
+
 void TimerCounter::_initialize()
 {
   if (timer==NULL)
@@ -700,8 +697,6 @@ void TimerCounter::_attachInterrupt()
 #else
 #error Missing definition of TimerCounter / unsupported device
 #endif
-
-#endif // !CLI
 
 static class TimerCounter _TimerInstance;
 class TimerCounter &Timer = _TimerInstance;

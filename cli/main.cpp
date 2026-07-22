@@ -87,6 +87,12 @@ static void wavWriteHeader(FILE *f, unsigned long sampleRate, unsigned long tota
 static unsigned long periodUsToSamples(unsigned long periodUs, unsigned long sampleRate,
                                        unsigned long overSample, double &error)
 {
+  static bool warnedZero = false;
+  static bool warnedShort = false;
+  if (!warnedZero && periodUs <= 1) {
+    warnedZero = true;
+    fprintf(stderr, "Warning: periodUs is %lu - probably this is a MaxDuino bug\n", periodUs);
+  }
   if (periodUs == 0) periodUs = 1;
   double exact = (double(periodUs) * double(overSample) / 1000000.0) * sampleRate;
   unsigned long n = (unsigned long)exact;
@@ -94,6 +100,10 @@ static unsigned long periodUsToSamples(unsigned long periodUs, unsigned long sam
   if (error >= 1.0) {
     n++;
     error -= 1.0;
+  }
+  if (!warnedShort && (periodUs < (1000000.0 / sampleRate - 1.0) || n == 0)) {
+    warnedShort = true;
+    fprintf(stderr, "Warning: Encoountered periodUs %lu that is likely too short for %lu Hz sample rate. Advise regenerating with higher samplerate.\n", periodUs, sampleRate);
   }
   if (n == 0) n = 1;
   return n;
