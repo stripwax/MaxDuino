@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "platformio"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+    open-pull-requests-limit: 10
+    allow-edits: false
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
