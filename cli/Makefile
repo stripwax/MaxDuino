@@ -1,5 +1,6 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -O2 -Wall -Wno-unused-variable -Wno-sign-compare \
+OPTFLAGS = -O2
+CXXFLAGS = -std=c++17 $(OPTFLAGS) -Wall -Wno-unused-variable -Wno-sign-compare \
   -include userCLIconfig.h -DCONFIGFILE=-1 -DCLI \
   -I../MaxDuino -I./stubs
 
@@ -31,7 +32,10 @@ win: CXX = x86_64-w64-mingw32-g++
 win: TARGET = $(BUILD)/maxduino.exe
 win: $(BUILD) $(TARGET)
 
+debug: OPTFLAGS = -g -O0
+debug: all
+
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all clean win
+.PHONY: all clean win debug
