@@ -28,11 +28,26 @@ $(BUILD)/%.o: $(MAX)/%.cpp
 $(BUILD)/main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-win: $(BUILD) $(BUILD)/maxduino.exe
+WINBUILD = $(BUILD)/win
+WIN_OBJS = $(patsubst $(MAX)/%.cpp,$(WINBUILD)/%.o,$(filter $(MAX)/%.cpp,$(SRCS))) \
+           $(WINBUILD)/main.o
+
+win: $(WINBUILD) $(BUILD)/maxduino.exe
+
+$(WINBUILD):
+	mkdir -p $(WINBUILD)
 
 $(BUILD)/maxduino.exe: CXX = x86_64-w64-mingw32-g++
-$(BUILD)/maxduino.exe: $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+$(BUILD)/maxduino.exe: $(WIN_OBJS)
+	$(CXX) $(CXXFLAGS) -static-libgcc -static-libstdc++ -o $@ $^
+
+$(WINBUILD)/%.o: CXX = x86_64-w64-mingw32-g++
+$(WINBUILD)/%.o: $(MAX)/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(WINBUILD)/main.o: CXX = x86_64-w64-mingw32-g++
+$(WINBUILD)/main.o: main.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 debug: OPTFLAGS = -g -O0
 debug: all
