@@ -28,9 +28,11 @@ $(BUILD)/%.o: $(MAX)/%.cpp
 $(BUILD)/main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-win: CXX = x86_64-w64-mingw32-g++
-win: TARGET = $(BUILD)/maxduino.exe
-win: $(BUILD) $(TARGET)
+win: $(BUILD) $(BUILD)/maxduino.exe
+
+$(BUILD)/maxduino.exe: CXX = x86_64-w64-mingw32-g++
+$(BUILD)/maxduino.exe: $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
 debug: OPTFLAGS = -g -O0
 debug: all
