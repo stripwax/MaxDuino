@@ -81,8 +81,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [cli-build]
     steps:
-      - name: Checkout master branch (default)
+      - name: Checkout current branch
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
 
       - name: Checkout test-cases-resources branch
         uses: actions/checkout@v7
