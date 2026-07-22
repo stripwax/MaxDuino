@@ -786,26 +786,28 @@ void upFile() {
   if (dirEmpty) return;
   oldMinFile = 0;
   oldMaxFile = maxFile;
-  while(currentFile!=0)
-  {
-    currentFile--;
-    // currentFile might not point to a valid entry (since not all values are used)
-    // and we might need to go back a bit further
-    // Do this here, so that we only need this logic in one place
-    // and so we can make seekFile dumber
-    entry.close();
-    if (entry.open(currentDir, currentFile, O_RDONLY))
-    {
-      entry.close();
-      break;
-    }
-  }
 
-  if(currentFile==0)
+  // Rather than going "backwards", we actually look forward from entry 0 ,
+  // because the SdFat can efficiently find "next entries"
+  // much more easily than "previous entries"
+  // So: first, load the zeroth entry.  SdFat will give us either this, or the next valid one > 0 .
+  // If we're (un)lucky, the one it finds is actually our original currentFile
+  // meaning there is no file prior to currentfile, in which case 'up' should just wrap to the last file
+  currentDir->rewind();
+  uint16_t currentPositionNow = maxFile; // preload what happens in the wrap case
+  uint16_t tryFindPrevFile;
+  do
   {
-    // seek up wrapped - should now be reset to point to the last file
-    currentFile = maxFile;
+    entry.close();
+    tryFindPrevFile = currentPositionNow;
+    entry.openNext(currentDir, O_RDONLY);
+    // openNext will always open a valid file. curPosition is now updated to a valid file index
+    // (so tryFindPrevFile is the index of the file preceding it; or maxFile if there was no file preceding currentFile
+    currentPositionNow = currentDir->curPosition()/32-1;
   }
+  while(currentPositionNow < currentFile);
+  currentFile = tryFindPrevFile;
+
   seekFile();
 }
 
@@ -850,15 +852,14 @@ void seekFile() {
   }
   else
   {
-    while (!entry.open(currentDir, currentFile, O_RDONLY) && currentFile<maxFile)
+    if (!entry.open(currentDir, currentFile, O_RDONLY) && currentFile<maxFile)
     {
       // if entry.open fails, when given an index, sdfat 2.1.2 automatically adjust curPosition to the next good entry
       // (which means that we can just retry calling open, passing in curPosition)
-      // but sdfat 1.1.4 does not automatically adjust curPosition, so we cannot do that trick.
-      // We cannot call openNext, because (with sdfat 2.1.2) the position has ALREADY been adjusted, so you will actually
-      // miss a file.
-      // so need to do this manually (to support both library versions), via incrementing currentFile manually
-      currentFile++;
+      // Note: SdFat 1.1.4 does not automatically adjust curPosition, so we cannot do that trick.
+      // So we no longer support SdFat1.x .  Sorry, but I don't see any reasons to support it (it's bigger, and slower)
+      currentFile = currentDir->curPosition()/32-1;
+      entry.open(currentDir, currentFile, O_RDONLY);
     }
 
     entry.getName(fileName,filenameLength);
