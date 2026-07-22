@@ -138,7 +138,11 @@ int main(int argc, char **argv) {
   }
 
   if (!inputPath || !outputPath) {
-    fprintf(stderr, "Usage: maxduino -i <input> -o <output> [-s <sample_rate>]\n");
+    fprintf(stderr, "Usage: maxduino -i <input> -o <output> [-s <sample_rate>] [-f <oversample>]\n");
+    fprintf(stderr, "Input should be an existing file that maxduino supports (.tap, .cas, etc)\n");
+    fprintf(stderr, "Output should be .wav file, including directory path if desired but directory must already exist\n");
+    fprintf(stderr, "Sample Rate defaults to 44.1kHz\n");
+    fprintf(stderr, "Oversample defaults to 64\n");
     return 1;
   }
 
