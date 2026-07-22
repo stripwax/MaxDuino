@@ -102,15 +102,16 @@ jobs:
         shell: bash
         run: |
           MAXDUINO=testing/maxduino
+          MAXDUINO_BATCH=testing/maxduinobatch.sh
           INPUT_DIR=testing/test/inputs
           MATCH_DIR=testing/test/outputs
           OUTPUT_DIR=/tmp/maxduino-testing-outputs
 
           mkdir -p "$OUTPUT_DIR"
-          chmod +x ./cli/build/maxduinobatch.sh
+          chmod +x "$MAXDUINO_BATCH"
           chmod +x "$MAXDUINO"
           echo "Running tests with maxduinobatch.sh: $MAXDUINO $INPUT_DIR $OUTPUT_DIR $MATCH_DIR"
-          ./cli/build/maxduinobatch.sh -p "$MAXDUINO" "$INPUT_DIR" "$OUTPUT_DIR" "$MATCH_DIR" 2>&1
+          "$MAXDUINO_BATCH" -p "$MAXDUINO" "$INPUT_DIR" "$OUTPUT_DIR" "$MATCH_DIR" 2>&1
 
       - name: Upload outputs for debugging
         if: ${{ failure() }}
