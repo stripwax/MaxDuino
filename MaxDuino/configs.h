@@ -83,6 +83,11 @@
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_RP2040
     #endif
     #define CONFIG_PATH userRPI_PICOconfig
+  #elif defined(ARDUINO_NANO_ESP32)
+    #ifndef CONFIGFILE
+    #define CONFIGFILE _CONFIG_FILE_DEFAULT_ARDUINO_NANO_ESP32
+    #endif
+    #define CONFIG_PATH userARDUINO_NANO_ESP32
   #elif defined(ESP32_XTENSA)
     #ifndef CONFIGFILE
     #define CONFIGFILE _CONFIG_FILE_DEFAULT_D1_MINI32

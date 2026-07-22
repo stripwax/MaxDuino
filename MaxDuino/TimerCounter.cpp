@@ -3,9 +3,25 @@
 #include "TimerCounter.h"
 #include "isr.h"
 
+#if defined(ESP32)
+// ESP32 code derived from TimerInterrupt_Generic by Khoi Hoang
+// ESP32 has an operating system / SDK layer we need to use
+#include <esp32-hal-timer.h>
+#define MAX_ESP32_NUM_TIMERS 4
+// typedef void (*timer_callback)  (void);
+#endif // (not) ESP32
+
+
 #if defined(ESP32_RISCV)
 #include "driver/timer.h"
 #include "esp_intr_alloc.h"
+
+
+static bool IRAM_ATTR timer_isr_wrapper(void *arg) {
+    void (*fn)(void) = (void (*)(void))arg;
+    fn();
+    return false;
+}
 #endif
 
 // standard timer class for all devices, constructed in the same way
@@ -18,6 +34,8 @@ void TimerCounter::initialize()
   setPeriod(100000);
   // attach the interrupt handler (there is only one now, and it does everything)
   _attachInterrupt();
+
+
 }
 
 void ISR_ATTR TimerCounter::setPeriod(unsigned long microseconds)
@@ -562,8 +580,31 @@ static bool IRAM_ATTR timer_isr_wrapper(void *arg) {
 }
 #endif
 
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+
+void ARDUINO_ISR_ATTR onTimer()
+{
+  portENTER_CRITICAL_ISR(&timerMux);
+  isrCallback();
+  portEXIT_CRITICAL_ISR(&timerMux);
+}
+
 void TimerCounter::_initialize()
 {
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+
+  if (timer == NULL)
+  {
+    //    uint32_t frequency = 1000000 / microseconds;
+    timer = timerBegin( (uint32_t)1000000); // we tick per ms
+    if (timer != NULL)
+      timerAlarm(timer, (uint32_t)1000000, true, 0 /* repeat=unlimited */);
+
+  } else {
+      timerAlarm(timer, 1000000UL, true, 0 /* repeat=unlimited */);
+      timerRestart(timer);
+  }
+#else
   if (timer==NULL)
   {
     // count microseconds - so divide CPU freq in Hz by 1e6
@@ -576,10 +617,17 @@ void TimerCounter::_initialize()
                            timer_isr_wrapper, (void *)isrCallback, ESP_INTR_FLAG_IRAM);
     #endif
   }
+#endif
+
 }
 
 void ISR_ATTR TimerCounter::_setPeriod(unsigned long microseconds)
 {
+
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+  timerAlarm(timer, microseconds, true, 0 /* repeat=unlimited */);
+#else 
+
 #if defined(ESP32_RISCV)
   // timerAlarmWrite handles alarm value + autoreload via IDF registers (alarmhi/lo).
   // tx_alarm_en is self-clearing on C3 — must re-arm every period.
@@ -588,17 +636,30 @@ void ISR_ATTR TimerCounter::_setPeriod(unsigned long microseconds)
 #else
   timerAlarmWrite(timer, microseconds, true);
 #endif
+#endif
 }
 
 void TimerCounter::stop()
 {
+
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+  timerEnd(timer);
+  timer = NULL;
+#else
   if(timer!=NULL)
     timerAlarmDisable(timer);
+#endif
 }
 
 void TimerCounter::_attachInterrupt()
 {
+
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+  if ( timer != NULL )
+    timerAttachInterrupt(timer, &onTimer);
+#else
   timerAlarmEnable(timer);
+#endif
 }
 
 #elif defined(ESP8266)

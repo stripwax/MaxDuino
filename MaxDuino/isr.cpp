@@ -40,6 +40,7 @@ static ISR_ATTR void advance_read_word()
 }
 
 void ISR_ATTR isrCallback() {
+
   //ISR Output routine
 //  unsigned long zeroTime = micros();
   uint16_t workingPeriod = readBuffer[readpos];

@@ -472,19 +472,19 @@ void loop(void) {
           #if !defined(SHOW_DIRNAMES)
             char len=0;
             setXY(0,0);
-            sendStr(ultoa(oldMinFile,input,10));
+            sendStr(ultoa(oldMinFile,(char*)input,10));
             sendChar('<');
-            len += strlen(input) + 1;
-            sendStr(ultoa(currentFile,input,10));
+            len += strlen((char*)input) + 1;
+            sendStr(ultoa(currentFile,(char*)input,10));
             sendChar('<');
-            len += strlen(input) + 1;
-            sendStr(ultoa(oldMaxFile,input,10));
-            len += strlen(input);
+            len += strlen((char*)input) + 1;
+            sendStr(ultoa(oldMaxFile,(char*)input,10));
+            len += strlen((char*)input);
             for(char x=len;x<16;x++) {
               sendChar(' ');
             }
           #elif defined(SHOW_DIRNAMES)
-            str4cpy(input,fileName);
+            str4cpy((char*)input,fileName);
             GetFileName(oldMinFile); str4cpy(oldMinFileName,fileName);
             GetFileName(oldMaxFile); str4cpy(oldMaxFileName,fileName);
             GetFileName(currentFile); 

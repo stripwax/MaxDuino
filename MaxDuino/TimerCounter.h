@@ -3,8 +3,20 @@
 
 #include "isr.h"
 
+#if defined(ESP32)
+
+typedef void (*timerCallback)(void);
+#endif
+
 class TimerCounter
 {
+#if defined(ESP32)
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+private:
+  hw_timer_t *_timer = NULL;
+#endif
+#endif
+
   public:
     TimerCounter();
     static void initialize();
