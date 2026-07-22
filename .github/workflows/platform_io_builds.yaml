@@ -75,6 +75,7 @@ jobs:
           path: |
             cli/build/maxduino
             cli/build/maxduino.exe
+            cli/build/maxduinobatch.sh
 
   test:
     runs-on: ubuntu-latest
@@ -104,10 +105,10 @@ jobs:
           OUTPUT_DIR=/tmp/maxduino-testing-outputs
 
           mkdir -p "$OUTPUT_DIR"
-          chmod +x ./test/maxduinobatch.sh
+          chmod +x ./cli/build/maxduinobatch.sh
           chmod +x "$MAXDUINO"
           echo "Running tests with maxduinobatch.sh: $MAXDUINO $INPUT_DIR $OUTPUT_DIR $MATCH_DIR"
-          ./test/maxduinobatch.sh -p "$MAXDUINO" "$INPUT_DIR" "$OUTPUT_DIR" "$MATCH_DIR" 2>&1
+          ./cli/build/maxduinobatch.sh -p "$MAXDUINO" "$INPUT_DIR" "$OUTPUT_DIR" "$MATCH_DIR" 2>&1
 
       - name: Upload outputs for debugging
         if: ${{ failure() }}

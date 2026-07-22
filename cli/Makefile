@@ -13,6 +13,7 @@ OBJS = $(patsubst $(MAX)/%.cpp,$(BUILD)/%.o,$(filter $(MAX)/%.cpp,$(SRCS))) \
 TARGET = $(BUILD)/maxduino
 
 all: $(BUILD) $(TARGET)
+	cp maxduinobatch.sh $(BUILD)/maxduinobatch.sh
 
 $(BUILD):
 	mkdir -p $(BUILD)
