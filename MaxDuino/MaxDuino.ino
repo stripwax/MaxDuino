@@ -371,6 +371,9 @@ void loop(void) {
           printtext2F(TXT_PAUSED,0);
           jblks =1; 
           firstBlockPause = true;
+#ifdef EXTRA_LEDS
+          USER_LED_OFF;
+#endif
         } else  {
           printtext2F(TXT_PLAYING,0);
           currpct=255;
