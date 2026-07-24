@@ -105,7 +105,6 @@ void OricBitWrite() {
   }
 
   if ((currentBit==0) && (lastByte)) {
-  #ifdef MenuBLK2A 
     count_r = 255; 
     if(ReadByte()) { 
       bytesRead += -1;                      //rewind a byte if we've not reached the end           
@@ -114,10 +113,6 @@ void OricBitWrite() {
       currentTask = TASK::GETID;
       return;
     }
-  #else
-    count_r = 255;
-    currentBlockTask = BLOCKTASK::PAUSE;
-  #endif
   }    
 }
 
