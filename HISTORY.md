@@ -14,6 +14,7 @@
 
 # HISTORY NOTES
 
+* V4.03 Some Arduino Nano love - smoother OLED display, faster directory navigation, and several end-of-file bugs fixed.  More firmware space means more features enabled - 32u4 config enhanced.  ALSO! New CLI mode for running and testing on PC (Windows/Linux).  And Seeed RP2040 fixed and now validated.
 * V4.02 Adds 'animated' startup logo, ability to load .bmp files and write to EEPROM logo, and default logo if EEPROM logo is absent
 * V4.01 Adds EACA EG2000 Colour Genie .CAS/.CGC implementation
 * V4.00 Adds full-featured recording support!
