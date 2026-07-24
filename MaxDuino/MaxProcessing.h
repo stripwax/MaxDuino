@@ -7,6 +7,8 @@ void UniSetup();
 void UniLoop();
 void UniPlay();
 void UniStop();
+void writeEnd();
+void setEOF();
 
 void HeaderFail();
 void ForcePauseAfter0();

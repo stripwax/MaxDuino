@@ -91,6 +91,7 @@ enum class TASK : byte
   CAS_wNameFileBlk,   //
   CAS_lookLeader,
   CAS_wNewLeader,
+  CAS_wEnd,           // Write ending signal (bit13 stop entry)
 #endif
 };
 

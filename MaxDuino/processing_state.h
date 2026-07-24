@@ -17,4 +17,9 @@ extern long count_r;
 extern byte currentBit;
 extern word currentPeriod;
 
+// Flags for ISR -> main loop communication
+extern volatile bool isStopped;
+// Main-loop only flag: set by writeEnd(), checked by UniLoop()
+extern bool writeFinished;
+
 #endif // PROCESSING_STATE_H_INCLUDED

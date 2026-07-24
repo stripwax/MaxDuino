@@ -32,7 +32,6 @@ void seekFile() {}
 
 void stopFile() {
   UniStop();
-  start = 0;
 }
 
 // --- WAV writing ---

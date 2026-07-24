@@ -428,9 +428,7 @@ void mtx_process() {
 
     case MTX_STAGE::DONE:
     default:
-      currentID = BLOCKID::IDEOF;
-      currentTask = TASK::PROCESSID;
-      currentPeriod = 0;
+      setEOF();
       return;
   }
 }

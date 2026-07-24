@@ -387,10 +387,7 @@ void trs80cas_process() {
   }
 
   if (count == 0) {
-    currentID = BLOCKID::IDEOF;
-    currentTask = TASK::PROCESSID;
-    count_r = 255;
-    currentPeriod = 0;
+    setEOF();
     return;
   }
 
