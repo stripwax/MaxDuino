@@ -18,6 +18,7 @@ typedef uint16_t word;
 #define PSTR(s) (s)
 
 #define pgm_read_byte(addr) (*(const uint8_t *)(addr))
+#define pgm_read_word(addr) (*(const uint16_t *)(addr))
 #define strcasecmp_P(a, b) strcasecmp((a), (b))
 #define memcmp_P(a, b, n) memcmp((a), (b), (n))
 
