@@ -10,20 +10,20 @@
 //**************************************  OPTIONAL USE TO SAVE SPACE  ***************************************************//
 #define Use_MENU                          // removing menu saves space
 #define AYPLAY
-#define MenuBLK2A
-//#define ID11CDTspeedup
+//#define MenuBLK2A
+#define ID11CDTspeedup
 #define DIRECT_RECORDING
 #define ZX81SPEEDUP
 //#define Use_MZF
 //#define Use_MTX
 //#define Use_CAQ
-//#define Use_CG                      // Colour Genie .cas/.cgc files playback
-//#define Use_c64
+#define Use_CG                      // Colour Genie .cas/.cgc files playback
+#define Use_c64
 //#define tapORIC
 //    #define ORICSPEEDUP
 #define Use_CAS                           // .cas files playback on MSX / Dragon / CoCo Tandy computers
     //#define Use_TRS80                   // TRS-80 .cas files playback
-    //#define Use_DRAGON
+    #define Use_DRAGON
         #define Use_Dragon_sLeader        // short Leader of 0x55 allowed for loading TOSEC files
             //#define Expand_All            // Expand short Leaders in ALL file header blocks. 
 #define Use_UEF                           // .uef files playback on BBC Micro / Electron / Atom computers
@@ -110,8 +110,8 @@
 
 // for list of logos, see filenames in "logos" folder, and remove the logo_ prefix from the filename
 // either use the below defines, or use -DLOGO
-#define LOGO_128_64 cablemax
-#define LOGO_128_32 LOGOMAXDUINO
+#define LOGO_128_64 miniduino
+#define LOGO_128_32 LOGOMINIDUINO
 #define LOGO_84_48 LOGOMAXDUINO
 
 /////////////////////
