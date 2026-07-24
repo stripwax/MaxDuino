@@ -27,7 +27,7 @@
 void ISR_ATTR isrCallback();
 
 //ISR Variables
-extern volatile byte isStopped;
+extern volatile byte isPaused;
 extern volatile byte pinState;
 extern volatile bool isPauseBlock;
 

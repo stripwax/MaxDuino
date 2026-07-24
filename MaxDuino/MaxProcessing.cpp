@@ -98,7 +98,7 @@ void UniPlay(){
   bytesRead=0;                                //start of file
   currentTask=TASK::INIT;                     //
   checkForEXT();
-  isStopped=false;
+  isPaused=false;
   
   clearBuffer();
 
@@ -121,7 +121,7 @@ void UniPlay(){
 
 void UniStop() {
   Timer.stop();
-  isStopped=true;
+  isPaused=true;
   start=0;
   entry.close();                              //Close file
   seekFile(); 
@@ -385,7 +385,7 @@ void ForcePauseAfter0() {
 
 void UniSetup() {
   INIT_OUTPORT;
-  isStopped=true;
+  isPaused=true;
   pinState=LOW;
   WRITE_LOW;
 }
@@ -1172,7 +1172,7 @@ void UniLoop() {
   bool _copybuff;
   noInterrupts();
   //Pause interrupts to prevent var reads and copy values out
-  isStopped = pauseOn;
+  isPaused = pauseOn;
   _copybuff = morebuff;
   morebuff = false;
   interrupts();

@@ -9,7 +9,7 @@
 
 
 //ISR Variables accessed/written by main loop
-volatile byte isStopped=false;
+volatile byte isPaused=false;
 volatile byte pinState=LOW;
 volatile bool isPauseBlock = false;
 volatile bool wasPauseBlock = false;
@@ -47,7 +47,7 @@ void ISR_ATTR isrCallback() {
   unsigned long newTime;
   static unsigned long directSampleLength;
  
-  if(isStopped)
+  if(isPaused)
   {
     newTime = 50000;
     goto _set_period;
