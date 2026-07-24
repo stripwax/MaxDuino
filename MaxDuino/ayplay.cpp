@@ -10,7 +10,7 @@
 PROGMEM const byte TAPHdr[20] = {0x0,0x0,0x3,'Z','X','A','Y','E','M','U','L',' ',' ',0x1A,0xB,0x0,0xC0,0x0,0x80,0x6E}; // 
 PROGMEM const byte * const AYFile = TAPHdr+3;  // added additional AY file header check
 
-byte AYPASS_hdrptr = AYPASS_STEP::HDRSTART;
+byte AYPASS_hdrptr;
 
 void WriteAYHeader() {
   //Convert byte from HDR Vector String into string of pulses and calculate checksum. One pulse per pass
