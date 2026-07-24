@@ -951,11 +951,17 @@ void getMaxFile() {
     maxFile = currentDir->curPosition()/32-1;
     dirEmpty=false;
     entry.close();
+    #ifdef EXTRA_LEDS 
+    analogWrite(ledPower, ( 140+maxFile<<2 )%256 ); // light up the LED to show progress of directory scan
+    #endif
   }
   currentDir->rewind(); // precautionary but I think might be unnecessary since we're using currentFile everywhere else now
   oldMinFile = 0;
   oldMaxFile = maxFile;
   currentFile = 0;
+  #ifdef EXTRA_LEDS
+  analogWrite(ledPower, 255 ); // turn off the LED after directory scan is complete
+  #endif
 }
 
 void changeDir() {    
