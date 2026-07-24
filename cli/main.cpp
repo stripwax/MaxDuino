@@ -84,11 +84,13 @@ static void wavWriteHeader(FILE *f, unsigned long sampleRate, unsigned long tota
   fwrite(buf, 1, 4, f);
 }
 
+bool potentialShort = false;
+bool warnedShort = false;
+
 static unsigned long periodUsToSamples(unsigned long periodUs, unsigned long sampleRate,
                                        unsigned long overSample, double &error)
 {
   static bool warnedZero = false;
-  static bool warnedShort = false;
   static bool warnedLatched = false;
 
   if (!warnedZero && periodUs <= 1) {
@@ -103,11 +105,16 @@ static unsigned long periodUsToSamples(unsigned long periodUs, unsigned long sam
     n++;
     error -= 1.0;
   }
-  if (!warnedShort && (periodUs < (1000000.0 / sampleRate - 1.0) || n == 0)) {
-    warnedShort = true;
-    fprintf(stderr, "Warning: Encountered periodUs %lu that is likely too short for %lu Hz sample rate. Advise regenerating with higher samplerate.\n", periodUs, sampleRate);
+
+  if (periodUs < (1000000.0 / sampleRate - 1.0) || n == 0)
+  {
+    if (n == 0) n = 1;
+    potentialShort = true;
   }
-  if (n == 0) n = 1;
+  else
+  {
+    potentialShort = false;
+  }
 
   if (periodUs == (unsigned long)((1000000.0 / sampleRate)) || periodUs == (unsigned long)((1000000.0 / (double)sampleRate) + 0.5))
   {
@@ -213,7 +220,16 @@ int main(int argc, char **argv) {
       average += level;
       if (samples<=0)
       {
+        bool check_cli_output_value_before_isr = cli_output_value;
         isrCallback();
+        if (potentialShort && cli_output_value != check_cli_output_value_before_isr)
+        {
+          if (!warnedShort) {
+            warnedShort = true;
+            fprintf(stderr, "Warning: Encountered periodUs %lu that is likely too short for %lu Hz sample rate. Advise regenerating with higher samplerate.\n", periodUs, sampleRate);
+          }
+        }
+
         periodUs = Timer.getCurrentMicroseconds();
         samples += periodUsToSamples(periodUs, sampleRate, overSample, isrError);
 
