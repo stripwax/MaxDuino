@@ -7,101 +7,50 @@
 #include "file_utils.h"
 
 #ifdef tapORIC
-void OricBitWrite() {
-  if (currentBit == 11) { //Start Bit
-    #ifdef ORICSPEEDUP
-    if (BAUDRATE <= 2400){
-      if (pass==0) currentPeriod = ORICZEROLOWPULSE; 
-      if (pass==1) currentPeriod = ORICZEROHIGHPULSE;
-    } else {
-      if (pass==0) currentPeriod = ORICTURBOZEROLOWPULSE; 
-      if (pass==1) currentPeriod = ORICTURBOZEROHIGHPULSE;            
-    }
-    #else
-      if (pass==0) currentPeriod = ORICZEROLOWPULSE; 
-      if (pass==1) currentPeriod = ORICZEROHIGHPULSE;
-    #endif         
-  } else if (currentBit == 2) { // Paridad inversa i.e. Impar
-    #ifdef ORICSPEEDUP
-    if (BAUDRATE <= 2400){
-      if (pass==0)  currentPeriod = bitChecksum ? ORICZEROLOWPULSE : ORICONEPULSE; 
-      if (pass==1)  currentPeriod = bitChecksum ? ORICZEROHIGHPULSE : ORICONEPULSE;
-    } else {
-      if (pass==0)  currentPeriod = bitChecksum ? ORICTURBOZEROLOWPULSE : ORICTURBOONEPULSE; 
-      if (pass==1)  currentPeriod = bitChecksum ? ORICTURBOZEROHIGHPULSE : ORICTURBOONEPULSE;                     
-    }
-    #else      
-      if (pass==0)  currentPeriod = bitChecksum ? ORICZEROLOWPULSE : ORICONEPULSE; 
-      if (pass==1)  currentPeriod = bitChecksum ? ORICZEROHIGHPULSE : ORICONEPULSE;
-    #endif     
-  } else if (currentBit == 1) {
-    #ifdef ORICSPEEDUP
-    if (BAUDRATE <= 2400){
-      currentPeriod = ORICONEPULSE;       
-    } else {
-      currentPeriod = ORICTURBOONEPULSE;             
-    }
-    #else      
-      currentPeriod = ORICONEPULSE; 
-    #endif  
+#ifdef ORICSPEEDUP
+PROGMEM const uint16_t oric_pulse_length_turbo[]={ORICTURBOZEROLOWPULSE, ORICTURBOZEROHIGHPULSE, ORICTURBOONEPULSE, ORICTURBOONEPULSE};
+#endif
+PROGMEM const uint16_t oric_pulse_length[]={ORICZEROLOWPULSE, ORICZEROHIGHPULSE, ORICONEPULSE, ORICONEPULSE};
+
+static void OricBitWrite() {
+  // we break a byte transmission into:
+  // 1 start bit
+  // 8 data bits
+  // 1 parity bit
+  // 3 stop bits
+  // = total 13 full waves
+
+  byte bit;
+  if (currentBit == 13) {
+    //Start Bit = a zero
+    //we emit low pulse or high pulse depending on pass (0 or 1)
+    bit = 0;
+  } else if (currentBit == 4) { // Paridad inversa i.e. Impar
+    //Parity bit (uses bitChecksum)/  If bitChecksum is 1 we emit zero pulse otherwise 1 pulse
+    //we emit low pulse or high pulse depending on pass (0 or 1)
+    bit = bitChecksum^1;
+  } else if (currentBit < 4) {
+    //Stop Bit = a one (x3)
+    bit = 1;
   } else {
-    if(currentByte&0x01) {                       //Set next period depending on value of bit 0
-      #ifdef ORICSPEEDUP
-      if (BAUDRATE <= 2400){
-        currentPeriod = ORICONEPULSE;
-      } else{
-        currentPeriod = ORICTURBOONEPULSE;          
-      }
-      #else      
-      currentPeriod = ORICONEPULSE; 
-      #endif        
-    } else {
-      #ifdef ORICSPEEDUP
-      if (BAUDRATE <= 2400){
-        if (pass==0)  currentPeriod = ORICZEROLOWPULSE; 
-        if (pass==1)  currentPeriod = ORICZEROHIGHPULSE;
-      }else{
-        if (pass==0)  currentPeriod = ORICTURBOZEROLOWPULSE; 
-        if (pass==1)  currentPeriod = ORICTURBOZEROHIGHPULSE;                 
-      }
-      #else       
-      if (pass==0)  currentPeriod = ORICZEROLOWPULSE; 
-      if (pass==1)  currentPeriod = ORICZEROHIGHPULSE;
-      #endif        
-    }
-  }   
+    bit = currentByte&0x01;
+  }
+
+  #ifdef ORICSPEEDUP
+  const uint16_t * const pulse_table = BAUDRATE <= 2400 ? oric_pulse_length : oric_pulse_length_turbo;
+  #else
+  const uint16_t * const pulse_table = oric_pulse_length;
+  #endif
+  currentPeriod = pgm_read_word(pulse_table+(bit ? pass+2 : pass));
 
   pass+=1;      //Data is played as 2 x pulses for a zero, and 2 pulses for a one
-  #ifdef ORICSPEEDUP
-  if ((currentPeriod == ORICONEPULSE) || (currentPeriod == ORICTURBOONEPULSE)) { 
-  #else  
-  if (currentPeriod == ORICONEPULSE) {
-  #endif
-
-    if ((currentBit>2) && (currentBit<11) && (pass==2)) {
-      bitChecksum ^= 1;
+  if (pass==2) {
+    if(currentBit-5<8) {
+      bitChecksum ^= bit;
       currentByte >>= 1;                        //Shift along to the next bit
-      currentBit += -1;
-      pass=0;
     }
-    if ((currentBit==1) && (pass==6)) {
-      currentBit += -1;
-      pass=0;
-    }
-    if (((currentBit==2) || (currentBit==11))  && (pass==2)) {
-      currentBit += -1;
-      pass=0;
-    }
-  }
-  else {
-    // must be a zero pulse
-    if(pass==2) {
-      if ((currentBit>2) && (currentBit<11)) {
-        currentByte >>= 1;                        //Shift along to the next bit
-      }
-      currentBit += -1;
-      pass=0; 
-    }
+    currentBit--;
+    pass=0;
   }
 
   if ((currentBit==0) && (lastByte)) {
@@ -111,177 +60,124 @@ void OricBitWrite() {
       currentBlockTask = BLOCKTASK::PAUSE;
     }else {
       currentTask = TASK::GETID;
-      return;
     }
   }    
 }
 
-void OricDataBlock() {
-  //Convert byte from file into string of pulses.  One pulse per pass
-  if(currentBit==0) {                         //Check for byte end/first byte
-    
-    if(ReadByte()) {            //Read in a byte
-      currentByte = outByte;
-      bytesToRead += -1;
-      bitChecksum = 0;
-      if(bytesToRead == 0) {                  //Check for end of data block
-        lastByte = 1;
-      }
-    } else {                         // If we reached the EOF
-      count_r =255;
-      currentTask = TASK::GETID;
-      return;
-    }
-
-    currentBit = 11;
-    pass=0;
-  }
-  OricBitWrite();
+static void newByte(byte value)
+{
+  currentByte=value;
+  currentBit=13;
+  bitChecksum=0;
+  lastByte=0;
 }
 
-void FlushBuffer(long newcount) {
-  if(count_r>0) {
-    currentPeriod = ORICONEPULSE;
-    count_r--;
-  } else {   
-    count_r= newcount;
-    currentBlockTask = BLOCKTASK::SYNC1;
-    #ifdef MenuBLK2A
-      if (!skip2A) ForcePauseAfter0();
-    #endif
-  }             
-  return;
+static void readNewByte()
+{
+  ReadByte();
+  newByte(outByte);
+}
+
+static void OricDataBlock() {
+  //Convert byte from file into string of pulses.  One pulse per pass
+  //This is only called when currentBit==0 (i.e. we get the next byte)
+  if(ReadByte()) {            //Read in a byte
+    currentByte = outByte;
+    bytesToRead = (unsigned int)(bytesToRead-1);
+    bitChecksum = 0;
+    if(bytesToRead == 0) {                  //Check for end of data block
+      lastByte = 1;
+    }
+  } else {                         // If we reached the EOF
+    count_r =255;
+    currentTask = TASK::GETID;
+    return;
+  }
+
+  currentBit = 13;
+  pass=0;
 }
 
 void tzx_process_blockid_oric() {
-  switch(currentBlockTask) {            
-    case BLOCKTASK::READPARAM: // currentBit = 0 y count_r = 255
-    case BLOCKTASK::SYNC1:
-      if(currentBit >0) {
-        OricBitWrite();
-      } else {
-        ReadByte();
-        currentByte=outByte;
-        currentBit = 11;
-        bitChecksum = 0;
-        lastByte=0;
+  if (currentBit > 0)
+  {
+    OricBitWrite();
+  }
+  else
+  {
+    switch(currentBlockTask) {            
+      case BLOCKTASK::READPARAM: // currentBit = 0 y count_r = 255
+      case BLOCKTASK::SYNC1:
+        readNewByte();
         if (currentByte==0x16) {
-            count_r--;
+          count_r=(byte)count_r-1;
+          break;
+        }
+        // else
+        currentBlockTask=BLOCKTASK::SYNC2;
+        // and fall through to:
+        
+      case BLOCKTASK::SYNC2:   
+        if((byte)count_r) {
+          newByte(0x16);
+          count_r=(byte)count_r-1;
         } else {
-            currentBit = 0;
-            currentBlockTask=BLOCKTASK::SYNC2;
-        } //0x24
-      }          
-      break;
-    case BLOCKTASK::SYNC2:   
-      if(currentBit >0) {
-        OricBitWrite();
-      } else {
-        if(count_r >0) {
-          currentByte=0x16;
-          currentBit = 11;
-          bitChecksum = 0;
-          lastByte=0;
-          count_r--;
-        } else {
-          count_r=1;
-          currentBlockTask=BLOCKTASK::SYNCLAST;
-        } //0x24 
-      }
-      break;
-            
-    case BLOCKTASK::SYNCLAST:   
-      if(currentBit >0) {
-        OricBitWrite();
-      } else {
-        if(count_r >0) {
-          currentByte=0x24;
-          currentBit = 11;
-          bitChecksum = 0;
-          lastByte=0;
-          count_r--;
-        } 
-        else {
+          newByte(0x24);
           count_r=9;
           lastByte=0;
           currentBlockTask=BLOCKTASK::NEWPARAM;
         }
-      }
-      break;
-                    
-    case BLOCKTASK::NEWPARAM:            
-      if(currentBit >0) {
-        OricBitWrite();
-      } else {
-        if (count_r >0) {
-          ReadByte();
-          currentByte=outByte;
-          currentBit = 11;
-          bitChecksum = 0;
-          lastByte=0;
-          if      (count_r == 5) bytesToRead = (unsigned int)(outByte<<8);
-          else if (count_r == 4) bytesToRead = (unsigned int)(bytesToRead + outByte +1) ;
-          else if (count_r == 3) bytesToRead = (unsigned int)(bytesToRead -(outByte<<8)) ;
-          else if (count_r == 2) bytesToRead = (unsigned int)(bytesToRead - outByte); 
-          count_r--;
+        break;
+                      
+      case BLOCKTASK::NEWPARAM:            
+        if ((byte)count_r) {
+          readNewByte();
+          if      ((byte)count_r == 5) bytesToRead = ((unsigned int)outByte)<<8;
+          else if ((byte)count_r == 4) bytesToRead = (unsigned int)(bytesToRead + ((unsigned int)outByte)+1);
+          else if ((byte)count_r == 3) bytesToRead = (unsigned int)(bytesToRead - (((unsigned int)outByte)<<8));
+          else if ((byte)count_r == 2) bytesToRead = (unsigned int)(bytesToRead - ((unsigned int)outByte));
+          count_r=(byte)count_r-1;
+          break;
         }
-        else {
-          currentBlockTask=BLOCKTASK::NAME;
-        }
-      }
-      break;
-            
-    case BLOCKTASK::NAME:
-      if(currentBit >0) {
-        OricBitWrite();
-      } else {
-        ReadByte();
-        currentByte=outByte;
-        currentBit = 11;
-        bitChecksum = 0;
-        lastByte=0;
+        // else
+        currentBlockTask=BLOCKTASK::NAME;
+        // and fall through to:
+              
+      case BLOCKTASK::NAME:
+        readNewByte();
         if (currentByte==0x00) {
-          count_r=1;
-          currentBit = 0;
-          currentBlockTask=BLOCKTASK::NAME00;
-        }
-      }               
-      break;
-            
-    case BLOCKTASK::NAME00:
-      if(currentBit >0) {
-        OricBitWrite();
-      } else {
-        if (count_r >0) {
-          currentByte=0x00;
-          currentBit = 11;
-          bitChecksum = 0;
-          lastByte=0;
-          count_r--;
-        } else {
+          newByte(0x00);
           count_r=100;
-          lastByte=0;
           currentBlockTask=BLOCKTASK::GAP;
         }
-      }
-      break;
+        break;
 
-    case BLOCKTASK::GAP:
-      if(count_r>0) {
-        currentPeriod = ORICONEPULSE;
-        count_r--;
-      } else {   
-        currentBlockTask=BLOCKTASK::TDATA;
-      }             
-      break;
+      case BLOCKTASK::GAP:
+        if((byte)count_r) {
+          currentPeriod = ORICONEPULSE;
+          count_r=(byte)count_r-1;
+        } else {   
+          currentBlockTask=BLOCKTASK::TDATA;
+        }             
+        break;
 
       case BLOCKTASK::TDATA:
         OricDataBlock();
         break;
-            
+              
       case BLOCKTASK::PAUSE:
-        FlushBuffer(100);
+        if((byte)count_r) {
+          currentPeriod = ORICONEPULSE;
+          count_r=(byte)count_r-1;
+        } else {   
+          count_r=100;
+          currentBlockTask = BLOCKTASK::SYNC1;
+          #ifdef MenuBLK2A
+            if (!skip2A) ForcePauseAfter0();
+          #endif
+        }
         break;                
+    }
   }
 }
 
