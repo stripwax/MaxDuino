@@ -204,11 +204,10 @@ int main(int argc, char **argv) {
 
   while (!fileFinished) {
 
-    if(!isStopped) {
+    if(start) {
       UniLoop();
-      if(isStopped) {
+      if(!start) {
         fileFinished = true;
-        isStopped = false;
         savedWriteBuffer = writeBuffer;
       }
     }
