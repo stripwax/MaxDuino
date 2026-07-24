@@ -17,7 +17,7 @@
 
 word bitword;
 byte fileStage=0;
-CASDUINO_FILETYPE casduino = CASDUINO_FILETYPE::NONE;
+CASDUINO_FILETYPE casduino;
 bool invert=false;
 CAS_TYPE cas_currentType = CAS_TYPE::Nothing;
 

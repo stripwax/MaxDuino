@@ -129,12 +129,6 @@ void UniStop() {
   entry.close();                              //Close file
   seekFile(); 
   bytesRead=0;                                // reset read bytes PlayBytes
-#ifdef AYPLAY
-  AYPASS_hdrptr = AYPASS_STEP::HDRSTART; // reset AY flag
-#endif
-#ifdef Use_CAS
-  casduino = CASDUINO_FILETYPE::NONE;
-#endif
   reset_output_state();
 }
 
