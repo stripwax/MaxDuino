@@ -285,10 +285,7 @@ void mzf_process() {
     case MZF_STAGE::DONE:
     default:
       // End of file: hand off to existing EOF handler
-      currentID = BLOCKID::IDEOF;
-      currentTask = TASK::PROCESSID;
-      count_r = 255;
-      currentPeriod = 0;
+      setEOF();
       return;
   }
 }

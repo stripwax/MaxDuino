@@ -138,7 +138,6 @@ else if (!strcasecmp_P(filenameExt, PSTR("caq"))) {
         invert=true;
         casduino = CASDUINO_FILETYPE::DRAGONMODE;
         cas_period=249;
-        count_r=255;
       }
       else
     #endif

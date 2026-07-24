@@ -898,7 +898,6 @@ void stopFile() {
       lcd.gotoRc(3,38);
       lcd.bitmap(Stop, 1, 6);
     #endif
-    start=0;
   }
 }
 

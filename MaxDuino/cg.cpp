@@ -93,10 +93,7 @@ void cgcas_process() {
         currentByte = 0xAA;
         currentBit = 8;
       } else if (!ReadByte()) {
-        currentID = BLOCKID::IDEOF;
-        currentTask = TASK::PROCESSID;
-        count_r = 255;
-        currentPeriod = 0;
+        setEOF();
         return;
       } else {
         currentByte = outByte;

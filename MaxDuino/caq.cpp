@@ -42,8 +42,6 @@ void caq_init() {
   // Ensure we return to the main processing loop in CAQ mode
   currentID = BLOCKID::CAQ;
   currentTask = TASK::PROCESSID;
-  //currentBlockTask = BLOCKTASK::READPARAM;  // unnecessary since first blocktask is ALWAYS readparam (see fundctions UniPlay() and SetPlayBlock() )
-  count_r = 255;
 }
 
 void caq_process() {
@@ -100,10 +98,7 @@ void caq_process() {
       case BLOCKTASK::CAQ_DONE:
       default:
         // End of file: hand off to existing EOF handler (menu return)
-        currentID = BLOCKID::IDEOF;
-        currentTask = TASK::PROCESSID;
-        count_r = 255;
-        currentPeriod = 0;
+        setEOF();
         break;
     }
   }

@@ -66,19 +66,16 @@ void ISR_ATTR isrCallback() {
   {
     bitClear(workingPeriod,15);         //Clear pause block flag
 
-    //Handle special 'ending' pause
+    //Handle special 'ending' pause — stop signal from writeEnd()
     if (bitRead(workingPeriod, 13)) {
-      bitClear(workingPeriod,13);
-      newTime = workingPeriod;
-      //pinState = LOW;
-      //WRITE_LOW;
       pinState = !pinState;
       if (pinState == LOW)
         WRITE_LOW; 
       else   
         WRITE_HIGH;
-     
-      goto _next;
+      isStopped = true;
+      Timer.stop();
+      return;
     }   
  
     //If bit 15 of the current period is set we're about to run a pause

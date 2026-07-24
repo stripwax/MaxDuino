@@ -13,6 +13,7 @@
 #include "processing_state.h"
 #include "current_settings.h"
 #include "TimerCounter.h"
+#include "MaxProcessing.h"
 
 word bitword;
 byte fileStage=0;
@@ -198,10 +199,9 @@ void process()
 {
   if(cas_currentType==CAS_TYPE::typeEOF)
   {
-    if(count_r) {
-      writeSilence();
-      count_r--;
-    } else stopFile();    
+    if(!writeFinished) {
+      writeEnd();
+    }
     return;
   }
   if(currentTask==TASK::GETFILEHEADER || currentTask==TASK::CAS_wData)
@@ -411,24 +411,19 @@ void processDragon()
       bytesRead+=1;             // increase pointer to read next byte (not the same)
   #endif  
 
-  } else {          // readfile !=1 , ending
-    if(currentTask==TASK::CAS_wData) {
-      if(lastByte != 0x55) {
-        writeByte(0x55);
-      }      
-      count_r = 54;
-      currentTask=TASK::CAS_wSilence;
-    }    
-    if(currentTask==TASK::CAS_wSilence) {
-      if(count_r) {
-        writeSilence();
-        count_r--;
-      } else {
-        stopFile();
-      }
+  } else if(currentTask==TASK::CAS_wData) {     // readfile !=1, ending
+    if(lastByte != 0x55) {
+      writeByte(0x55);
+    }      
+    currentTask=TASK::CAS_wEnd;
+  } else if(currentTask==TASK::CAS_wEnd) {
+    if(currentBit == 0) {
+      writeEnd();
     }
+    // else: wait for bits_to_pulses() to finish processing trailing 0x55
   }
 }
+
 #endif // defined(Use_DRAGON)
 
 void casduinoLoop()

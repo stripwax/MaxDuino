@@ -44,7 +44,7 @@
 #endif
 
 //Temporarily store for a pulse period before loading it into the buffer.
-word currentPeriod=1;
+word currentPeriod;
 
 word pauseLength=0;
 unsigned long bytesToRead=0;
@@ -96,9 +96,12 @@ void UniPlay(){
   block=0;                                    // Initial block when starting
   currentBit=0;                               // fallo reproducción de .tap tras .tzx
   bytesRead=0;                                //start of file
+  pass=0;
   currentTask=TASK::INIT;                     //
   checkForEXT();
   isPaused=false;
+  isStopped=false;
+  writeFinished=false;
   
   clearBuffer();
 
@@ -110,7 +113,7 @@ void UniPlay(){
 
   // for TZX/UEF/etc:
   currentBlockTask = BLOCKTASK::READPARAM;    //First block task is to read in parameters
-  count_r = 255;                                //End of file buffer flush 
+  count_r=255;                                //End of file buffer flush / ORIC leader count
   EndOfFile=false;
   uefpassforZero=2;
   jtapflag=255;
@@ -133,6 +136,22 @@ void UniStop() {
   casduino = CASDUINO_FILETYPE::NONE;
 #endif
   reset_output_state();
+}
+
+void writeEnd() {
+  volatile uint16_t * _wb = &writeBuffer[writepos];
+  noInterrupts();
+  *_wb = 0xA000;  // bit15 + bit13: "stop" signal for ISR
+  interrupts();
+  advance_write_word();
+  currentBit = 0;
+  writeFinished = true;
+}
+
+void setEOF() {
+  currentID = BLOCKID::IDEOF;
+  currentTask = TASK::PROCESSID;
+  currentPeriod = 0;
 }
 
 bool getNextDataByte() {
@@ -1069,17 +1088,9 @@ void TZXProcess() {
           break;
     
         case BLOCKID::IDEOF:
-          //Handle end of file
-          if(!count_r==0) {
-            currentPeriod = 10;
-            bitSet(currentPeriod, 15);
-            bitSet(currentPeriod, 13);
-            count_r += -1;
-          } else {
-            stopFile();
-            return;
-          }       
-          break; 
+          //Handle end of file — write one stop entry, let ISR stop itself
+          writeEnd();
+          break;
         
         default:
           //ID Not Recognised - Fall back if non TZX file or unrecognised ID occurs
@@ -1169,6 +1180,19 @@ void TZXLoop() {
 }
 
 void UniLoop() {
+  if(isStopped) {
+    // if ISR has finished draining all the buffers, we are officially complete
+    stopFile();
+    return;
+  }
+
+  if(writeFinished) {
+    // if main loop (UniLoop) has finishsed writing all the file into the writeBuffer
+    // then there is nothing left for UniLoop to do (but we must check isStopped
+    // condition first - see above)
+    return;
+  }
+
   bool _copybuff;
   noInterrupts();
   //Pause interrupts to prevent var reads and copy values out
