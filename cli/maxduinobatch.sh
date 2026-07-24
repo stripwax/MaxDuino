@@ -91,9 +91,15 @@ for input_file in "$INPUT_DIR"/*; do
     echo "${done_count}/${total} test cases processed" >&2
 done
 
-if [ $mismatches -gt 0 ]; then
-    echo "Total mismatches: $mismatches" >&2
-    exit 1
+if [ -n "$MATCH_DIR" ]; then
+    if [ $mismatches -gt 0 ]; then
+        echo "Total mismatches: $mismatches" >&2
+        exit 1
+    else
+        echo "Everything matched"
+    fi
+else
+    echo "Done"
 fi
 
 exit 0
