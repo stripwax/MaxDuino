@@ -895,11 +895,6 @@ void OledStatusLine() {
       ultoa(BAUDRATE,fline,10);
       sendStrXY(fline,0,6);
 
-      #ifdef SORT_DIRS
-      ultoa(currentFile, fline, 10);
-      sendStrXY(fline, 0,4);
-      #endif 
-
       #ifndef NO_MOTOR       
         if(mselectMask) {
           sendStrXY(F(" M:ON"),5,6);

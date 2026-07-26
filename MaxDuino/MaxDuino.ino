@@ -86,6 +86,8 @@ bool dirEmpty;                      //flag if directory is completely empty
 uint16_t oldMinFile = 0;
 uint16_t oldMaxFile = 0;
 
+extern char fline[17];
+
 #ifdef SHOW_DIRNAMES
   #define fnameLength  5
   char oldMinFileName[fnameLength];
@@ -920,11 +922,17 @@ void seekFile() {
     #endif
     
   } else {
+
+  #ifdef SORT_DIRS
+    sprintf( PlayBytes, "%03d |%8lu B", currentFile+1, filesize);
+    ultoa(currentFile, fline, 10);
+  #else
     ultoa(filesize,PlayBytes,10);
     strcat_P(PlayBytes,PSTR(" bytes"));
     #ifdef P8544
       printtext("                 ",3);
     #endif
+  #endif
   }
 
   printtext(PlayBytes,0);
