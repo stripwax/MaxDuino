@@ -43,6 +43,12 @@
 #include "cg.h"
 #endif
 
+#ifdef SORT_DIRS
+#include <DoubleLinkedList.h>
+#include "sort_dirs.h"
+extern DoubleLinkedList<dirEntry> dirEntries;
+#endif
+
 //Temporarily store for a pulse period before loading it into the buffer.
 word currentPeriod;
 
@@ -81,7 +87,8 @@ word TickToUs(word ticks) {
   return (word)((((long(ticks) << 2) + 7) >> 1) / 7);
 }
 
-void UniPlay(){
+void UniPlay()
+{
   // initialise scale and period based on current BAUDRATE
   // (although these could be overridden later e.g. during checkForEXT, depending on file type)
   // on entry, the variable named "entry" is a file handle already opened for the file you want to play
@@ -90,6 +97,13 @@ void UniPlay(){
   setCASBaud();
   #endif
 
+  /*
+#ifdef SORT_DIRS
+  if (!entry.open(currentDir, dirEntries.get(currentFile)->index, O_RDONLY)) {
+    //  printtextF(PSTR("Error Opening File"),0);
+  }
+#endif
+*/
 #ifdef ID11CDTspeedup
   AMScdt = false;
 #endif

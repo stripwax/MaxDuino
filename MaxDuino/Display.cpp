@@ -12,6 +12,9 @@
 // general text-printing buffer shared by most routines, it's long enough for one line of text plus one NUL terminator
 char fline[17];
 
+extern uint16_t currentFile;               //File index (per filesystem) of current file, relative to current directory (pointed to by currentDir)
+
+
 #ifdef LCDSCREEN16x2
 
   LiquidCrystal_I2C lcd(LCD_I2C_ADDR,16,2); // set the LCD address, and configure for a 16 chars and 2 line display
@@ -891,6 +894,12 @@ void OledStatusLine() {
       sendStrXY(F("ID:   BLK:"),4,4);        
       ultoa(BAUDRATE,fline,10);
       sendStrXY(fline,0,6);
+
+      #ifdef SORT_DIRS
+      ultoa(currentFile, fline, 10);
+      sendStrXY(fline, 0,4);
+      #endif 
+
       #ifndef NO_MOTOR       
         if(mselectMask) {
           sendStrXY(F(" M:ON"),5,6);
