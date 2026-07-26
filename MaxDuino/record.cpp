@@ -889,8 +889,12 @@ static void timer_start_recording() {
 #endif
 
   const uint16_t sampleRate =
-      active_recording_is_cas() ? kMsxSampleRate :
-      active_recording_is_mzf() ? kMzfSampleRate :
+#if defined(RECORD_CAS_MSX)
+    active_recording_is_cas() ? kMsxSampleRate :
+#endif
+#if defined(RECORD_SHARP_MZF)
+    active_recording_is_mzf() ? kMzfSampleRate :
+#endif
       kTzxSampleRate;
   REC_TCB.CTRLA = 0;
   REC_TCB.CTRLB = TCB_CNTMODE_INT_gc;
@@ -992,9 +996,16 @@ inline void isr_tzx()
   const uint16_t sample = ADC0.RES;
   uint8_t bit;
 
+#if defined(RECORD_TZX_ID15) && defined(RECORD_ZX_SPECTRUM)
   if (!active_recording_is_zx_spectrum()) {
     bit = (sample >= 512) ? 1 : 0;
-  } else {
+  } else
+#endif
+#if defined(RECORD_TZX_ID15)
+    bit = (sample >= 512) ? 1 : 0;
+#endif
+#if defined(RECORD_ZX_SPECTRUM)
+  {
     int16_t filtered = (int16_t)tzxRecordFiltered;
     int16_t floor = (int16_t)tzxRecordFloor;
     int16_t ceil = (int16_t)tzxRecordCeil;
@@ -1051,6 +1062,7 @@ inline void isr_tzx()
     tzxRecordDeviation = hysteresis;
     tzxRecordLevel = bit;
   }
+#endif
 
   uint8_t bb = tzxBitByte;
   uint8_t bc = tzxBitCount;
