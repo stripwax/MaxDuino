@@ -7,24 +7,19 @@
 #include <Arduino.h>
 #include "sdfat_config.h"
 #include <SdFat.h>
-
+#include "record_TimerADC.h"
+#include "record_buffers.h"
 #include "Display.h"
 #include "file_utils.h"
 #include "current_settings.h"
 
+#include "record_msx.h"
+#include "record_mzf.h"
+#include "record_tzx.h"
+
 #if defined(RECORD_CAS_MSX)
 #include "casProcessing.h"
 #endif
-
-constexpr uint16_t kRecordPageSize = 2 * buffsize; // in BYTES (since buffsize is in UINT16_t)
-static constexpr uint16_t kMsxHeaderMinDurationMs = 500;
-volatile uint8_t * pageA = (uint8_t *)(wbuffer[0]);
-volatile uint8_t * pageB = (uint8_t *)(wbuffer[1]);
-volatile uint16_t pagePos;
-volatile uint8_t activePage;
-volatile bool pageReadyA;
-volatile bool pageReadyB;
-static uint32_t droppedBytes = 0;
 
 static bool gRecording = false;
 static bool gRecordPaused = false;
@@ -35,35 +30,6 @@ static const char * ext3;  // required file extension for a given recording form
 static SdBaseFile recFile;
 static uint32_t filePos_usedBits = 0;
 static uint32_t filePos_len3 = 0;
-static uint32_t dataBytesWritten = 0;
-
-static inline bool active_recording_is_cas()
-{
-  #if defined(RECORD_CAS_MSX)
-    return recordFormat == RecordFormat::CAS_MSX;
-  #else
-    return false;
-  #endif
-}
-
-static inline bool active_recording_is_mzf()
-{
-  #if defined(RECORD_SHARP_MZF)
-    return recordFormat == RecordFormat::SHARP_MZF;
-  #else
-    return false;
-  #endif
-}
-
-static inline bool active_recording_is_zx_spectrum()
-{
-  #if defined(RECORD_ZX_SPECTRUM)
-    return recordFormat == RecordFormat::ZX_SPECTRUM;
-  #else
-    return false;
-  #endif
-}
-
 
 bool isRecordFormatSupported(const RecordFormat format)
 {
@@ -164,10 +130,6 @@ static uint16_t next_recording_index() {
   return count_files_with_ext_in_current_dir();
 }
 
-static volatile inline uint8_t* active_page_ptr() {
-  return (activePage == 0) ? pageA : pageB;
-}
-
 static inline bool other_page_ready() {
   return (activePage == 0) ? pageReadyB : pageReadyA;
 }
@@ -179,7 +141,7 @@ static inline void mark_active_ready_and_swap() {
   pagePos = 0;
 }
 
-static inline void queue_output_byte(uint8_t value) {
+void queue_output_byte(uint8_t value) {
   uint16_t pos = pagePos;
   volatile uint8_t* p = active_page_ptr();
   if (pos < kRecordPageSize) {
@@ -211,882 +173,22 @@ static void write_ready_page(uint8_t which) {
   dataBytesWritten += kRecordPageSize;
 }
 
-static constexpr uint16_t kMsxSampleRate = 50000;
-static constexpr uint16_t kTzxSampleRate = 44100;
-#if defined(__AVR_ATmega4809__)
-static constexpr uint8_t kWeakZxFilterShift = 2;
-static constexpr uint8_t kWeakZxEnvelopeTrackShift = 4;
-static constexpr uint8_t kWeakZxCenterTrackShift = 4;
-static constexpr uint8_t kWeakZxMinHysteresis = 2;
-static constexpr uint8_t kWeakZxMaxHysteresis = 8;
-#else
-static constexpr uint8_t kWeakZxFilterShift = 2;
-static constexpr uint8_t kWeakZxEnvelopeTrackShift = 5;
-static constexpr uint8_t kWeakZxCenterTrackShift = 3;
-static constexpr uint8_t kWeakZxMinHysteresis = 2;
-static constexpr uint8_t kWeakZxMaxHysteresis = 8;
-#endif
-#if defined(RECORD_CAS_MSX)
-
-static constexpr uint8_t kMsxRecordCenterTrackShift = 6;
-static constexpr uint8_t kMsxRecordHysteresis = 4;
-static constexpr uint8_t kMsxMinAcceptedEdgeSamples = 2;
-static constexpr uint8_t kMsxMinShortCycle = 2;
-static constexpr uint8_t kMsxMaxHeaderShortCycle = 40;
-static constexpr uint8_t kMsxMinBitCellsBeforeHeader = 50;
-
-static uint16_t msxRecordCenter = 512;
-static uint8_t msxRecordLevel = 0;
-static uint8_t msxSamplesSinceEdge = 0;
-static uint16_t msxHeaderShortRun = 0;
-static uint16_t msxHeaderShortSum = 0;
-static uint8_t msxShortCycleAvg = 0;
-static bool msxHeaderArmed = false;
-static bool msxHeaderPending = false;
-static bool msxBlockOpen = false;
-static bool msxInByte = false;
-static uint8_t msxCurrentByte = 0;
-static uint8_t msxFrameBitIndex = 0;
-static uint8_t msxBitCellCount = 0;
-static uint8_t msxBitEdgeCount = 0;
-static uint8_t msxExpectedShortMin = 0;
-static uint8_t msxExpectedShortMax = 0;
-static uint8_t msxExpectedLongMin = 0;
-static uint8_t msxExpectedLongMax = 0;
-static uint8_t msxSilenceSamples = 0;
-static uint16_t msxHeaderShortSamplesNeeded = 4000;
-
-static inline void msx_restore_header_detection() {
-  msxShortCycleAvg = 0;
-  msxExpectedShortMin = kMsxMinShortCycle;
-  msxExpectedShortMax = kMsxMaxHeaderShortCycle;
-  msxExpectedLongMin = kMsxMaxHeaderShortCycle + 1u;
-  msxExpectedLongMax = 80u;
-  msxSilenceSamples = 160u;
-}
-
-static inline void msx_reset_header_state() {
-  msxHeaderShortRun = 0;
-  msxHeaderShortSum = 0;
-  msxHeaderArmed = false;
-}
-
-static inline void msx_reset_byte_state() {
-  msxInByte = false;
-  msxCurrentByte = 0;
-  msxFrameBitIndex = 0;
-  msxBitCellCount = 0;
-  msxBitEdgeCount = 0;
-}
-
-static inline void msx_abort_block() {
-  msxBlockOpen = false;
-  msxHeaderPending = false;
-  msx_restore_header_detection();
-  msx_reset_header_state();
-  msx_reset_byte_state();
-}
-
-static inline void msx_resync_open_block() {
-  msx_reset_byte_state();
-}
-
-static inline void msx_set_cycle_expectations(uint16_t shortCycleSamples) {
-  uint8_t shortMin = (shortCycleSamples * 3u) / 4u;
-  uint8_t shortMax = (shortCycleSamples * 5u) / 4u + 1u;
-  const uint16_t longCycleSamples = shortCycleSamples * 2u;
-  uint8_t longMin = (longCycleSamples * 3u) / 4u;
-  uint8_t longMax = (longCycleSamples * 5u) / 4u + 2u;
-
-  if (shortMin < kMsxMinShortCycle) shortMin = kMsxMinShortCycle;
-  if (shortMax <= shortMin) shortMax = shortMin + 1u;
-  if (longMin <= shortMax) longMin = shortMax + 1u;
-  if (longMax <= longMin) longMax = longMin + 1u;
-
-  msxExpectedShortMin = shortMin;
-  msxExpectedShortMax = shortMax;
-  msxExpectedLongMin = longMin;
-  msxExpectedLongMax = longMax;
-
-  uint16_t silence = longMax * 8u;
-  if (silence < 32u) silence = 32u;
-  if (silence > 250u) silence = 250u;
-  msxSilenceSamples = (uint8_t)silence;
-}
-
-static inline void msx_reset_capture_state() {
-  msxRecordCenter = 512;
-  msxRecordLevel = 0;
-  msxSamplesSinceEdge = 0;
-  msxHeaderPending = false;
-  msxBlockOpen = false;
-  msx_reset_header_state();
-  msx_reset_byte_state();
-  msx_restore_header_detection();
-  msxHeaderShortSamplesNeeded =
-      (uint16_t)(((uint32_t)kMsxSampleRate * kMsxHeaderMinDurationMs + 999u) / 1000u);
-}
-
-static inline bool msx_is_short_cycle(uint8_t cycleSamples) {
-  return cycleSamples >= msxExpectedShortMin && cycleSamples <= msxExpectedShortMax;
-}
-
-static inline bool msx_is_long_cycle(uint8_t cycleSamples) {
-  return cycleSamples >= msxExpectedLongMin && cycleSamples <= msxExpectedLongMax;
-}
-
-static inline void msx_write_cas_header() {
-  for (uint8_t i = 0; i < 8; ++i) {
-    queue_output_byte(pgm_read_byte(&CAS_HEADER[i]));
-  }
-}
-
-static inline void msx_start_byte() {
-  msxInByte = true;
-  msxCurrentByte = 0;
-  // The first long interval after the header is the first half of the start bit.
-  msxFrameBitIndex = 0;
-  msxBitCellCount = 2;
-  msxBitEdgeCount = 1;
-}
-
-static inline void msx_process_data_cycle(uint8_t cycleSamples) {
-  uint8_t intervalCells = 0;
-  if (msx_is_short_cycle(cycleSamples)) {
-    intervalCells = 1;
-  } else if (msx_is_long_cycle(cycleSamples)) {
-    intervalCells = 2;
-  } else {
-    // Ignore obvious glitch edges that are much shorter than a real cell.
-    if (cycleSamples < msxExpectedShortMin && cycleSamples + 1u < msxExpectedShortMin) {
-      return;
-    }
-    msx_resync_open_block();
-    return;
-  }
-
-  msxBitCellCount = (uint8_t)(msxBitCellCount + intervalCells);
-  msxBitEdgeCount++;
-  if (msxBitCellCount < 4) {
-    return;
-  }
-
-  if (msxBitCellCount > 4) {
-    msx_resync_open_block();
-    return;
-  }
-
-  const uint8_t edges = msxBitEdgeCount;
-  msxBitCellCount = 0;
-  msxBitEdgeCount = 0;
-
-  uint8_t bit;
-  if (edges == 2) {
-    bit = 0;
-  } else if (edges == 4) {
-    bit = 1;
-  } else {
-    msx_resync_open_block();
-    return;
-  }
-
-  if (msxFrameBitIndex == 0) {
-    if (bit != 0) {
-      msx_resync_open_block();
-      return;
-    }
-    msxFrameBitIndex = 1;
-    return;
-  }
-
-  if (msxFrameBitIndex <= 8) {
-    if (bit) {
-      msxCurrentByte |= (uint8_t)(1u << (msxFrameBitIndex - 1u));
-    }
-    msxFrameBitIndex++;
-    return;
-  }
-
-  if (bit != 1) {
-    msx_resync_open_block();
-    return;
-  }
-
-  msxFrameBitIndex++;
-  if (msxFrameBitIndex <= 10) {
-    return;
-  }
-
-  if (msxHeaderPending) {
-    msx_write_cas_header();
-    msxHeaderPending = false;
-  }
-  queue_output_byte(msxCurrentByte);
-  msx_reset_byte_state();
-  msxBlockOpen = true;
-}
-
-static inline void msx_process_sync_cycle(uint8_t cycleSamples) {
-  if (msxBlockOpen) {
-    msx_reset_header_state();
-    if (msx_is_long_cycle(cycleSamples)) {
-      msx_start_byte();
-    }
-    return;
-  }
-
-  if (msx_is_short_cycle(cycleSamples)) {
-    if (msxHeaderShortRun < 0xFFFF) msxHeaderShortRun++;
-    if ((uint16_t)(0xFFFFu - msxHeaderShortSum) < cycleSamples) {
-      msxHeaderShortSum = 0xFFFFu;
-    } else {
-      msxHeaderShortSum += cycleSamples;
-    }
-
-    if (msxHeaderShortRun >= kMsxMinBitCellsBeforeHeader &&
-        msxHeaderShortSum >= msxHeaderShortSamplesNeeded) {
-      if (!msxHeaderArmed) {
-        uint16_t avg = (msxHeaderShortSum + (msxHeaderShortRun / 2u)) / msxHeaderShortRun;
-        if (avg < kMsxMinShortCycle) avg = kMsxMinShortCycle;
-        if (avg > kMsxMaxHeaderShortCycle) avg = kMsxMaxHeaderShortCycle;
-        msxShortCycleAvg = (uint8_t)avg;
-        msx_set_cycle_expectations(avg);
-      }
-      msxHeaderArmed = true;
-    }
-    return;
-  }
-
-  if (msx_is_long_cycle(cycleSamples)) {
-    if (msxHeaderArmed) {
-      msxHeaderPending = true;
-      msxBlockOpen = true;
-      msx_reset_header_state();
-      msx_start_byte();
-      return;
-    }
-  }
-
-  msx_restore_header_detection();
-  msx_reset_header_state();
-}
-
-static inline void msx_process_cycle(uint8_t cycleSamples) {
-  if (msxInByte) {
-    msx_process_data_cycle(cycleSamples);
-  } else {
-    msx_process_sync_cycle(cycleSamples);
-  }
-}
-#endif
-
-#if defined(RECORD_SHARP_MZF)
-static constexpr uint16_t kMzfSampleRate = 50000;
-static constexpr uint8_t kMzfMinAcceptedEdgeSamples = 6;
-static constexpr uint8_t kMzfResetSilenceSamples = 120;
-static constexpr uint8_t kMzfGapMinShortPulses = 32;
-static constexpr uint8_t kMzfShortHalfMin = 8;
-static constexpr uint8_t kMzfShortHalfMax = 16;
-static constexpr uint8_t kMzfLongHalfMin = 18;
-static constexpr uint8_t kMzfLongHalfMax = 30;
-static constexpr uint8_t kMzfLtmLongMin = 30;
-static constexpr uint8_t kMzfLtmShortMin = 30;
-static constexpr uint8_t kMzfStmLongMin = 15;
-static constexpr uint8_t kMzfStmShortMin = 15;
-
-enum class MzfRecStage : uint8_t {
-  SEEK_LTM,
-  HDR1,
-  CHKH1,
-  HDR2,
-  CHKH2,
-  SEEK_STM,
-  FILE1,
-  CHKF1,
-  DONE
-};
-
-enum class MzfPulseKind : uint8_t {
-  INVALID,
-  SHORT,
-  LONG
-};
-
-static byte mzfRecordHeader[128];
-static MzfRecStage mzfRecordStage = MzfRecStage::SEEK_LTM;
-static uint8_t mzfRecordLevel = 0;
-static uint8_t mzfSamplesSinceEdge = 0;
-static uint8_t mzfPendingHalfKind = static_cast<uint8_t>(MzfPulseKind::INVALID);
-static bool mzfHavePendingHalf = false;
-static uint16_t mzfGapShortRun = 0;
-static uint8_t mzfMarkerCount = 0;
-static uint8_t mzfSeekPhase = 0;
-static uint8_t mzfBitMask = 0x80;
-static uint8_t mzfCurrentByte = 0;
-static bool mzfExpectLeadLong = true;
-static uint8_t mzfHeaderIndex = 0;
-static uint16_t mzfHeaderChecksumCalc = 0;
-static uint16_t mzfChecksumRead = 0;
-static uint8_t mzfChecksumBytesRead = 0;
-static volatile bool mzfHeaderAccepted = false;
-static volatile bool mzfHeaderOutputPending = false;
-static bool mzfHeaderWritten = false;
-static uint16_t mzfFileLength = 0;
-static uint16_t mzfFileBytesDecoded = 0;
-static uint16_t mzfFileChecksumCalc = 0;
-static bool mzfDecodeComplete = false;
-
-static inline uint8_t mzf_popcount8(byte v) {
-  v = v - ((v >> 1) & 0x55);
-  v = (v & 0x33) + ((v >> 2) & 0x33);
-  return (uint8_t)((((v + (v >> 4)) & 0x0F) * 0x01) & 0x1F);
-}
-
-static inline uint16_t mzf_cksum_add(uint16_t acc, byte v) {
-  return (uint16_t)(acc + mzf_popcount8(v));
-}
-
-static inline void mzf_reset_byte_decoder() {
-  mzfBitMask = 0x80;
-  mzfCurrentByte = 0;
-  mzfExpectLeadLong = true;
-}
-
-static inline void mzf_reset_seek(const MzfRecStage stage) {
-  mzfRecordStage = stage;
-  mzfGapShortRun = 0;
-  mzfMarkerCount = 0;
-  mzfSeekPhase = 0;
-  mzfHavePendingHalf = false;
-  mzf_reset_byte_decoder();
-}
-
-static inline void mzf_accept_header() {
-  mzfHeaderAccepted = true;
-  mzfHeaderOutputPending = true;
-  mzfFileLength = (uint16_t)mzfRecordHeader[18] | ((uint16_t)mzfRecordHeader[19] << 8);
-}
-
-static inline void mzf_reset_capture_state() {
-  mzfRecordLevel = 0;
-  mzfSamplesSinceEdge = 0;
-  mzfPendingHalfKind = static_cast<uint8_t>(MzfPulseKind::INVALID);
-  mzfHavePendingHalf = false;
-  mzfHeaderIndex = 0;
-  mzfHeaderChecksumCalc = 0;
-  mzfChecksumRead = 0;
-  mzfChecksumBytesRead = 0;
-  mzfHeaderAccepted = false;
-  mzfHeaderOutputPending = false;
-  mzfHeaderWritten = false;
-  mzfFileLength = 0;
-  mzfFileBytesDecoded = 0;
-  mzfFileChecksumCalc = 0;
-  mzfDecodeComplete = false;
-  mzf_reset_seek(MzfRecStage::SEEK_LTM);
-}
-
-static inline MzfPulseKind mzf_classify_half_cycle(const uint8_t halfCycleSamples) {
-  if (halfCycleSamples >= kMzfShortHalfMin && halfCycleSamples <= kMzfShortHalfMax) {
-    return MzfPulseKind::SHORT;
-  }
-  if (halfCycleSamples >= kMzfLongHalfMin && halfCycleSamples <= kMzfLongHalfMax) {
-    return MzfPulseKind::LONG;
-  }
-  return MzfPulseKind::INVALID;
-}
-
-static inline uint8_t mzf_seek_long_min(const MzfRecStage stage) {
-  return (stage == MzfRecStage::SEEK_LTM) ? kMzfLtmLongMin : kMzfStmLongMin;
-}
-
-static inline uint8_t mzf_seek_short_min(const MzfRecStage stage) {
-  return (stage == MzfRecStage::SEEK_LTM) ? kMzfLtmShortMin : kMzfStmShortMin;
-}
-
-static inline void mzf_begin_header_stage(const MzfRecStage stage) {
-  mzfRecordStage = stage;
-  mzfHeaderIndex = 0;
-  mzfHeaderChecksumCalc = 0;
-  mzfChecksumRead = 0;
-  mzfChecksumBytesRead = 0;
-  mzf_reset_byte_decoder();
-}
-
-static inline void mzf_begin_file_stage() {
-  mzfRecordStage = MzfRecStage::FILE1;
-  mzfFileBytesDecoded = 0;
-  mzfFileChecksumCalc = 0;
-  mzfChecksumRead = 0;
-  mzfChecksumBytesRead = 0;
-  mzf_reset_byte_decoder();
-}
-
-static inline void mzf_process_seek_pulse(const bool isLong) {
-  switch (mzfSeekPhase) {
-    case 0:
-      if (!isLong) {
-        if (mzfGapShortRun < 0xFFFF) mzfGapShortRun++;
-      } else if (mzfGapShortRun >= kMzfGapMinShortPulses) {
-        mzfSeekPhase = 1;
-        mzfMarkerCount = 1;
-      } else {
-        mzfGapShortRun = 0;
-      }
-      return;
-
-    case 1:
-      if (isLong) {
-        if (mzfMarkerCount < 0xFF) mzfMarkerCount++;
-      } else if (mzfMarkerCount >= mzf_seek_long_min(mzfRecordStage)) {
-        mzfSeekPhase = 2;
-        mzfMarkerCount = 1;
-      } else {
-        mzfGapShortRun = 1;
-        mzfSeekPhase = 0;
-        mzfMarkerCount = 0;
-      }
-      return;
-
-    case 2:
-      if (!isLong) {
-        if (mzfMarkerCount < 0xFF) mzfMarkerCount++;
-      } else if (mzfMarkerCount >= mzf_seek_short_min(mzfRecordStage)) {
-        mzfGapShortRun = 0;
-        mzfMarkerCount = 0;
-        mzfSeekPhase = 0;
-        if (mzfRecordStage == MzfRecStage::SEEK_LTM) {
-          mzf_begin_header_stage(MzfRecStage::HDR1);
-        } else if (mzfHeaderAccepted) {
-          mzf_begin_file_stage();
-        } else {
-          mzfRecordStage = MzfRecStage::DONE;
-        }
-      } else {
-        mzfSeekPhase = 1;
-        mzfMarkerCount = 1;
-        mzfGapShortRun = 0;
-      }
-      return;
-  }
-}
-
-static inline void mzf_finish_header_checksum() {
-  if (!mzfHeaderAccepted && mzfChecksumRead == mzfHeaderChecksumCalc) {
-    mzf_accept_header();
-  }
-
-  if (mzfRecordStage == MzfRecStage::CHKH1) {
-    mzf_begin_header_stage(MzfRecStage::HDR2);
-  } else {
-    mzf_reset_seek(MzfRecStage::SEEK_STM);
-  }
-}
-
-static inline void mzf_finish_file_checksum() {
-  mzfDecodeComplete = (mzfChecksumRead == mzfFileChecksumCalc);
-  mzfRecordStage = MzfRecStage::DONE;
-}
-
-static inline void mzf_process_decoded_byte(const byte value) {
-  switch (mzfRecordStage) {
-    case MzfRecStage::HDR1:
-    case MzfRecStage::HDR2:
-      if (!mzfHeaderAccepted || mzfRecordStage == MzfRecStage::HDR1) {
-        mzfRecordHeader[mzfHeaderIndex] = value;
-        mzfHeaderChecksumCalc = mzf_cksum_add(mzfHeaderChecksumCalc, value);
-      }
-      mzfHeaderIndex++;
-      if (mzfHeaderIndex >= sizeof(mzfRecordHeader)) {
-        mzfRecordStage = (mzfRecordStage == MzfRecStage::HDR1) ? MzfRecStage::CHKH1 : MzfRecStage::CHKH2;
-        mzfChecksumRead = 0;
-        mzfChecksumBytesRead = 0;
-        mzf_reset_byte_decoder();
-      }
-      return;
-
-    case MzfRecStage::CHKH1:
-    case MzfRecStage::CHKH2:
-    case MzfRecStage::CHKF1:
-      mzfChecksumRead = (uint16_t)((mzfChecksumRead << 8) | value);
-      mzfChecksumBytesRead++;
-      if (mzfChecksumBytesRead >= 2) {
-        if (mzfRecordStage == MzfRecStage::CHKF1)
-          mzf_finish_file_checksum();
-        else
-          mzf_finish_header_checksum();
-      }
-      return;
-
-    case MzfRecStage::FILE1:
-      if (mzfHeaderWritten) {
-        queue_output_byte(value);
-      }
-      mzfFileChecksumCalc = mzf_cksum_add(mzfFileChecksumCalc, value);
-      mzfFileBytesDecoded++;
-      if (mzfFileBytesDecoded >= mzfFileLength) {
-        mzfRecordStage = MzfRecStage::CHKF1;
-        mzfChecksumRead = 0;
-        mzfChecksumBytesRead = 0;
-        mzf_reset_byte_decoder();
-      }
-      return;
-
-    default:
-      return;
-  }
-}
-
-static inline void mzf_process_byte_pulse(const bool isLong) {
-  if (mzfExpectLeadLong) {
-    if (!isLong) {
-      return;
-    }
-    mzfExpectLeadLong = false;
-    mzfBitMask = 0x80;
-    mzfCurrentByte = 0;
-    return;
-  }
-
-  if (isLong) {
-    mzfCurrentByte |= mzfBitMask;
-  }
-  mzfBitMask >>= 1;
-
-  if (mzfBitMask == 0) {
-    const byte completedByte = mzfCurrentByte;
-    mzf_reset_byte_decoder();
-    mzf_process_decoded_byte(completedByte);
-  }
-}
-
-static inline void mzf_process_pulse(const MzfPulseKind kind) {
-  if (kind == MzfPulseKind::INVALID) {
-    if (mzfRecordStage == MzfRecStage::SEEK_LTM || mzfRecordStage == MzfRecStage::SEEK_STM) {
-      mzfGapShortRun = 0;
-      mzfMarkerCount = 0;
-      mzfSeekPhase = 0;
-    } else if (mzfRecordStage != MzfRecStage::DONE) {
-      mzf_reset_byte_decoder();
-    }
-    return;
-  }
-
-  if (mzfRecordStage == MzfRecStage::SEEK_LTM || mzfRecordStage == MzfRecStage::SEEK_STM) {
-    mzf_process_seek_pulse(kind == MzfPulseKind::LONG);
-    return;
-  }
-
-  if (mzfRecordStage == MzfRecStage::DONE) {
-    return;
-  }
-
-  mzf_process_byte_pulse(kind == MzfPulseKind::LONG);
-}
-
-static inline void mzf_process_half_cycle(const uint8_t halfCycleSamples) {
-  const MzfPulseKind kind = mzf_classify_half_cycle(halfCycleSamples);
-  if (kind == MzfPulseKind::INVALID) {
-    mzfHavePendingHalf = false;
-    mzf_process_pulse(MzfPulseKind::INVALID);
-    return;
-  }
-
-  if (!mzfHavePendingHalf) {
-    mzfPendingHalfKind = static_cast<uint8_t>(kind);
-    mzfHavePendingHalf = true;
-    return;
-  }
-
-  const MzfPulseKind pendingKind = static_cast<MzfPulseKind>(mzfPendingHalfKind);
-  if (pendingKind == kind) {
-    mzfHavePendingHalf = false;
-    mzf_process_pulse(kind);
-    return;
-  }
-
-  mzfPendingHalfKind = static_cast<uint8_t>(kind);
-}
-
-static void mzf_flush_pending_header() {
-  if (!mzfHeaderOutputPending || mzfHeaderWritten || !mzfHeaderAccepted) return;
-  if (pageReadyA || pageReadyB) return;
-  if (dataBytesWritten != 0 || pagePos != 0) return;
-
-  uint8_t* p = active_page_ptr();
-  for (uint8_t i = 0; i < sizeof(mzfRecordHeader); ++i) {
-    p[i] = mzfRecordHeader[i];
-  }
-  pagePos = sizeof(mzfRecordHeader);
-  mzfHeaderWritten = true;
-  mzfHeaderOutputPending = false;
-}
-#endif
-
-static constexpr uint16_t kTStatesPerSample = 79;
-static constexpr uint16_t kPauseAfterMs = 1000;
-
-static const uint8_t kTzxHeader[10] = {
-  'Z','X','T','a','p','e','!',
-  0x1A,
-  0x01, 0x20
-};
-
-static volatile uint8_t tzxBitByte = 0;
-static volatile uint8_t tzxBitCount = 0;
-static uint16_t tzxRecordCenter = 512;
-static uint16_t tzxRecordFiltered = 512;
-static uint8_t tzxRecordDeviation = 8;
-static uint16_t tzxRecordFloor = 512;
-static uint16_t tzxRecordCeil = 512;
-static uint8_t tzxRecordLevel = 0;
-static bool tzxRecordCenterPrimed = false;
-
-static inline void tzx_reset_capture_state() {
-  tzxBitByte = 0;
-  tzxBitCount = 0;
-  tzxRecordCenter = 512;
-  tzxRecordFiltered = 512;
-  tzxRecordDeviation = 8;
-  tzxRecordFloor = 512;
-  tzxRecordCeil = 512;
-  tzxRecordLevel = 0;
-  tzxRecordCenterPrimed = false;
-}
-
-inline void recorder_isr();
-
-#if defined(__AVR_ATmega4808__) || defined(__AVR_ATmega4809__)
-
-
-static void adc_start_freerun_record_pin() {
-  ADC0.CTRLA = 0;
-  ADC0.CTRLB = 0;
-  ADC0.CTRLC = ADC_PRESC_DIV16_gc;
-  ADC0.CTRLD = 0;
-  ADC0.SAMPCTRL = 0;
-
-  #if defined(__AVR_ATmega4808__)
-    ADC0.MUXPOS = ADC_MUXPOS_AIN15_gc;
-  #elif defined(__AVR_ATmega4809__)
-    ADC0.MUXPOS = ADC_MUXPOS_AIN5_gc;
-  #endif
-
-  ADC0.CTRLA = ADC_ENABLE_bm | ADC_FREERUN_bm;
-  ADC0.COMMAND = ADC_STCONV_bm;
-}
-
-static void adc_stop() {
-  ADC0.CTRLA &= ~(ADC_ENABLE_bm);
-}
-
-static void timer_start_recording() {
-#if defined(TCB1)
-#  define REC_TCB TCB1
-#  define REC_TCB_INT_vect TCB1_INT_vect
-#else
-#  define REC_TCB TCB0
-#  define REC_TCB_INT_vect TCB0_INT_vect
-#endif
-
-  const uint16_t sampleRate =
+uint16_t default_sample_rate_for_format() {
+    return
 #if defined(RECORD_CAS_MSX)
     active_recording_is_cas() ? kMsxSampleRate :
 #endif
 #if defined(RECORD_SHARP_MZF)
     active_recording_is_mzf() ? kMzfSampleRate :
 #endif
-      kTzxSampleRate;
-  REC_TCB.CTRLA = 0;
-  REC_TCB.CTRLB = TCB_CNTMODE_INT_gc;
-  REC_TCB.CCMP  = (uint16_t)(F_CPU / sampleRate);
-  REC_TCB.CNT   = 0;
-  REC_TCB.INTFLAGS = TCB_CAPT_bm;
-  REC_TCB.INTCTRL  = TCB_CAPT_bm;
-  REC_TCB.CTRLA = TCB_CLKSEL_CLKDIV1_gc | TCB_ENABLE_bm;
-}
-
-static void timer_stop_recording() {
-  REC_TCB.INTCTRL = 0;
-  REC_TCB.CTRLA = 0;
-  REC_TCB.INTFLAGS = TCB_CAPT_bm;
-}
-
-ISR(REC_TCB_INT_vect) {
-  REC_TCB.INTFLAGS = TCB_CAPT_bm;
-  recorder_isr();
-}
-
-inline uint16_t get_adc_value()
-{
-  return ADC0.RES;
-}
-
-#else
-#error Missing recording timer and isr definition for this MCU
-#endif
-
-#if defined(RECORD_SHARP_MZF)
-inline void isr_mzf()
-{
-  const uint16_t sample = get_adc_value();
-  const uint8_t level = (sample >= 512) ? 1 : 0;
-
-  if (mzfSamplesSinceEdge < 0xFF) mzfSamplesSinceEdge++;
-
-  if (level == mzfRecordLevel) {
-    if (mzfSamplesSinceEdge >= kMzfResetSilenceSamples) {
-      mzfHavePendingHalf = false;
-      if (mzfRecordStage == MzfRecStage::SEEK_LTM || mzfRecordStage == MzfRecStage::SEEK_STM) {
-        mzfGapShortRun = 0;
-        mzfMarkerCount = 0;
-        mzfSeekPhase = 0;
-      } else if (mzfRecordStage != MzfRecStage::DONE) {
-        mzf_reset_byte_decoder();
-      }
-      mzfSamplesSinceEdge = kMzfResetSilenceSamples;
-    }
-    return;
-  }
-
-  const uint8_t halfCycleSamples = mzfSamplesSinceEdge;
-  if (halfCycleSamples == 0) return;
-  if (halfCycleSamples < kMzfMinAcceptedEdgeSamples) return;
-
-  mzfRecordLevel = level;
-  mzfSamplesSinceEdge = 0;
-  mzf_process_half_cycle(halfCycleSamples);
-}
-#endif
-
-#if defined(RECORD_CAS_MSX)
-inline void isr_cas()
-{
-      const uint16_t sample = get_adc_value();
-    int16_t center = (int16_t)msxRecordCenter;
-    uint8_t level = msxRecordLevel;
-
-    if ((int16_t)sample >= center + kMsxRecordHysteresis) {
-      level = 1;
-    } else if ((int16_t)sample <= center - kMsxRecordHysteresis) {
-      level = 0;
-    }
-
-    center += (((int16_t)sample) - center) >> kMsxRecordCenterTrackShift;
-    if (center < 0) center = 0;
-    else if (center > 1023) center = 1023;
-    msxRecordCenter = (uint16_t)center;
-
-    if (msxSamplesSinceEdge < 0xFF) msxSamplesSinceEdge++;
-
-    if (level == msxRecordLevel) {
-      if (msxSamplesSinceEdge >= msxSilenceSamples) {
-        msx_abort_block();
-      }
-      return;
-    }
-
-    const uint8_t halfCycleSamples = msxSamplesSinceEdge;
-    if (halfCycleSamples == 0) return;
-    if (halfCycleSamples < kMsxMinAcceptedEdgeSamples) return;
-
-    msxRecordLevel = level;
-    msxSamplesSinceEdge = 0;
-    msx_process_cycle(halfCycleSamples);
-}
-#endif
-
 #if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
-inline void isr_tzx()
-{
-  const uint16_t sample = get_adc_value();
-  uint8_t bit;
-
-#if defined(RECORD_TZX_ID15) && defined(RECORD_ZX_SPECTRUM)
-  if (!active_recording_is_zx_spectrum()) {
-    bit = (sample >= 512) ? 1 : 0;
-  } else
+    kTzxSampleRate;
+#else
+    44100; // just some default, we shouldn't get here
 #endif
-#if defined(RECORD_TZX_ID15)
-    bit = (sample >= 512) ? 1 : 0;
-#endif
-#if defined(RECORD_ZX_SPECTRUM)
-  {
-    int16_t filtered = (int16_t)tzxRecordFiltered;
-    int16_t floor = (int16_t)tzxRecordFloor;
-    int16_t ceil = (int16_t)tzxRecordCeil;
-    uint8_t hysteresis = tzxRecordDeviation;
-    bit = tzxRecordLevel;
-
-    filtered += (((int16_t)sample) - filtered) >> kWeakZxFilterShift;
-
-    if (!tzxRecordCenterPrimed) {
-      floor = filtered;
-      ceil = filtered;
-      hysteresis = kWeakZxMinHysteresis;
-      tzxRecordCenterPrimed = true;
-      tzxRecordCenter = (uint16_t)filtered;
-      bit = (sample >= 512) ? 1 : 0;
-    } else {
-      if (filtered < floor) {
-        floor = filtered;
-      } else {
-        floor += (filtered - floor) >> kWeakZxEnvelopeTrackShift;
-      }
-
-      if (filtered > ceil) {
-        ceil = filtered;
-      } else {
-        ceil += (filtered - ceil) >> kWeakZxEnvelopeTrackShift;
-      }
-
-      const uint16_t span = (ceil >= floor) ? (uint16_t)(ceil - floor) : 0;
-      hysteresis = (uint8_t)(span >> 7);
-      if (hysteresis < kWeakZxMinHysteresis) hysteresis = kWeakZxMinHysteresis;
-      if (hysteresis > kWeakZxMaxHysteresis) hysteresis = kWeakZxMaxHysteresis;
-
-      const int16_t centerTarget = (floor + ceil) >> 1;
-      int16_t center = (int16_t)tzxRecordCenter;
-      center += (centerTarget - center) >> kWeakZxCenterTrackShift;
-      const int16_t decisionDelta = (int16_t)sample - center;
-
-      if (decisionDelta >= hysteresis) {
-        bit = 1;
-      } else if (decisionDelta <= -((int16_t)hysteresis)) {
-        bit = 0;
-      }
-      tzxRecordCenter = (uint16_t)center;
-    }
-
-    if (floor < 0) floor = 0;
-    else if (floor > 1023) floor = 1023;
-    if (ceil < 0) ceil = 0;
-    else if (ceil > 1023) ceil = 1023;
-    tzxRecordFloor = (uint16_t)floor;
-    tzxRecordCeil = (uint16_t)ceil;
-    tzxRecordFiltered = (uint16_t)filtered;
-    tzxRecordDeviation = hysteresis;
-    tzxRecordLevel = bit;
-  }
-#endif
-
-  uint8_t bb = tzxBitByte;
-  uint8_t bc = tzxBitCount;
-  if (bit) bb |= (uint8_t)(0x80 >> bc);
-  bc++;
-
-  if (bc >= 8) {
-    tzxBitByte = 0;
-    tzxBitCount = 0;
-    queue_output_byte(bb);
-  } else {
-    tzxBitByte = bb;
-    tzxBitCount = bc;
-  }
 }
-#endif
 
-inline void recorder_isr()
+void recorder_isr()
 {
   if (!gRecording) return;
 
@@ -1177,7 +279,9 @@ bool start_recording() {
     mzf_reset_capture_state();
     #endif
   } else {
+    #if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
     tzx_reset_capture_state();
+    #endif
   }
   interrupts();
 
@@ -1186,6 +290,7 @@ bool start_recording() {
 
   drawRecordingScreenOnce();
 
+  #if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
   if (!activeCas && !activeMzf) {
     recFile.write(kTzxHeader, sizeof(kTzxHeader));
     recFile.write((uint8_t)0x15);
@@ -1197,6 +302,7 @@ bool start_recording() {
     tzx_write_u24_le(recFile, 0);
     recFile.flush();
   }
+  #endif
 
   adc_start_freerun_record_pin();
   gRecording = true;
@@ -1250,10 +356,12 @@ void stop_recording() {
   noInterrupts();
   pos = pagePos;
   which = activePage;
+  #if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
   if (!activeCas && !activeMzf) {
     bb = tzxBitByte;
     bc = tzxBitCount;
   }
+  #endif
   pagePos = 0;
   interrupts();
 
