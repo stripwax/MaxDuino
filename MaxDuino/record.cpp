@@ -3,6 +3,7 @@
 #ifdef RECORD
 
 #include "record.h"
+#include "buffer.h"
 #include <Arduino.h>
 #include "sdfat_config.h"
 #include <SdFat.h>
@@ -15,14 +16,14 @@
 #include "casProcessing.h"
 #endif
 
-static constexpr uint16_t kRecordPageSize = 512;
+constexpr uint16_t kRecordPageSize = 2 * buffsize; // in BYTES (since buffsize is in UINT16_t)
 static constexpr uint16_t kMsxHeaderMinDurationMs = 500;
-static uint8_t pageA[kRecordPageSize];
-static uint8_t pageB[kRecordPageSize];
-static volatile uint16_t pagePos = 0;
-static volatile uint8_t activePage = 0;
-static volatile bool pageReadyA = false;
-static volatile bool pageReadyB = false;
+volatile uint8_t * pageA = (uint8_t *)(wbuffer[0]);
+volatile uint8_t * pageB = (uint8_t *)(wbuffer[1]);
+volatile uint16_t pagePos;
+volatile uint8_t activePage;
+volatile bool pageReadyA;
+volatile bool pageReadyB;
 static uint32_t droppedBytes = 0;
 
 static bool gRecording = false;
@@ -163,7 +164,7 @@ static uint16_t next_recording_index() {
   return count_files_with_ext_in_current_dir();
 }
 
-static inline uint8_t* active_page_ptr() {
+static volatile inline uint8_t* active_page_ptr() {
   return (activePage == 0) ? pageA : pageB;
 }
 
@@ -180,7 +181,7 @@ static inline void mark_active_ready_and_swap() {
 
 static inline void queue_output_byte(uint8_t value) {
   uint16_t pos = pagePos;
-  uint8_t* p = active_page_ptr();
+  volatile uint8_t* p = active_page_ptr();
   if (pos < kRecordPageSize) {
     p[pos] = value;
   }
@@ -203,9 +204,9 @@ static inline void queue_output_byte(uint8_t value) {
 static void write_ready_page(uint8_t which) {
   if (!recFile.isOpen()) return;
   if (which == 0) {
-    recFile.write(pageA, kRecordPageSize);
+    recFile.write((uint8_t *)pageA, kRecordPageSize);
   } else {
-    recFile.write(pageB, kRecordPageSize);
+    recFile.write((uint8_t *)pageB, kRecordPageSize);
   }
   dataBytesWritten += kRecordPageSize;
 }
@@ -916,6 +917,11 @@ ISR(REC_TCB_INT_vect) {
   recorder_isr();
 }
 
+inline uint16_t get_adc_value()
+{
+  return ADC0.RES;
+}
+
 #else
 #error Missing recording timer and isr definition for this MCU
 #endif
@@ -923,7 +929,7 @@ ISR(REC_TCB_INT_vect) {
 #if defined(RECORD_SHARP_MZF)
 inline void isr_mzf()
 {
-  const uint16_t sample = ADC0.RES;
+  const uint16_t sample = get_adc_value();
   const uint8_t level = (sample >= 512) ? 1 : 0;
 
   if (mzfSamplesSinceEdge < 0xFF) mzfSamplesSinceEdge++;
@@ -956,7 +962,7 @@ inline void isr_mzf()
 #if defined(RECORD_CAS_MSX)
 inline void isr_cas()
 {
-      const uint16_t sample = ADC0.RES;
+      const uint16_t sample = get_adc_value();
     int16_t center = (int16_t)msxRecordCenter;
     uint8_t level = msxRecordLevel;
 
@@ -993,7 +999,7 @@ inline void isr_cas()
 #if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
 inline void isr_tzx()
 {
-  const uint16_t sample = ADC0.RES;
+  const uint16_t sample = get_adc_value();
   uint8_t bit;
 
 #if defined(RECORD_TZX_ID15) && defined(RECORD_ZX_SPECTRUM)
@@ -1255,7 +1261,7 @@ void stop_recording() {
   if (!activeCas && !activeMzf) {
     if (bc != 0) {
       usedBitsLast = bc;
-      uint8_t* p = (which == 0) ? pageA : pageB;
+      volatile uint8_t* p = (which == 0) ? pageA : pageB;
       if (pos < kRecordPageSize) {
         p[pos] = bb;
         pos++;
@@ -1264,8 +1270,8 @@ void stop_recording() {
   }
 
   if (pos) {
-    uint8_t* p = (which == 0) ? pageA : pageB;
-    recFile.write(p, pos);
+    volatile uint8_t* p = (which == 0) ? pageA : pageB;
+    recFile.write((uint8_t *)p, pos);
     dataBytesWritten += pos;
   }
 
