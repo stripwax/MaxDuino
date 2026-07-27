@@ -3,13 +3,13 @@
 #include "TimerCounter.h"
 #include "isr.h"
 
-#if defined(ESP32)
+#if defined(ESP32_XTENSA)
 // ESP32 code derived from TimerInterrupt_Generic by Khoi Hoang
 // ESP32 has an operating system / SDK layer we need to use
 #include <esp32-hal-timer.h>
 #define MAX_ESP32_NUM_TIMERS 4
 // typedef void (*timer_callback)  (void);
-#endif // (not) ESP32
+#endif // 
 
 
 #if defined(ESP32_RISCV)
@@ -34,8 +34,6 @@ void TimerCounter::initialize()
   setPeriod(100000);
   // attach the interrupt handler (there is only one now, and it does everything)
   _attachInterrupt();
-
-
 }
 
 void ISR_ATTR TimerCounter::setPeriod(unsigned long microseconds)
@@ -577,8 +575,9 @@ static bool IRAM_ATTR timer_isr_wrapper(void *arg) {
     void (*fn)(void) = (void (*)(void))arg;
     fn();
     return false;
-}
-#endif
+} 
+
+#else  
 
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
@@ -588,6 +587,10 @@ void ARDUINO_ISR_ATTR onTimer()
   isrCallback();
   portEXIT_CRITICAL_ISR(&timerMux);
 }
+
+#endif
+
+
 
 void TimerCounter::_initialize()
 {

@@ -54,7 +54,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Set defines for various types of screen
 
-#define SERIALSCREEN       // For testing and debugging
+//#define SERIALSCREEN       // For testing and debugging
 //#define SERIALSCREEN_DEBUG // For testing and debugging
 // #define FREERAM                   // Changing filenameLength from 255 to 190
 #define LARGEBUFFER // small buffer size used by default to free RAM
