@@ -69,12 +69,8 @@ RecordFormat defaultRecordFormat()
   #endif
 }
 
+const char TXT_PREPARING[] PROGMEM = "Preparing";
 const char TXT_RECORDING[] PROGMEM = "Recording";
-static void drawRecordingScreenOnce()
-{
-  printtextF(TXT_RECORDING, 0);
-  printtext(gRecName, lineaxy);
-}
 
 static bool has_ext_ci() {
   filenameExt = strrchr(fileName,'.') + 1;
@@ -234,13 +230,16 @@ static void tzx_write_u24_le(SdBaseFile &f, uint32_t v) {
 bool start_recording() {
   if (gRecording) return true;
 
+  printtextF(TXT_PREPARING, 0);
+  printtextF(TXT_RECORDING, lineaxy);
+
   const bool activeCas = (recordFormat == RecordFormat::CAS_MSX);
   const bool activeMzf = (recordFormat == RecordFormat::SHARP_MZF);
   ext3 = activeCas ? PSTR("cas") : activeMzf ? PSTR("mzf") : PSTR("tzx");
 
   const uint16_t filecount = next_recording_index();
-
   format_recording_name(gRecName, filecount);
+  printtext(gRecName, lineaxy);
 
   recFile.close();
   if (!recFile.open(currentDir, gRecName, O_RDWR | O_CREAT | O_TRUNC)) {
@@ -248,7 +247,6 @@ bool start_recording() {
     return false;
   }
 
-  noInterrupts();
   pagePos = 0;
   activePage = 0;
   pageReadyA = false;
@@ -268,16 +266,18 @@ bool start_recording() {
     tzx_reset_capture_state();
     #endif
   }
-  interrupts();
 
   dataBytesWritten = 0;
   gRecordPaused = false;
 
+  // create file, this can take a while sometimes so we do it before we say we are really recording
   recFile.write((uint8_t)0);
   recFile.flush();
   recFile.seekSet(0);
 
-  drawRecordingScreenOnce();
+  // now print 'RECORDING'
+  // print this towards the end (in particular after the relatively slow SD file creation)
+  printtextF(TXT_RECORDING, 0);
 
   #if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
   if (!activeCas && !activeMzf) {
