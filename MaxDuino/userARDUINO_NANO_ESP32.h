@@ -75,9 +75,6 @@
 
 #define btnRoot_AS_PIVOT // This requires being able to simultaneously press multiple buttons, and with BUTTON_ADC this is not [easily] possible.
 
-#define TURBO_MODES // control TAP/TZX turbomodes by btnRoot during pause
-
-#define EXTRA_LEDS // Use extra LEDs - power and play indication
 
 
 #define SHOW_DIRPOS
@@ -155,11 +152,13 @@
 
 //      ESP32S3 Enhancements      //
 //--------------------------------//
-#define ANIMATED_LOGO_128_64                // new animated logos support
-#define ANIMATED_LOGO_FILE arduino_anim
-#define ANIMATED_LOGO_DELAY 50              // frame delay in msec
-#define ANIMATED_LOGO_FRAMES 9              // number of frame cycles to show
+//#define ANIMATED_LOGO_128_64                // new animated logos support
+//#define ANIMATED_LOGO_FILE arduino_anim
+//#define ANIMATED_LOGO_DELAY 50              // frame delay in msec
+//#define ANIMATED_LOGO_FRAMES 9              // number of frame cycles to show
 
-#define USE_ICONS                       // show status line using icons
+//#define USE_ICONS                       // show status line using icons
 // 
 #define SORT_DIRS                      // Use extra ram of ESP32S3 for sorting entries. At the moment sorting is case insensitive and directories are not put as first
+#define TURBO_MODES // control TAP/TZX turbomodes by btnRoot during pause
+#define EXTRA_LEDS // Use extra LEDs - power and play indication

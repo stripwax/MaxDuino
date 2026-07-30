@@ -14,6 +14,11 @@ char fline[17];
 
 extern uint16_t currentFile;               //File index (per filesystem) of current file, relative to current directory (pointed to by currentDir)
 
+#ifdef TURBO_MODES
+#include "MaxDuino.h"
+extern int turbo_control_mode;
+#endif
+
 
 #ifdef LCDSCREEN16x2
 

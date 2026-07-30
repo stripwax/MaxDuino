@@ -49,6 +49,10 @@
 extern DoubleLinkedList<dirEntry> dirEntries;
 #endif
 
+#ifdef TURBO_MODES
+extern int turbo;
+#endif
+
 //Temporarily store for a pulse period before loading it into the buffer.
 word currentPeriod;
 
@@ -1171,6 +1175,15 @@ void TZXLoop() {
       //add period to the buffer
       volatile uint16_t * _wb = &writeBuffer[writepos];
       noInterrupts();                       //Pause interrupts while we add a period to the buffer
+
+      #ifdef TURBO_MODES // in turbo mode shift period by the turbo factor
+      uint16_t mask = 0b1110000000000000; // pause mask
+      uint16_t pausebits = currentPeriod & mask; 
+      currentPeriod &= ~mask; // clear pause bits for turbo calculation  
+      currentPeriod = currentPeriod >> turbo_control_mode;
+      currentPeriod |= pausebits; // restore pause bits  
+      #endif
+
       *_wb = currentPeriod;
       interrupts();
       advance_write_word();

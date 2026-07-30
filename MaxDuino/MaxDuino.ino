@@ -924,7 +924,7 @@ void seekFile() {
   } else {
 
   #ifdef SORT_DIRS
-    sprintf( PlayBytes, "%03d |%8lu B", currentFile+1, filesize);
+    snprintf( PlayBytes, 17, "%03d |%8lu B", currentFile+1, filesize);
     ultoa(currentFile, fline, 10);
   #else
     ultoa(filesize,PlayBytes,10);
