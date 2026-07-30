@@ -54,6 +54,13 @@ const unsigned char myFont[][_FONTHEIGHT] PROGMEM = {
 #include FONT_header(_FONTPATH, _FONT)
 };
 
+#ifdef USE_ICONS
+const unsigned char iconFont[][32] PROGMEM = {
+  #include FONT_header(_FONTPATH, icons)
+};
+
+#endif //USE_ICONS
+
 #endif  // OLED1306
 
 #endif // FONTS_H_INCLUDED

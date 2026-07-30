@@ -124,6 +124,7 @@ extern int turbo_control_mode;
     unsigned char i=0;
     while(*string)
     {
+
       for(i=0;i<8;i++) {
         SendByte(pgm_read_byte(myFont[*string-0x20]+i));
       }
@@ -237,6 +238,50 @@ extern int turbo_control_mode;
   
     #endif // defined(XY2) && defined(DoubleFont)
   }
+
+#ifdef USE_ICONS
+//==========================================================//
+// Prints a string in coordinates X Y, being multiples of 8.
+// This means we have 16 COLS (0-15) and 8 ROWS (0-7).
+
+void sendIconXY(const char *string, int X, int Y, int first_col, int last_col)
+{
+  int Xh = X, Xl = X;
+  const char *stringL = string, *stringH = string;
+
+  setXY(Xl, Y);
+  while (*stringL)
+  {
+    mx_i2c_start(OLED_address);
+    mx_i2c_write(0x40);
+
+    for (int i = first_col; i < last_col; i++)
+    {
+      int ril = (pgm_read_byte(iconFont[(*stringL - 'A')<<1] + i));
+      mx_i2c_write(ril);
+    }
+    mx_i2c_end();
+    Xl++;
+    stringL++;
+  }
+
+  setXY(Xh, Y + 1);
+  while (*stringH)
+  {
+    mx_i2c_start(OLED_address);
+    mx_i2c_write(0x40);
+    for (int i = first_col; i < last_col; i++)
+    {
+      int rih = (pgm_read_byte(iconFont[(*stringH - 'A')<<1] + i + 32));
+      mx_i2c_write(rih);
+    }
+    mx_i2c_end();
+    Xh++;
+    stringH++;
+  }
+}
+
+#endif   // USE_ICONS
 
   //==========================================================//
   // Resets display depending on the actual mode.
@@ -638,8 +683,14 @@ void scrollText(char* text, bool is_dir){
   byte i=0;
   byte p=scrollPos;
   if(is_dir) {
+    #ifndef USE_ICONS
     fline[0]='>';
     i++;
+    #else // reserve two spaces for folder icon
+    fline[0]=' ';
+    fline[1]=' ';
+    i+=2;
+    #endif //USE_ICONS
   }
   for(;i<16;i++,p++)
   {
@@ -652,6 +703,11 @@ void scrollText(char* text, bool is_dir){
   }
   fline[16]='\0';
   printtext(fline,lineaxy);
+
+  #ifdef USE_ICONS
+  if (is_dir) sendIconXY("P", 0, 2,0,16);  // folder icon - half of it
+  #endif
+  
   #endif
 
   #ifdef P8544
@@ -897,6 +953,7 @@ void OledStatusLine() {
   #ifdef XY2                        // Y with double value
     #ifdef OLED1306_128_64          // 8 rows supported
       sendStrXY(F("ID:   BLK:"),4,4);        
+      #ifndef USE_ICONS
       ultoa(BAUDRATE,fline,10);
       sendStrXY(fline,0,6);
 
@@ -912,9 +969,67 @@ void OledStatusLine() {
       } else {
         sendStrXY(F("%^off"),11,6);
       }
-    #endif      
-  #endif  
+      #else // display status using icons
 
+      if (skip2A) {
+        sendIconXY("N", 4, 6);  // skip2A - no pauses
+      } else {
+        sendIconXY("O", 4, 6);  // no skip2A - pauses
+      }
+      switch (BAUDRATE) {
+        case 1200:
+          sendIconXY("G", 0, 6);  // 1200
+          break;
+        case 2400:
+          sendIconXY("H", 0, 6);  // 2400
+          break;
+        case 3150:
+          sendIconXY("I", 0, 6);  // 3150
+          break;
+        case 3600:
+          sendIconXY("J", 0, 6);  // 3600
+          break;
+        case 3850:
+          sendIconXY("K", 0, 6);  // 3850
+          break;
+        default:
+          sendIconXY("L", 0, 6);  // ID:
+          break;
+      }
+      #ifndef NO_MOTOR
+      if (mselectMask) {
+        sendIconXY("A", 8, 6);
+      } else {
+        sendIconXY("B", 8, 6);
+      }
+      #endif //NO_MOTOR
+
+#ifndef TURBO_MODES
+      if (TSXCONTROLzxpolarityUEFSWITCHPARITY) {
+        sendIconXY("D", 12, 6);
+      } else {
+        sendIconXY("C", 12, 6);
+      }
+#else
+      switch (turbo_control_mode) {
+        case 1:  // turbo 2x
+          sendIconXY("E", 12, 6);
+          break;
+        case 2:  // turbo 4x
+          sendIconXY("F", 12, 6);
+          break;
+        case 0:
+          if (TSXCONTROLzxpolarityUEFSWITCHPARITY) {
+            sendIconXY("D", 12, 6);
+          } else {
+            sendIconXY("C", 12, 6);
+          }
+          break;
+      }
+#endif
+#endif  // USE_ICONS
+#endif
+#endif  
 }
 #endif // defined(OLED1306)
 

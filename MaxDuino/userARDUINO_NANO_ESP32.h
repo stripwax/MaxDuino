@@ -143,7 +143,7 @@
 //      FONTS      //
 /////////////////////
 
-//#define DoubleFont
+#define DoubleFont
 #define FONT8x8 SpectrumFont
 #define FONT8x16 atariST8x16
 
@@ -152,13 +152,8 @@
 
 //      ESP32S3 Enhancements      //
 //--------------------------------//
-//#define ANIMATED_LOGO_128_64                // new animated logos support
-//#define ANIMATED_LOGO_FILE arduino_anim
-//#define ANIMATED_LOGO_DELAY 50              // frame delay in msec
-//#define ANIMATED_LOGO_FRAMES 9              // number of frame cycles to show
 
-//#define USE_ICONS                       // show status line using icons
-// 
-#define SORT_DIRS                      // Use extra ram of ESP32S3 for sorting entries. At the moment sorting is case insensitive and directories are not put as first
-#define TURBO_MODES // control TAP/TZX turbomodes by btnRoot during pause
-#define EXTRA_LEDS // Use extra LEDs - power and play indication
+#define USE_ICONS       // show icons for status line and  folders
+#define SORT_DIRS       // Use extra ram of ESP32S3 for sorting entries. At the moment sorting is case insensitive and directories are not put as first
+#define TURBO_MODES     // control TAP/TZX turbomodes by btnRoot during pause
+#define EXTRA_LEDS      // Use extra LEDs - power and play indication

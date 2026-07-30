@@ -500,10 +500,18 @@ void loop(void) {
             GetFileName(oldMaxFile); str4cpy(oldMaxFileName,fileName);
             GetFileName(currentFile); 
             
+            #ifndef DoubleFont
             setXY(0,0);
             sendStr(oldMinFileName);sendChar(' ');sendChar('<');
             sendStr((char *)input);sendChar('<');sendChar(' ');
             sendStr(oldMaxFileName);
+            #else
+            sendStrXY((char*)oldMinFileName, 0, 0);
+            sendStrXY("<", 5, 0);
+            sendStrXY((char*)input, 6, 0);
+            sendStrXY("<", 10, 0);
+            sendStrXY((char*)oldMaxFileName, 11, 0);
+#endif
               
           #endif
         #endif // defined(OLED1306)
@@ -686,9 +694,17 @@ void loop(void) {
       #ifdef OLED1306
         #ifdef XY2
           if (jblks==BM_BLKSJUMP) {
+            #ifndef USE_ICONS
             sendStrXY(F("^"),15,0);
+            #else // reserve two spaces for folder icon
+            sendIconXY("P", 15,0,24,32);  // +20 skip icon
+            #endif
           } else {
+            #ifndef USE_ICONS
             sendStrXY(F("\'"),15,0);
+            #else
+            sendIconXY("P", 15,0,16,24);  // +1 skip icon
+            #endif // USE_ICONS
           }
         #else
           setXY(15,0);
@@ -835,6 +851,7 @@ void upFile() {
   while(currentPositionNow < currentFile);
   currentFile = tryFindPrevFile;
 #endif
+
   seekFile();
 }
 
@@ -855,9 +872,7 @@ void downFile() {
 #else // no SORT_DIRS
 
   currentFile++;
-  if (currentFile>maxFile) { 
-    currentFile=0; 
-  }
+  if (currentFile>maxFile) { currentFile=0; }
 #endif
 
   seekFile();
@@ -907,6 +922,7 @@ void seekFile() {
       currentFile = currentDir->curPosition()/32-1;
       entry.open(currentDir, currentFile, O_RDONLY);
     }
+
 #endif // SORTDIRS
     entry.getName(fileName,filenameLength);
     filesize = entry.fileSize();
@@ -924,7 +940,7 @@ void seekFile() {
   } else {
 
   #ifdef SORT_DIRS
-    snprintf( PlayBytes, 17, "%03d |%8lu B", currentFile+1, filesize);
+    snprintf( PlayBytes, 17, "%03d|%10lu B", (currentFile+1)%1000, filesize);
     ultoa(currentFile, fline, 10);
   #else
     ultoa(filesize,PlayBytes,10);
