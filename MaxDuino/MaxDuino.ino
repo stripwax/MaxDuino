@@ -829,7 +829,6 @@ void upFile() {
 
 #else // no SORT_DIRS
 
-  while(currentFile!=0)
   // Rather than going "backwards", we actually look forward from entry 0 ,
   // because the SdFat can efficiently find "next entries"
   // much more easily than "previous entries"
