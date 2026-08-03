@@ -85,4 +85,11 @@ byte HEX_CHAR(byte);
 extern const char TXT_PAUSED[];
 extern const char TXT_PLAYING[];
 
+#ifdef USE_ICONS
+#if !(defined(DoubleFont) && defined(XY2))
+  #error "DoubleFont and XY2 must be defined to use icons, other combinations are not supported"
+#endif
+void sendIconXY(const char *string, int X, int Y, int first_col = 0, int last_col = 32);
+#endif // USE_ICONS
+
 #endif // DISPLAY_H_INCLUDED

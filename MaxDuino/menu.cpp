@@ -49,6 +49,9 @@ enum MenuItems{
 #ifdef MenuBLK2A
   BLK2A,
 #endif
+#ifdef TURBO_MODES
+  TURBO_CTL,
+#endif 
 #ifdef MENU_HAS_REBOOT
   REBOOT,
 #endif
@@ -67,6 +70,9 @@ const char MENU_ITEM_TSX[] PROGMEM = "TSXCzxpUEFSW ?";
 #ifdef MenuBLK2A
 const char MENU_ITEM_BLK2A[] PROGMEM = "Skip BLK:2A ?";
 #endif
+#ifdef TURBO_MODES
+const char MENU_ITEM_TURBO[] PROGMEM = "Turbo modes ?";
+#endif
 #ifdef MENU_HAS_REBOOT
 const char MENU_ITEM_REBOOT[] PROGMEM = "REBOOT?";
 #endif
@@ -84,12 +90,29 @@ const char* const MENU_ITEMS[] PROGMEM = {
 #ifdef MenuBLK2A
   MENU_ITEM_BLK2A,
 #endif
+#ifdef TURBO_MODES
+  MENU_ITEM_TURBO,
+#endif 
 #ifdef MENU_HAS_REBOOT
   MENU_ITEM_REBOOT
 #endif
 };
 
 const word BAUDRATES[] PROGMEM = {1200, 2400, 3150, 3600, 3850};
+
+
+#ifdef TURBO_MODES
+const char turbo_0[] PROGMEM = "off";
+const char turbo_1[] PROGMEM = "2x";
+const char turbo_2[] PROGMEM = "4x";
+
+PGM_P const TURBO[] PROGMEM = {
+  turbo_0,
+  turbo_1,
+  turbo_2
+};
+extern int turbo_control_mode;
+#endif 
 
 #ifdef RECORD
 /* we map between the 'supported' formats for this build, which will be the listed menu items,
@@ -310,17 +333,60 @@ void menuMode()
           }
         break;
 
-        #ifdef RECORD
-          case MenuItems::RECORD_TYPE:
-            doRecordTypeSubmenu();
-            break;
-        #endif
-        
-        #ifndef NO_MOTOR
-          case MenuItems::MOTOR_CTL:
-            doOnOffSubmenu(mselectMask);
-            break;
-        #endif
+#ifdef TURBO_MODES
+
+        case MenuItems::TURBO_CTL:
+          subItem = 0;
+          updateScreen = true;
+          lastbtn = true;
+          while (!button_stop() || lastbtn) {
+            if (button_down() && !lastbtn) {
+              if (subItem < 2) subItem += 1;
+              lastbtn = true;
+              updateScreen = true;
+            }
+
+            if (button_up() && !lastbtn) {
+              if (subItem > 0) subItem += -1;
+              lastbtn = true;
+              updateScreen = true;
+            }
+
+            strcpy_P( (char*)input, (PGM_P) pgm_read_ptr(&TURBO[subItem]));
+
+            if (button_play() && !lastbtn) {
+              turbo_control_mode = subItem;
+              updateScreen = true;
+#if defined(OLED1306) && defined(OSTATUSLINE)
+              OledStatusLine();
+#endif
+              lastbtn = true;
+            }
+
+            if (updateScreen) {
+              if (turbo_control_mode == subItem) {
+                strcat_P((char*)input, PSTR(" *"));
+              }
+              printtext((char*)input, M_LINE2);
+              updateScreen = false;
+            }
+            checkLastButton();
+          }
+          break;
+
+#endif  // TURBO_MODES
+
+#ifdef RECORD
+        case MenuItems::RECORD_TYPE:
+          doRecordTypeSubmenu();
+          break;
+#endif
+
+#ifndef NO_MOTOR
+        case MenuItems::MOTOR_CTL:
+          doOnOffSubmenu(mselectMask);
+          break;
+#endif
 
         case MenuItems::TSX_POL_UEFSW:
           doOnOffSubmenu(TSXCONTROLzxpolarityUEFSWITCHPARITY);
