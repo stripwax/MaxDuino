@@ -15,6 +15,13 @@
 #if defined(ESP32_RISCV)
 #include "driver/timer.h"
 #include "esp_intr_alloc.h"
+
+
+static bool IRAM_ATTR timer_isr_wrapper(void *arg) {
+    void (*fn)(void) = (void (*)(void))arg;
+    fn();
+    return false;
+}
 #endif
 
 // standard timer class for all devices, constructed in the same way
