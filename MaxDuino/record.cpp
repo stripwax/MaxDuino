@@ -1231,6 +1231,8 @@ void recording_loop() {
   service_record_output();
 }
 
+extern uint16_t currentFile;
+
 void stop_recording() {
   if (!gRecording) return;
 
@@ -1284,6 +1286,7 @@ void stop_recording() {
   }
 
   recFile.flush();
+  currentFile = recFile.dirIndex();
   recFile.close();
 
   printtextF(PSTR("Saved"), 0);

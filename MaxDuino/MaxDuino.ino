@@ -323,7 +323,7 @@ void loop(void) {
         stop_recording();
         debounce(button_stop);
         getMaxFile();
-        currentFile = maxFile; // this should be the file we just created - so UI shows the recorded file after recording
+        
         seekFile();
         printtext(PlayBytes,0);
         #ifdef LCDSCREEN16x2
@@ -1015,8 +1015,8 @@ void changeDirParent()
   }
    
   getMaxFile();
-  currentFile = this_directory; // select the directory we were in, as the current file in the parent
-  seekFile(); // don't forget that this will put the real filename back into fileName 
+  currentFile = this_directory; 
+  seekFile();
 }
 
 void changeDirRoot()
