@@ -380,6 +380,10 @@ void stop_recording() {
   }
 
   recFile.flush();
+  currentFile = recFile.dirIndex();
+  // update maxFile if necessary, but don't call getMaxFile since that also resets currentFile to 0
+  if (currentFile>maxFile)
+    maxFile=currentFile;
   recFile.close();
 
   printtextF(PSTR("Saved"), 0);

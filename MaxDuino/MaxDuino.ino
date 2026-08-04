@@ -322,8 +322,7 @@ void loop(void) {
       if (button_stop()) {
         stop_recording();
         debounce(button_stop);
-        getMaxFile();
-        currentFile = maxFile; // this should be the file we just created - so UI shows the recorded file after recording
+        // stop_recording will have set currentFile to the newly recorded file
         seekFile();
         printtext(PlayBytes,0);
         #ifdef LCDSCREEN16x2

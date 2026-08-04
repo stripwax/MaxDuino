@@ -13,6 +13,7 @@ extern SdBaseFile _tmpdirs[]; // internal to MaxDuino.ino really, but power.cpp 
 extern unsigned long filesize;
 extern unsigned long bytesRead;
 extern uint16_t currentFile; //File index (per filesystem) of current file, relative to current directory (pointed to by currentDir)
+extern uint16_t maxFile; //Total number of files in directory
 extern char fileName[];
 extern const char * filenameExt;
 
