@@ -9,6 +9,13 @@
 static constexpr uint16_t kPauseAfterMs = 1000;
 static constexpr uint16_t kTStatesPerSample = 79;
 static constexpr uint16_t kTzxSampleRate = 44100;
+//static constexpr uint16_t kTStatesPerSample = 158;
+//static constexpr uint16_t kTzxSampleRate = 22050;
+//static constexpr uint16_t kTStatesPerSample = 316;
+//static constexpr uint16_t kTzxSampleRate = 11025;
+
+static constexpr byte filePos_usedBits = 15;
+static constexpr byte filePos_len3 = 16;
 
 #if defined(__AVR_ATmega4809__)
 static constexpr uint8_t kWeakZxFilterShift = 2;
@@ -31,10 +38,15 @@ static constexpr uint8_t kWeakZxMinHysteresis = 2;
 static constexpr uint8_t kWeakZxMaxHysteresis = 8;
 #endif
 
-static const uint8_t kTzxHeader[10] = {
+static const uint8_t kTzxHeader[15] PROGMEM = {
   'Z','X','T','a','p','e','!',
   0x1A,
-  0x01, 0x20
+  0x01, 0x20,
+  0x15,
+  kTStatesPerSample & 0xFF,
+  (kTStatesPerSample >> 8) & 0xFF,
+  kPauseAfterMs & 0xFF,
+  (kPauseAfterMs >> 8) & 0xFF,
 };
 
 void isr_tzx();

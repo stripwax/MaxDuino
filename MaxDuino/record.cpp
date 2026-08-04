@@ -28,8 +28,6 @@ static char gRecName[17];  // "MaxSavennnnn.ext" needs only 17 bytes incl NUL te
 static const char * ext3;  // required file extension for a given recording format. This is set when beginning recording.
 
 static SdBaseFile recFile;
-static uint32_t filePos_usedBits = 0;
-static uint32_t filePos_len3 = 0;
 
 bool isRecordFormatSupported(const RecordFormat format)
 {
@@ -142,20 +140,17 @@ static inline void mark_active_ready_and_swap() {
 }
 
 void queue_output_byte(uint8_t value) {
-  uint16_t pos = pagePos;
-  volatile uint8_t* p = active_page_ptr();
-  if (pos < kRecordPageSize) {
-    p[pos] = value;
-  }
+  pagepos_t pos = pagePos;
+  uint8_t* p = active_page_ptr();
+  p[pos] = value;
   pos++;
 
-  if (pos >= kRecordPageSize) {
+  if (pos == (pagepos_t)kRecordPageSize) {
     if (other_page_ready()) {
       droppedBytes++;
-      pagePos = kRecordPageSize - 1;
+      pagePos = (pagepos_t)kRecordPageSize - 1;
       return;
     }
-    pagePos = pos;
     mark_active_ready_and_swap();
     return;
   }
@@ -163,13 +158,8 @@ void queue_output_byte(uint8_t value) {
   pagePos = pos;
 }
 
-static void write_ready_page(uint8_t which) {
-  if (!recFile.isOpen()) return;
-  if (which == 0) {
-    recFile.write((uint8_t *)pageA, kRecordPageSize);
-  } else {
-    recFile.write((uint8_t *)pageB, kRecordPageSize);
-  }
+static inline void write_ready_page(uint8_t* buffer) {
+  recFile.write((uint8_t *)(buffer), kRecordPageSize);
   dataBytesWritten += kRecordPageSize;
 }
 
@@ -236,11 +226,6 @@ void resume_recording() {
   printtextF(TXT_RECORDING, 0);
 }
 
-static void tzx_write_u16_le(SdBaseFile &f, uint16_t v) {
-  uint8_t b[2] = { (uint8_t)(v & 0xFF), (uint8_t)(v >> 8) };
-  f.write(b, 2);
-}
-
 static void tzx_write_u24_le(SdBaseFile &f, uint32_t v) {
   uint8_t b[3] = { (uint8_t)(v & 0xFF), (uint8_t)((v >> 8) & 0xFF), (uint8_t)((v >> 16) & 0xFF) };
   f.write(b, 3);
@@ -288,19 +273,20 @@ bool start_recording() {
   dataBytesWritten = 0;
   gRecordPaused = false;
 
+  recFile.write((uint8_t)0);
+  recFile.flush();
+  recFile.seekSet(0);
+
   drawRecordingScreenOnce();
 
   #if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
   if (!activeCas && !activeMzf) {
-    recFile.write(kTzxHeader, sizeof(kTzxHeader));
-    recFile.write((uint8_t)0x15);
-    tzx_write_u16_le(recFile, kTStatesPerSample);
-    tzx_write_u16_le(recFile, kPauseAfterMs);
-    filePos_usedBits = recFile.curPosition();
-    recFile.write((uint8_t)8);
-    filePos_len3 = recFile.curPosition();
-    tzx_write_u24_le(recFile, 0);
-    recFile.flush();
+    pagePos = 19;
+    memcpy_P((void*)wbuffer[0], kTzxHeader, sizeof(kTzxHeader));
+    // subtract 19 bytes (TZX header length plus length of ID15 block header) from dataBytesWritten
+    // because the dataBytesWritten (part of the ID15 block) does not include the lengths of these...
+    // but the sd write function does not know that
+    dataBytesWritten-=19; 
   }
   #endif
 
@@ -318,17 +304,19 @@ static void service_record_output() {
   #endif
 
   if (pageReadyA) {
-    noInterrupts();
+    write_ready_page((uint8_t *)(wbuffer[0]));
+    // Only signify page readiness is false after writing.
+    // Don't need noInterrupts/interrupts here because
+    // this flag is a single atomic byte variable
+    // and isr will either see true or false (it will not change
+    // while the isr is running)
     pageReadyA = false;
-    interrupts();
-    write_ready_page(0);
   }
 
   if (pageReadyB) {
-    noInterrupts();
+    // as above for pageReadA
+    write_ready_page((uint8_t *)(wbuffer[1]));
     pageReadyB = false;
-    interrupts();
-    write_ready_page(1);
   }
 }
 
@@ -369,7 +357,7 @@ void stop_recording() {
   if (!activeCas && !activeMzf) {
     if (bc != 0) {
       usedBitsLast = bc;
-      volatile uint8_t* p = (which == 0) ? pageA : pageB;
+      uint8_t* p = (uint8_t *)(wbuffer[which]);
       if (pos < kRecordPageSize) {
         p[pos] = bb;
         pos++;
@@ -378,7 +366,7 @@ void stop_recording() {
   }
 
   if (pos) {
-    volatile uint8_t* p = (which == 0) ? pageA : pageB;
+    uint8_t* p = (uint8_t *)(wbuffer[which]);
     recFile.write((uint8_t *)p, pos);
     dataBytesWritten += pos;
   }
