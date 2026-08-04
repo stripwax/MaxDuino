@@ -2,6 +2,7 @@
 #include "configs.h"
 #include "Arduino.h"
 #include "pinSetup.h"
+ #include <digitalWriteFast.h>
 #if defined(ARDUINO_XIAO_ESP32C3)
 #include <driver/gpio.h>
 #endif
@@ -14,87 +15,15 @@
 #endif
 #endif
 
+// use the macro from digitalWriteFast instead of hardcoding pin-port mappings in this file
+// Takes into account the fact that Input is already set by default so we don't need to BIT_CLEAR first
+#define pinModePullupFast(P) { \
+  BIT_SET(*__digitalPinToPortReg(P), __digitalPinToBit(P)); \
+}
+
 void pinsetup()
 {
-#ifdef __AVR_ATmega2560__
-
-  // Analog pin A0
-  PORTF |= _BV(0);
-
-  // Analog pin A1
-  PORTF |= _BV(1);
-  
-  // Analog pin A2
-  PORTF |= _BV(2);
-  
-  // Analog pin A3
-  PORTF |= _BV(3);
-
-  // Analog pin A4
-  PORTF |= _BV(4);
-
-  // Analog pin A5
-  //PORTF |= _BV(5);
-
-  // Digital pin 6
-  PORTH |= _BV(3);
-
-#elif defined(__AVR_ATmega4809__)
-//pinMode(btnPlay,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-  //digitalWrite(btnPlay,HIGH); // 17 PD0
-  //PORTD.PIN0CTRL |=0B00001000;
-  PORTD.PIN0CTRL |=PORT_PULLUPEN_bm; /* Enable the internal pullup */
-
-  //VPORTC.DIR |= ~PIN3_bm;
-  //PORTC.DIR |= ~PIN3_bm; /* Configure PC3 as digital input */
-  //PORTC.PIN3CTRL = PORT_PULLUPEN_bm; /* Enable the internal pullup */
-  
-    
-  //digitalWrite(btnPlay,HIGH);
-  //  VPORTC.OUT |= _BV(3);
-  //PORTC |= _BV(3);
-  
-  //pinMode(btnStop,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-  //digitalWrite(btnStop,HIGH); // 16 PD1
-  PORTD.PIN1CTRL |=PORT_PULLUPEN_bm; /* Enable the internal pullup */  
-  //VPORTC.OUT |= _BV(2);
-  //PORTC |= _BV(2);
-
-  //pinMode(btnUp,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-  //digitalWrite(btnUp,HIGH); // 15 PD2
-  PORTD.PIN2CTRL |=PORT_PULLUPEN_bm; /* Enable the internal pullup */    
-  //VPORTC.OUT |= _BV(1);
-  //PORTC |= _BV(1);
-
-  //pinMode(btnDown,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-  //digitalWrite(btnDown,HIGH); // 14 PD3 also to enbale PULLUP if PINMODE is INPUT
-  PORTD.PIN3CTRL |=PORT_PULLUPEN_bm; /* Enable the internal pullup */    
-  //VPORTC.OUT |= _BV(0);
-  //PORTC |= _BV(0);
-
-  //pinMode(btnMotor, INPUT_PULLUP);  // Not needed, default is INPUT (0)
-  //digitalWrite(btnMotor,HIGH); // 6 PF4
-  PORTF.PIN4CTRL |=PORT_PULLUPEN_bm; /* Enable the internal pullup */  
-  //VPORTD.OUT |= _BV(btnMotor);
-  //PORTD |= _BV(btnMotor);
-  
-  //pinMode(btnRoot, INPUT_PULLUP);  // Not needed, default is INPUT (0)
-  //digitalWrite(btnRoot, HIGH); // 7 PA1 
-  PORTA.PIN1CTRL |=PORT_PULLUPEN_bm; /* Enable the internal pullup */
-  //VPORTD.OUT |= _BV(btnRoot); 
-  //PORTD |= _BV(btnRoot);
-
-  #if defined(RECORD)
-    pinMode(btnRec, INPUT_PULLUP);
-
-    // Reduce noise on the recording ADC pin.
-    // ATmega4809 Nano Every: A7 = PD5 = AIN5
-    #if defined(PORT_ISC_INPUT_DISABLE_gc)
-      PORTD.PIN5CTRL = PORT_ISC_INPUT_DISABLE_gc;
-    #endif
-  #endif
-
-#elif defined(__AVR_ATmega4808__)
+#if defined(__AVR_ATmega4808__)
   //pinMode(btnPlay,INPUT_PULLUP);  // Not needed, default is INPUT (0)
   //digitalWrite(btnPlay,HIGH); // 17 PD3
   VPORTD.DIR |= ~PIN3_bm;
@@ -160,32 +89,6 @@ void pinsetup()
   pinMode(btnRoot, INPUT_PULLUP);
   digitalWrite(btnRoot, HIGH); 
 
-#elif defined(__AVR_ATmega32U4__) 
-  
-//  pinMode(btnPlay,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnPlay,HIGH); // Wrte for INPUT_PULLUP if input type is only INPUT
-  PORTD |= _BV(4);
-  
-//  pinMode(btnStop,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnStop,HIGH);
-  PORTD |= _BV(5);
-
-//  pinMode(btnUp,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnUp,HIGH);
-  PORTD |= _BV(7);
-
-//  pinMode(btnDown,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnDown,HIGH);
-  PORTD |= _BV(6);
-
-//  pinMode(btnMotor, INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnMotor,HIGH);
-  PORTD |= _BV(2);
-  
-//  pinMode(btnRoot, INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnRoot, HIGH); 
-  PORTD |= _BV(3);
-
    
 #elif defined(ARDUINO_XIAO_ESP32C3)
 
@@ -214,10 +117,12 @@ void pinsetup()
   pinMode(btnRoot, INPUT_PULLUP);
   #endif
 
-  #if defined(NO_MOTOR)
-  // nothing to do for btnMotor
-  #else
+  #if !defined(NO_MOTOR)
   pinMode(btnMotor, INPUT_PULLUP);
+  #endif
+
+  #if defined(RECORD)
+  pinMode(btnRec, INPUT_PULLUP);
   #endif
 
 #if (I2C_Library_Preference == _I2C_Impl_Wire) || (I2C_Library_Preference == _I2C_Impl_SoftWire)
@@ -240,30 +145,29 @@ void pinsetup()
     SPI1.setCS(chipSelect);
   #endif
   
-#elif defined(__AVR_ATmega328P__)
+#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega4809__) || defined(__AVR_ATmega2560__)
+
   //pinMode(btnPlay,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnPlay,HIGH); // Wrte for INPUT_PULLUP if input type is only INPUT
-  PORTC |= _BV(3);
+  //digitalWrite(btnPlay,HIGH); // Wrte for INPUT_PULLUP if input type is only INPUT
+  //PORTD |= _BV(4); // Not good practice, hardcodes the pin assignments.  Use a macro instead.
+  pinModePullupFast(btnPlay);
+  pinModePullupFast(btnStop);
+  pinModePullupFast(btnUp);
+  pinModePullupFast(btnDown);
+  pinModePullupFast(btnMotor);
+  pinModePullupFast(btnRoot);
+
   
-  //pinMode(btnStop,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnStop,HIGH);
-  PORTC |= _BV(2);
+  #if defined(RECORD)
+    pinModePullupFast(btnRec);
 
-  //pinMode(btnUp,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnUp,HIGH);
-  PORTC |= _BV(1);
+    // Reduce noise on the recording ADC pin.
+    // ATmega4809 Nano Every: A7 = PD5 = AIN5
+    #if defined(PORT_ISC_INPUT_DISABLE_gc)
+      PORTD.PIN5CTRL = PORT_ISC_INPUT_DISABLE_gc;
+    #endif
+  #endif
 
-  //pinMode(btnDown,INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnDown,HIGH);
-  PORTC |= _BV(0);
-
-  //pinMode(btnMotor, INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnMotor,HIGH);
-  PORTD |= _BV(btnMotor);
-  
-  //pinMode(btnRoot, INPUT_PULLUP);  // Not needed, default is INPUT (0)
-//  digitalWrite(btnRoot, HIGH); 
-  PORTD |= _BV(btnRoot);
 #else
 #error Unknown device type or missing definition in pinSetup.h
 #endif
