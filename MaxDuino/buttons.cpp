@@ -123,17 +123,17 @@ static int readButtonADC()
 
 bool button_any() {
   int sensorValue = readButtonADC();
+#ifdef RECORD
+  return(sensorValue>=btnADCRecLow);
+#else
   return(sensorValue>=btnADCUpLow);
+#endif
 }
 
 bool button_play()
 {
   int sensorValue = readButtonADC();
-#ifdef RECORD
-  return(sensorValue>=btnADCPlayLow && sensorValue<btnADCRecLow);
-#else
   return(sensorValue>=btnADCPlayLow);
-#endif
 }
 
 bool button_stop()
@@ -164,7 +164,7 @@ bool button_up()
 bool button_rec()
 {
   int sensorValue = readButtonADC();
-  return(sensorValue>=btnADCRecLow);
+  return(sensorValue>=btnADCRecLow && sensorValue<btnADCUpLow);
 }
 #endif
 
