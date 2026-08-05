@@ -68,7 +68,8 @@ MaxDuino firmware is itself an open-source project and remains free for everybod
 
 * TZXDuino, ArduiTape, CASDuino, TSXDuino
   * This is the 'classic' original device with a variety of different supporting hardware
-  * Arduino Nano (ATMEGA328P), with either 128x64 GRAPHICAL OLED or 16x2 TEXT LCD, from a variety of suppliers and self-build kits.
+  * Arduino Nano (ATMEGA328P), with either 128x64 GRAPHICAL OLED or 16x2 TEXT LCD, from a variety of suppliers and self-build kits, or schematics (often free)
+  * Example: Zaxon TZXDuino Shield V2 https://www.pcbway.com/project/shareproject/TZXDuino_Shield_V2.html
   * Due to variety of configurations, different build configurations are necessary and you may need to simply build your own.
   * Sometimes these devices include PCD8544 LCD controller instead. This is no longer supported by MaxDuino but support can be added back if there is sufficient demand!!
   * Release builds available: `Nano328p_CF0` thru `Nano328p_CF7`; `Nano328p_LCD161` if you have a 16x2 TEXT LCD; `Nano328p_NO_BOOTLOADER` if you wish to have maximum features and don't mind losing bootloader functionality and USB reflashing.  **SEE NOTE BELOW ABOUT DEVICES WITH USB**
