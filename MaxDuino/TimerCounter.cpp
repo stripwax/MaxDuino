@@ -365,6 +365,12 @@ ISR(TIMER1_OVF_vect)
   // As an aside, the TimerTC3 library also has the same bugs (as well as one or two others), as it is derived from
   // the same logic as SAMD_TimerInterrupt, and therefore also cannot be used by this project...
   
+  // TC3_Handler is a global single interrupt handler for TC3 - whether it's being used for playback or recording or both.
+  // So a function pointer is used to dispatch directly to the desired handler:
+  // by default (and whenever the playback timer is attached) it targets isrCallback,
+  // but while recording is active it targets recorder_isr (set via setTimerIsrCallback)
+  static void (*volatile g_tc3IsrCallback)(void) = &isrCallback;
+
   void TC3_Handler()
   {
     // get timer struct
@@ -373,14 +379,23 @@ ISR(TIMER1_OVF_vect)
     // If the compare register matching the timer count, trigger this interrupt
     if (TC->INTFLAG.bit.MC0 == 1) 
     {
-      isrCallback();
+      // Clear the match flag *before* running the callback, so that any match
+      // that fires while the callback is busy gets immediately handled after this one
+      // (rather than dropped)
       TC->INTFLAG.bit.MC0 = 1; // write 1 here, to clear the interrupt tr
+      g_tc3IsrCallback();
     }
   }
   
 #define SAMD_TC3        ((TcCount16*) TC3)
-#include "Arduino.h"
   
+#if defined(RECORD)
+void setTimerIsrCallback(void (*fn)(void))
+{
+  g_tc3IsrCallback = fn;
+}
+#endif
+
 void TimerCounter::_initialize()
 {
   TcCount16* _Timer = SAMD_TC3;
@@ -535,6 +550,11 @@ void TimerCounter::_attachInterrupt()
   // disable the timer (this might not be necessary)
   _Timer->CTRLA.reg &= ~TC_CTRLA_ENABLE;
   while (_Timer->STATUS.bit.SYNCBUSY);
+
+  #if defined(RECORD)
+  // ensure playback will dispatch to the playback isr (in case it was previously set to recorder_isr)
+  g_tc3IsrCallback = &isrCallback;
+  #endif
 
   // Enable the compare interrupt
   SAMD_TC3->INTENSET.reg = 0;

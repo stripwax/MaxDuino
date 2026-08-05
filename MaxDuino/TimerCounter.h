@@ -23,4 +23,10 @@ class TimerCounter
 extern TimerCounter& Timer;
 extern const unsigned long MAXPAUSE_PERIOD;
 
+#if defined(__SAMD21G18A__) && defined(RECORD)
+// Sets which handler the (single) timer interrupt dispatches to: playback isr or recording isr
+// (SAMD21 only, see TimerCounter.cpp).
+void setTimerIsrCallback(void (*fn)(void));
+#endif
+
 #endif // TIMER_H_INCLUDED

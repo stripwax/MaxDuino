@@ -178,11 +178,19 @@ void recorder_isr()
 {
   if (!gRecording) return;
 
+  #if defined(__SAMD21G18A__)
+  // If the previous tick's button service re-pointed the ADC back at the
+  // record channel, RESULT may still hold a stale button-channel conversion.
+  // Discard it (and one more, to guarantee a fresh record sample) before any
+  // format handler reads the sample.
+  record_adc_flush_pending();
+  #endif
+
   #if defined(RECORD_SHARP_MZF)
     if (recordFormat==RecordFormat::SHARP_MZF)
     {
       isr_mzf();
-      return;
+      goto done;
     }
   #endif
   
@@ -190,13 +198,19 @@ void recorder_isr()
     if (recordFormat==RecordFormat::CAS_MSX)
     {
       isr_cas();
-      return;
+      goto done;
     }
   #endif
   
   #if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
   isr_tzx();
   #endif
+
+  done:
+  #if defined(__SAMD21G18A__)
+  record_adc_service_button();
+  #endif
+  return;
 }
 
 
@@ -211,6 +225,7 @@ bool is_recording_paused() {
 void pause_recording() {
   if (!gRecording || gRecordPaused) return;
   timer_stop_recording();
+  adc_stop();
   gRecordPaused = true;
   printtextF(TXT_PAUSED,0);
 }
@@ -218,6 +233,10 @@ void pause_recording() {
 void resume_recording() {
   if (!gRecording || !gRecordPaused) return;
   gRecordPaused = false;
+  // Re-initialise the record channel: analogRead (used by the buttons while
+  // paused) leaves the ADC disabled, so the freerun configuration must be
+  // restored before the timer restarts.
+  adc_start_freerun_record_pin();
   timer_start_recording();
   printtextF(TXT_RECORDING, 0);
 }

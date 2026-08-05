@@ -4,6 +4,11 @@
 #include "buttons.h"
 #include "pinSetup.h"
 
+#if defined(RECORD)
+#include "record.h"
+#include "record_TimerADC.h"
+#endif
+
 bool lastbtn=true;
 
 #if defined(BUTTON_ADC)
@@ -111,6 +116,13 @@ void setup_buttons(void)
 
 static int readButtonADC()
 {
+  #if defined(__SAMD21G18A__) && defined(RECORD)
+  // While actively recording the ADC is owned by the record ISR, which
+  // maintains latest_adc_reading on a ~45ms cadence.
+  if (is_recording() && !is_recording_paused()) {
+    return (int)record_adc_get_button_value();
+  }
+  #endif
   int adc_value = analogRead(btnADC);
   #if defined(DEBUG_ADC)
   Serial.println(adc_value);
