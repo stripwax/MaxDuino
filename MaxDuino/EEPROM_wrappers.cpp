@@ -91,7 +91,7 @@
   // All these platforms provide a flash-backed EEPROM emulation library
   // with a common EEPROM.get/put/commit API, even if the include differs.
   #if defined(__SAMD21__) || defined(__SAMD21G18A__)
-    #define EEPROM_EMULATION_SIZE 1025
+    #define EEPROM_EMULATION_SIZE 1026
     #include <FlashStorage_SAMD.h>
   #elif defined(ESP8266)
     #include <ESP_EEPROM.h>
@@ -124,7 +124,7 @@
       EEPROM.setCommitASAP(false);
       (void)*((volatile uint32_t*)&eeprom_locator);
     #else
-      EEPROM.begin(1025);
+      EEPROM.begin(1026);
     #endif
   }
 
@@ -150,6 +150,17 @@
     EEPROM_put(EEPROM_CONFIG_BYTEPOS, data);
     EEPROM.commit();
   }
+
+  #if defined(RECORD)
+  void EEPROM_read_record_configbyte(byte &data) {
+    EEPROM_get(EEPROM_RECORD_CONFIG_BYTEPOS, data);
+  }
+
+  void EEPROM_write_record_configbyte(byte data) {
+    EEPROM_put(EEPROM_RECORD_CONFIG_BYTEPOS, data);
+    EEPROM.commit();
+  }
+  #endif
 
   void EEPROM_read_logo_byte(uint16_t address, byte& data) {
     EEPROM_get(address, data);
