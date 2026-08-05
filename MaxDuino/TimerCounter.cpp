@@ -351,7 +351,7 @@ ISR(TIMER1_OVF_vect)
   isrCallback();
 }
 
-#elif defined(__SAMD21__)
+#elif defined(__SAMD21G18A__)
 
 #define __TIMER_MAXPAUSE_PERIOD 1000
 

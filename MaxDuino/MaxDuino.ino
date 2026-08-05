@@ -112,7 +112,7 @@ bool firstBlockPause = false;
   #if defined(__AVR__)
     // Restarts program from beginning but does not reset the peripherals and registers
     void(* resetFunc) (void) = 0;//declare reset function at adress 0
-   #elif defined(__SAMD21__)
+   #elif defined(__SAMD21G18A__)
    void _resetFunc(void)
    {
       noInterrupts(); 

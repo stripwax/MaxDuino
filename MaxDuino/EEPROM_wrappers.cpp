@@ -86,11 +86,11 @@
     }
   }
 
-#elif defined(__SAMD21__) || defined(__SAMD21G18A__) || defined(ESP8266) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
+#elif defined(__SAMD21G18A__) || defined(ESP8266) || defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
 
   // All these platforms provide a flash-backed EEPROM emulation library
   // with a common EEPROM.get/put/commit API, even if the include differs.
-  #if defined(__SAMD21__) || defined(__SAMD21G18A__)
+  #if defined(__SAMD21G18A__)
     #define EEPROM_EMULATION_SIZE 1026
     #include <FlashStorage_SAMD.h>
   #elif defined(ESP8266)
@@ -99,7 +99,7 @@
     #include <EEPROM.h>
   #endif
 
-  #if defined(__SAMD21__) || defined(__SAMD21G18A__)
+  #if defined(__SAMD21G18A__)
     // EEPROM locator for extra_script.py — bookended markers
     // that encode the runtime flash address and size of the
     // EEPROM backing store (_data_eeprom_storage).  extra_script.py
@@ -120,7 +120,7 @@
   #endif
 
   void EEPROM_init() {
-    #if defined(__SAMD21__) || defined(__SAMD21G18A__)
+    #if defined(__SAMD21G18A__)
       EEPROM.setCommitASAP(false);
       (void)*((volatile uint32_t*)&eeprom_locator);
     #else
