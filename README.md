@@ -56,7 +56,7 @@ More information at [FILE TYPES](./FILE_TYPES.md)
 
 ## RECORDING FILETYPES SUPPORTED BY MAXDUINO
 
-This feature is introduced in v4.00 onwards, and is initially enabled only for the ATMEGA4808/ATMEGA4809 MCUs (Thinary Nano Every or Arduino Nano Every) .  Using the recording feature you can capture and save to SD in one of the following formats:
+This feature was introduced in v4.00 onwards, and is currently available only for some of the supported devices - not all of them.  Using the recording feature you can capture and save to SD in one of the following formats:
 
 * Generic TZX ID15 (.TZX)
 * ZX Spectrum optimised TZX ID15 (.TZX)
