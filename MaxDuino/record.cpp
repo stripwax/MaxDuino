@@ -69,7 +69,8 @@ RecordFormat defaultRecordFormat()
   #endif
 }
 
-const char TXT_PREPARING[] PROGMEM = "Preparing";
+const char TXT_PREPARING[] PROGMEM = "Preparing...";
+const char TXT_PLEASE_WAIT[] PROGMEM = "Please Wait";
 const char TXT_RECORDING[] PROGMEM = "Recording";
 
 static bool has_ext_ci() {
@@ -250,7 +251,7 @@ bool start_recording() {
   if (gRecording) return true;
 
   printtextF(TXT_PREPARING, 0);
-  printtextF(TXT_RECORDING, lineaxy);
+  printtextF(TXT_PLEASE_WAIT, lineaxy);
 
   const bool activeCas = (recordFormat == RecordFormat::CAS_MSX);
   const bool activeMzf = (recordFormat == RecordFormat::SHARP_MZF);
@@ -258,7 +259,6 @@ bool start_recording() {
 
   const uint16_t filecount = next_recording_index();
   format_recording_name(gRecName, filecount);
-  printtext(gRecName, lineaxy);
 
   recFile.close();
   if (!recFile.open(currentDir, gRecName, O_RDWR | O_CREAT | O_TRUNC)) {
@@ -294,9 +294,9 @@ bool start_recording() {
   recFile.flush();
   recFile.seekSet(0);
 
-  // now print 'RECORDING'
-  // print this towards the end (in particular after the relatively slow SD file creation)
+  // now print 'RECORDING' and the filename (this indicates we are now REALLY recording!)
   printtextF(TXT_RECORDING, 0);
+  printtext(gRecName, lineaxy);
 
   #if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
   if (!activeCas && !activeMzf) {
