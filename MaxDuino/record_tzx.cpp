@@ -1,7 +1,7 @@
 #include "configs.h"
 #include "Arduino.h"
 
-#if defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
+#if defined(RECORD) && (defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM))
 
 #include "current_settings.h"
 #include "record.h"
@@ -134,4 +134,4 @@ bool active_recording_is_zx_spectrum()
   return false;
 }
 
-#endif //defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM)
+#endif //defined(RECORD) && (defined(RECORD_TZX_ID15) || defined(RECORD_ZX_SPECTRUM))
