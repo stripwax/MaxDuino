@@ -154,6 +154,6 @@
 //--------------------------------//
 
 #define USE_ICONS       // show icons for status line and  folders
-//#define SORT_DIRS       // Use extra ram of ESP32S3 for sorting entries. At the moment sorting is case insensitive and directories are not put as first
+#define SORT_DIRS       // Use extra ram of ESP32S3 for sorting entries. At the moment sorting is case insensitive and directories are not put as first
 #define TURBO_MODES     // control TAP/TZX turbomodes by btnRoot during pause
 #define EXTRA_LEDS      // Use extra LEDs - power and play indication
