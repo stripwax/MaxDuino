@@ -163,13 +163,21 @@ bool button_root()
 bool button_down()
 {
   int sensorValue = readButtonADC();
+  #if defined(BUTTONS_REVERSED)
+  return(sensorValue>=btnADCUpLow && sensorValue<btnADCDownLow);
+  #else
   return(sensorValue>=btnADCDownLow && sensorValue<btnADCRootLow);
+  #endif
 }
 
 bool button_up()
 {
   int sensorValue = readButtonADC();
+  #if defined(BUTTONS_REVERSED)
+  return(sensorValue>=btnADCDownLow && sensorValue<btnADCRootLow);
+  #else
   return(sensorValue>=btnADCUpLow && sensorValue<btnADCDownLow);
+  #endif
 }
 
 #ifdef RECORD
@@ -208,11 +216,19 @@ bool button_root() {
 }
 
 bool button_down() {
+  #if defined(BUTTONS_REVERSED)
+  return(digitalRead(btnUp) == LOW);
+  #else
   return(digitalRead(btnDown) == LOW);
+  #endif
 }
 
 bool button_up() {
+  #if defined(BUTTONS_REVERSED)
+  return(digitalRead(btnDown) == LOW);
+  #else
   return(digitalRead(btnUp) == LOW);
+  #endif
 }
 
 #ifdef RECORD
