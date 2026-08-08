@@ -3,8 +3,14 @@
 
 #include "isr.h"
 
+#if defined(ESP32_XTENSA)
+typedef void (*timerCallback)(void);
+#endif
+
 class TimerCounter
 {
+
+
   public:
     TimerCounter();
     static void initialize();

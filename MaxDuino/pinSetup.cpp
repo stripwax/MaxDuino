@@ -186,6 +186,29 @@ void pinsetup()
 //  digitalWrite(btnRoot, HIGH); 
   PORTD |= _BV(3);
 
+
+#elif defined(ARDUINO_NANO_ESP32)
+
+  pinMode(btnPlay,INPUT_PULLUP);
+  //digitalWrite(btnPlay,HIGH);
+  pinMode(btnStop,INPUT_PULLUP);
+  //digitalWrite(btnStop,HIGH);
+  pinMode(btnUp,INPUT_PULLUP);
+  //digitalWrite(btnUp,HIGH);
+  pinMode(btnDown,INPUT_PULLUP);
+  //digitalWrite(btnDown,HIGH);
+  pinMode(btnMotor, INPUT_PULLUP);
+  //digitalWrite(btnMotor,HIGH);
+  pinMode(btnRoot, INPUT_PULLUP);
+  //digitalWrite(btnRoot, HIGH); 
+
+#ifdef EXTRA_LEDS
+#warning Use support of extra LEDs
+  pinMode( ledPower, OUTPUT );
+  analogWrite( ledPower, 255);
+  pinMode( ledUser, OUTPUT );
+  analogWrite( ledUser, 0);
+#endif
    
 #elif defined(ARDUINO_XIAO_ESP32C3)
 
@@ -196,7 +219,7 @@ void pinsetup()
 
   // BUTTON PIN CONFIGURATION
   // n.a.
-  
+
 #elif defined(ESP32_XTENSA)
 
   pinMode(btnMotor, INPUT_PULLUP);
