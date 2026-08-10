@@ -31,9 +31,13 @@ extern word onePulse;
 extern byte uefpassforZero;
 
 
+
 #ifdef ID11CDTspeedup
 extern bool AMScdt;
 #endif
 
+#ifdef TURBO_MODES
+extern int turbo_control_mode;
+#endif
 
 #endif // MAX_PROCESSING_H_INCLUDED
