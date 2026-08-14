@@ -222,6 +222,9 @@ void pinsetup()
   pinMode(btnUp, INPUT_PULLUP);
   pinMode(btnDown, INPUT_PULLUP);
   pinMode(btnRoot, INPUT_PULLUP);
+    #if defined(RECORD)
+    pinMode(btnRec, INPUT_PULLUP);
+    #endif
   #endif
 
   #if !defined(NO_MOTOR)
