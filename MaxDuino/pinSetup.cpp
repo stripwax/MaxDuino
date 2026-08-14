@@ -199,6 +199,11 @@ void pinsetup()
   
 #elif defined(ESP32_XTENSA)
 
+  pinMode(btnPlay, INPUT_PULLUP);
+  pinMode(btnStop, INPUT_PULLUP);
+  pinMode(btnUp, INPUT_PULLUP);
+  pinMode(btnDown, INPUT_PULLUP);
+  pinMode(btnRoot, INPUT_PULLUP);
   pinMode(btnMotor, INPUT_PULLUP);
   digitalWrite(btnMotor, HIGH);
 

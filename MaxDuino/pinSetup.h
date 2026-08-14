@@ -127,6 +127,12 @@
 #endif
 
 */
+#elif defined(ARDUINO_NANO_ESP32)
+
+  #define outputPin         18
+  #define INIT_OUTPORT            pinMode(outputPin,OUTPUT)
+  #define WRITE_LOW               digitalWrite(outputPin,LOW)
+  #define WRITE_HIGH              digitalWrite(outputPin,HIGH)
 
 #else
 #error Unknown device type or missing definition in pinSetup.h
@@ -280,7 +286,26 @@
   #define btnRoot       7             //Return to SD card root
   #define btnRec        8             // only relevant #if defined(RECORD)
 
-  #else
+#elif defined(ARDUINO_NANO_ESP32)
+//
+// Pin definition for Arduino Nano ESP32
+//
+#if defined(BOARD_HAS_PIN_REMAP) && !defined(BOARD_USES_HW_GPIO_NUMBERS)
+// arduino pin definition
+#error warning Pin Remap used. Either compile without BOARD_HAS_PIN_REMAP or with BOARD_USES_HW_GPIO_NUMBERS to use GPIO numbers instead of Arduino pin numbers
+#else
+// GPIO pins definition
+#define chipSelect    21
+#define btnPlay       4            //Play Button
+#define btnStop       3            //Stop Button
+#define btnUp         1            //Up button
+#define btnDown       2            //Down button
+#define btnMotor      9             //Motor Sense (connect pin to gnd to play, NC for pause)
+#define btnRoot       10             //Return to SD card root
+
+#endif // BOARD_HAS_PIN_REMAP
+
+#else
 #error Unknown device type or missing definition in pinSetup.h
 #endif
 
