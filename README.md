@@ -80,6 +80,7 @@ Various MaxDuino and TZXDuino devices have been manufactured over the last 15 ye
 *  Espressif ESP32-WROOM (D1 Mini32)
 *  Atmel (Microchip) SAMD21 (SEEED XIAO M0 SAMD21)
 *  Espressif ESP32C3 (SEEED XIAO ESP32-C3)
+*  Espressif ESP32S3 (Arduino Nano ESP32)
 *  STMicroelectronics STM32 (experimental, needs testing)
 *  .. and others
 
