@@ -186,65 +186,6 @@ void pinsetup()
 //  digitalWrite(btnRoot, HIGH); 
   PORTD |= _BV(3);
 
-   
-#elif defined(ARDUINO_XIAO_ESP32C3)
-
-  // GPIO output drive strength — try minimum (5mA) to reduce overshoot/ringing on edges
-  gpio_set_drive_capability((gpio_num_t)outputPin, GPIO_DRIVE_CAP_0);
-
-#elif defined(SEEED_XIAO_M0) || defined(ARDUINO_ESP8266_WEMOS_D1MINI)
-
-  // BUTTON PIN CONFIGURATION
-  // n.a.
-  
-#elif defined(ESP32_XTENSA)
-
-  pinMode(btnPlay, INPUT_PULLUP);
-  pinMode(btnStop, INPUT_PULLUP);
-  pinMode(btnUp, INPUT_PULLUP);
-  pinMode(btnDown, INPUT_PULLUP);
-  pinMode(btnRoot, INPUT_PULLUP);
-  pinMode(btnMotor, INPUT_PULLUP);
-  digitalWrite(btnMotor, HIGH);
-
-#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
-
-  #if defined(BUTTON_ADC)
-  // nothing else required
-  #else
-  pinMode(btnPlay, INPUT_PULLUP);
-  pinMode(btnStop, INPUT_PULLUP);
-  pinMode(btnUp, INPUT_PULLUP);
-  pinMode(btnDown, INPUT_PULLUP);
-  pinMode(btnRoot, INPUT_PULLUP);
-  #endif
-
-  #if defined(NO_MOTOR)
-  // nothing to do for btnMotor
-  #else
-  pinMode(btnMotor, INPUT_PULLUP);
-  #endif
-
-#if (I2C_Library_Preference == _I2C_Impl_Wire) || (I2C_Library_Preference == _I2C_Impl_SoftWire)
-  I2C_WIRE_CLASS.setSDA(RP2040_I2C_SDA_PIN);
-  I2C_WIRE_CLASS.setSCL(RP2040_I2C_SCL_PIN);
-#endif
-
-  // XIAO boards use SPI0 (SD pins D8/D9/D10 = GPIO 2/4/3 match default SPI0 pins).
-  // Pico and others use SPI1 with default pins (GPIO 10/11/12).
-  // Don't call setCS at all — SdFat manages CS as a regular GPIO via
-  // digitalWrite (not through the SPI peripheral's CS signal).
-  #if defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
-    SPI.setSCK(RP2040_SD_SCK_PIN);
-    SPI.setTX(RP2040_SD_MOSI_PIN);
-    SPI.setRX(RP2040_SD_MISO_PIN);
-  #else
-    SPI1.setSCK(RP2040_SD_SCK_PIN);
-    SPI1.setTX(RP2040_SD_MOSI_PIN);
-    SPI1.setRX(RP2040_SD_MISO_PIN);
-    SPI1.setCS(chipSelect);
-  #endif
-  
 #elif defined(__AVR_ATmega328P__)
   //pinMode(btnPlay,INPUT_PULLUP);  // Not needed, default is INPUT (0)
 //  digitalWrite(btnPlay,HIGH); // Wrte for INPUT_PULLUP if input type is only INPUT
@@ -269,8 +210,54 @@ void pinsetup()
   //pinMode(btnRoot, INPUT_PULLUP);  // Not needed, default is INPUT (0)
 //  digitalWrite(btnRoot, HIGH); 
   PORTD |= _BV(btnRoot);
+
 #else
-#error Unknown device type or missing definition in pinSetup.h
+
+  // standardise the default logic which should "always work"
+  #if defined(BUTTON_ADC)
+    // BUTTON PIN CONFIGURATION - with ADC, nothing else to do
+  #else
+  pinMode(btnPlay, INPUT_PULLUP);
+  pinMode(btnStop, INPUT_PULLUP);
+  pinMode(btnUp, INPUT_PULLUP);
+  pinMode(btnDown, INPUT_PULLUP);
+  pinMode(btnRoot, INPUT_PULLUP);
+  #endif
+
+  #if !defined(NO_MOTOR)
+  pinMode(btnMotor, INPUT_PULLUP);
+  #endif
+
 #endif
+
+// additional MCU-specific setup
+#if defined(ARDUINO_XIAO_ESP32C3)
+  // GPIO output drive strength — try minimum (5mA) to reduce overshoot/ringing on edges
+  gpio_set_drive_capability((gpio_num_t)outputPin, GPIO_DRIVE_CAP_0);
+#endif
+
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_MBED_RP2040) || defined(ARDUINO_ARCH_RP2350)
+  #if (I2C_Library_Preference == _I2C_Impl_Wire) || (I2C_Library_Preference == _I2C_Impl_SoftWire)
+    I2C_WIRE_CLASS.setSDA(RP2040_I2C_SDA_PIN);
+    I2C_WIRE_CLASS.setSCL(RP2040_I2C_SCL_PIN);
+  #endif
+
+  // XIAO boards use SPI0 (SD pins D8/D9/D10 = GPIO 2/4/3 match default SPI0 pins).
+  // Pico and others use SPI1 with default pins (GPIO 10/11/12).
+  // Don't call setCS at all — SdFat manages CS as a regular GPIO via
+  // digitalWrite (not through the SPI peripheral's CS signal).
+  #if defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
+    SPI.setSCK(RP2040_SD_SCK_PIN);
+    SPI.setTX(RP2040_SD_MOSI_PIN);
+    SPI.setRX(RP2040_SD_MISO_PIN);
+  #else
+    SPI1.setSCK(RP2040_SD_SCK_PIN);
+    SPI1.setTX(RP2040_SD_MOSI_PIN);
+    SPI1.setRX(RP2040_SD_MISO_PIN);
+    SPI1.setCS(chipSelect);
+  #endif
+#endif
+
 }
+
 #endif
