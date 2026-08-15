@@ -359,6 +359,14 @@ void loop(void) {
     }
   #endif
 
+  #ifdef EXTRA_LEDS
+    if (( start == 0 ) || ( pauseOn )) {
+      USER_LED_OFF; // turn off the led during pause or when not started
+    } else {
+      USER_LED_ON;
+    }
+  #endif
+
     if(button_play()) {
       //Handle Play/Pause button
       if(start==0) {
