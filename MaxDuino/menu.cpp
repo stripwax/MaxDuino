@@ -30,6 +30,10 @@
 extern void (*resetFunc) (void);
 #endif
 
+#ifdef SORT_DIRS
+extern bool putSubdirsFirst;
+#endif
+
 #if defined(lineaxy)
 #define M_LINE2 lineaxy
 #else
@@ -52,6 +56,9 @@ enum MenuItems{
 #ifdef TURBO_MODES
   TURBO_CTL,
 #endif 
+#ifdef SORT_DIRS
+  SUBDIRS_FIRST,
+#endif
 #ifdef MENU_HAS_REBOOT
   REBOOT,
 #endif
@@ -73,6 +80,9 @@ const char MENU_ITEM_BLK2A[] PROGMEM = "Skip BLK:2A ?";
 #ifdef TURBO_MODES
 const char MENU_ITEM_TURBO[] PROGMEM = "Turbo modes ?";
 #endif
+#ifdef SORT_DIRS
+const char MENU_ITEM_SUBDIRSFIRST[] PROGMEM = "Subdirs first?";
+#endif
 #ifdef MENU_HAS_REBOOT
 const char MENU_ITEM_REBOOT[] PROGMEM = "REBOOT?";
 #endif
@@ -93,6 +103,9 @@ const char* const MENU_ITEMS[] PROGMEM = {
 #ifdef TURBO_MODES
   MENU_ITEM_TURBO,
 #endif 
+#ifdef SORT_DIRS
+  MENU_ITEM_SUBDIRSFIRST,
+#endif 
 #ifdef MENU_HAS_REBOOT
   MENU_ITEM_REBOOT
 #endif
@@ -111,7 +124,7 @@ PGM_P const TURBO[] PROGMEM = {
   turbo_1,
   turbo_2
 };
-extern int turbo_control_mode;
+extern byte turbo_control_mode;
 #endif 
 
 #ifdef RECORD
@@ -376,6 +389,7 @@ void menuMode()
 
 #endif  // TURBO_MODES
 
+
 #ifdef RECORD
         case MenuItems::RECORD_TYPE:
           doRecordTypeSubmenu();
@@ -397,6 +411,12 @@ void menuMode()
             doOnOffSubmenu(skip2A);
             break;
         #endif    
+    
+        #ifdef SORT_DIRS 
+         case MenuItems::SUBDIRS_FIRST:
+            doOnOffSubmenu( putSubdirsFirst );
+            break;
+        #endif 
 
         #ifdef MENU_HAS_REBOOT
           case MenuItems::REBOOT:

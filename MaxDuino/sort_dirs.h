@@ -4,8 +4,11 @@
 typedef struct
 {
     char name[256];
+    bool isdir;
     uint16_t index;
 } dirEntry;
+
+extern bool putSubdirsFirst;
 
 bool operator< (dirEntry const &lhs, dirEntry const &rhs );
 bool operator> (dirEntry const &lhs, dirEntry const &rhs );

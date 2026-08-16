@@ -7,7 +7,7 @@
 word BAUDRATE = DEFAULT_BAUDRATE;
 
 #ifdef TURBO_MODES
-int turbo_control_mode = 0; // 0 - normal speed, 1 - turbo 2x, 2 - turbo 4x
+byte turbo_control_mode = 0; // 0 - normal speed, 1 - turbo 2x, 2 - turbo 4x
 #endif
 
 #if defined(RECORD)

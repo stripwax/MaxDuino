@@ -60,6 +60,7 @@
 #include <DoubleLinkedList.h>
 #include "sort_dirs.h"
 DoubleLinkedList<dirEntry> dirEntries;
+bool putSubdirsFirst = true;
 #endif
 
 
@@ -1050,6 +1051,7 @@ void getMaxFile() {
     {
       entry.getName(newEntry.name, 256);
       newEntry.index = currentDir->curPosition() / 32 - 1;
+      newEntry.isdir = entry.isDir();
       insertSorted(&dirEntries, &newEntry);
       maxFile = dirEntries.size()-1;
       dirEmpty = false;
