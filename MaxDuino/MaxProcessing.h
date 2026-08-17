@@ -37,7 +37,7 @@ extern bool AMScdt;
 #endif
 
 #ifdef TURBO_MODES
-extern int turbo_control_mode;
+extern byte turbo_control_mode;
 #endif
 
 #endif // MAX_PROCESSING_H_INCLUDED

@@ -1,10 +1,13 @@
 #include <Arduino.h>
-#include "sort_dirs.h"
+#include "file_utils.h"
 
-extern bool putSubdirsFirst;
+#ifdef SORT_DIRS
+#include "sort_dirs.h"
 
 bool operator< (dirEntry const &lhs, dirEntry const &rhs )
 {
+    extern bool putSubdirsFirst;
+    
     if ( putSubdirsFirst ) {
         if ( lhs.isdir != rhs.isdir ) {
             if ( lhs.isdir > rhs.isdir )  {
@@ -23,6 +26,8 @@ bool operator< (dirEntry const &lhs, dirEntry const &rhs )
 
 bool operator> (dirEntry const &lhs, dirEntry const &rhs )
 {
+    extern bool putSubdirsFirst;
+
     if ( putSubdirsFirst ) {
         if ( lhs.isdir != rhs.isdir ) {
             if ( lhs.isdir < rhs.isdir )  {
@@ -41,6 +46,8 @@ bool operator> (dirEntry const &lhs, dirEntry const &rhs )
 
 bool operator>= (dirEntry const &lhs, dirEntry const &rhs )
 {
+    extern bool putSubdirsFirst;
+
     if ( putSubdirsFirst ) {
         if ( lhs.isdir != rhs.isdir ) {
             if ( lhs.isdir > rhs.isdir )  {
@@ -59,6 +66,8 @@ bool operator>= (dirEntry const &lhs, dirEntry const &rhs )
 
 bool operator<= (dirEntry const &lhs, dirEntry const &rhs )
 {
+    extern bool putSubdirsFirst;
+
     if ( putSubdirsFirst ) {
         if ( lhs.isdir != rhs.isdir ) {
             if ( lhs.isdir < rhs.isdir )  {
@@ -74,3 +83,4 @@ bool operator<= (dirEntry const &lhs, dirEntry const &rhs )
     }
     return false;
 }
+#endif

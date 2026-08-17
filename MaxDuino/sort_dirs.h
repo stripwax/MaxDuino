@@ -1,6 +1,9 @@
 #ifndef SORT_DIRS_H_INCLUDED
 
 #define SORT_DIRS_H_INCLUDED
+
+#ifdef SORT_DIRS
+
 typedef struct
 {
     char name[256];
@@ -8,11 +11,11 @@ typedef struct
     uint16_t index;
 } dirEntry;
 
-extern bool putSubdirsFirst;
-
 bool operator< (dirEntry const &lhs, dirEntry const &rhs );
 bool operator> (dirEntry const &lhs, dirEntry const &rhs );
 bool operator>= (dirEntry const &lhs, dirEntry const &rhs );
 bool operator<= (dirEntry const &lhs, dirEntry const &rhs );
+
+#endif
 
 #endif //SORT_DIRS_H_INCLUDED

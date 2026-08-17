@@ -46,11 +46,6 @@
 #ifdef SORT_DIRS
 #include <DoubleLinkedList.h>
 #include "sort_dirs.h"
-extern DoubleLinkedList<dirEntry> dirEntries;
-#endif
-
-#ifdef TURBO_MODES
-extern int turbo;
 #endif
 
 //Temporarily store for a pulse period before loading it into the buffer.
