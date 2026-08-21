@@ -289,15 +289,10 @@
   
   #define btnPlay       17            //Play Button
   #define btnStop       16            //Stop Button
-
-  #ifndef BUTTONS_REVERSED
+  
   #define btnUp         15            //Up button
   #define btnDown       14            //Down button
-  #else
-  #define btnUp         14            //Up button
-  #define btnDown       15            //Down button
-  #endif 
-  
+    
   #define btnMotor      6             //Motor Sense (connect pin to gnd to play, NC for pause)
   #define btnRoot       7             //Return to SD card root
   #define btnRec        8             // only relevant #if defined(RECORD)
