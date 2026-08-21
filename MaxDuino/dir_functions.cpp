@@ -1,3 +1,4 @@
+#ifndef CLI
 #include <Arduino.h>
 #include "file_utils.h"
 #include "dir_functions.h"
@@ -226,3 +227,4 @@ uint16_t sdMaxFileIndex( uint16_t index )
         return index;
     #endif
 }
+#endif
