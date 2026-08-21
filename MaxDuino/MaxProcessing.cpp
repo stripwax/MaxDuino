@@ -43,10 +43,8 @@
 #include "cg.h"
 #endif
 
-#ifdef SORT_DIRS
-#include <DoubleLinkedList.h>
-#include "sort_dirs.h"
-#endif
+#include "dir_functions.h"
+
 
 //Temporarily store for a pulse period before loading it into the buffer.
 word currentPeriod;
@@ -95,14 +93,7 @@ void UniPlay()
   #ifdef Use_CAS
   setCASBaud();
   #endif
-
-  /*
-#ifdef SORT_DIRS
-  if (!entry.open(currentDir, dirEntries.get(currentFile)->index, O_RDONLY)) {
-    //  printtextF(PSTR("Error Opening File"),0);
-  }
-#endif
-*/
+  
 #ifdef ID11CDTspeedup
   AMScdt = false;
 #endif

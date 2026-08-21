@@ -56,13 +56,7 @@
   #include "EEPROM_bmp_loader.h"
 #endif
 
-#ifdef SORT_DIRS
-#include <DoubleLinkedList.h>
-#include "sort_dirs.h"
-DoubleLinkedList<dirEntry> dirEntries;
-bool putSubdirsFirst = true;
-#endif
-
+#include "dir_functions.h"
 
 const char TXT_PAUSED[] PROGMEM =  "Paused ";
 const char TXT_PLAYING[] PROGMEM = "Playing     ";   // sufficient trailing spaces here to clear the top line but WITHOUT clearing the counter's leading zeros.. (a bit of a hack)
@@ -503,24 +497,18 @@ void loop(void) {
               sendChar(' ');
             }
           #elif defined(SHOW_DIRNAMES)
-            str4cpy((char*)input,fileName);
-            GetFileName(oldMinFile); str4cpy(oldMinFileName,fileName);
-            GetFileName(oldMaxFile); str4cpy(oldMaxFileName,fileName);
-            GetFileName(currentFile); 
-            
-            #ifndef DoubleFont
-            setXY(0,0);
-            sendStr(oldMinFileName);sendChar(' ');sendChar('<');
-            sendStr((char *)input);sendChar('<');sendChar(' ');
-            sendStr(oldMaxFileName);
-            #else
-            sendStrXY((char*)oldMinFileName, 0, 0);
-            sendStrXY("<", 5, 0);
-            sendStrXY((char*)input, 6, 0);
-            sendStrXY("<", 10, 0);
-            sendStrXY((char*)oldMaxFileName, 11, 0);
-#endif
-              
+
+            if ( !dirEmpty ) {
+              sprintf( fline, "%.4s> %.4s >%.4s", sdGetFileName(oldMinFile), fileName, sdGetFileName(oldMaxFile) );
+       
+              #ifndef DoubleFont
+              setXY(0,0);
+              sendStr(fline);
+              #else
+              sendStrXY( (char*) fline, 0,0 );
+              #endif
+
+            }
           #endif
         #endif // defined(OLED1306)
       #endif // SHOW_DIRPOS
@@ -822,43 +810,8 @@ void upFile() {
   oldMinFile = 0;
   oldMaxFile = maxFile;
 
-#ifdef SORT_DIRS
-
-  if (currentFile == 0)
-    currentFile = dirEntries.size() - 1;
-  else  // we wrap as we are at the first file/dir
-  {
-    currentFile--;
-    entry.close();
-    if (entry.open(currentDir, dirEntries.get(currentFile)->index, O_RDONLY)) {
-      entry.close();
-    }
-  }
-
-#else // no SORT_DIRS
-
-  // Rather than going "backwards", we actually look forward from entry 0 ,
-  // because the SdFat can efficiently find "next entries"
-  // much more easily than "previous entries"
-  // So: first, load the zeroth entry.  SdFat will give us either this, or the next valid one > 0 .
-  // If we're (un)lucky, the one it finds is actually our original currentFile
-  // meaning there is no file prior to currentfile, in which case 'up' should just wrap to the last file
   currentDir->rewind();
-  uint16_t currentPositionNow = maxFile; // preload what happens in the wrap case
-  uint16_t tryFindPrevFile;
-  do
-  {
-    entry.close();
-    tryFindPrevFile = currentPositionNow;
-    entry.openNext(currentDir, O_RDONLY);
-    // openNext will always open a valid file. curPosition is now updated to a valid file index
-    // (so tryFindPrevFile is the index of the file preceding it; or maxFile if there was no file preceding currentFile
-    currentPositionNow = currentDir->curPosition()/32-1;
-  }
-  while(currentPositionNow < currentFile);
-  currentFile = tryFindPrevFile;
-#endif
-
+  currentFile = sdGetPreviousFile( currentFile );
   seekFile();
 }
 
@@ -868,20 +821,7 @@ void downFile() {
   oldMinFile = 0;
   oldMaxFile = maxFile;
 
-#ifdef SORT_DIRS
-
-  currentFile++;
-  if (currentFile >= dirEntries.size())
-  { // return to zero if went beyond last file
-    currentFile = 0;
-  }
-
-#else // no SORT_DIRS
-
-  currentFile++;
-  if (currentFile>maxFile) { currentFile=0; }
-#endif
-
+  currentFile = sdGetNextFile( currentFile );
   seekFile();
 }
 
@@ -917,20 +857,14 @@ void seekFile() {
   else
   {
 
-#ifdef SORT_DIRS
- entry.open(currentDir, dirEntries.get(currentFile)->index, O_RDONLY);
- #else
-  if (!entry.open(currentDir, currentFile, O_RDONLY) && currentFile<maxFile)
-    {
-      // if entry.open fails, when given an index, sdfat 2.1.2 automatically adjust curPosition to the next good entry
-      // (which means that we can just retry calling open, passing in curPosition)
-      // Note: SdFat 1.1.4 does not automatically adjust curPosition, so we cannot do that trick.
-      // So we no longer support SdFat1.x .  Sorry, but I don't see any reasons to support it (it's bigger, and slower)
-      currentFile = currentDir->curPosition()/32-1;
-      entry.open(currentDir, currentFile, O_RDONLY);
-    }
-
-#endif // SORTDIRS
+   if  ( !entry.open(currentDir, sdGetCurrentFileIndex(  currentFile ), O_RDONLY) &&  currentFile<maxFile) {
+        // if entry.open fails, when given an index, sdfat 2.1.2 automatically adjust curPosition to the next good entry
+        // (which means that we can just retry calling open, passing in curPosition)
+        // Note: SdFat 1.1.4 does not automatically adjust curPosition, so we cannot do that trick.
+        // So we no longer support SdFat1.x .  Sorry, but I don't see any reasons to support it (it's bigger, and slower)
+        currentFile = currentDir->curPosition()/32-1;
+        entry.open(currentDir, currentFile, O_RDONLY);
+   }
     entry.getName(fileName,filenameLength);
     filesize = entry.fileSize();
     if(entry.isDir() || !strcmp_P(fileName, PSTR("ROOT"))) { isDir=1; } else { isDir=0; }
@@ -948,7 +882,6 @@ void seekFile() {
 
   #ifdef SORT_DIRS
     snprintf( PlayBytes, 17, "%03d|%10lu B", (currentFile+1)%1000, filesize);
-    ultoa(currentFile, fline, 10);
   #else
     ultoa(filesize,PlayBytes,10);
     strcat_P(PlayBytes,PSTR(" bytes"));
@@ -981,12 +914,8 @@ void playFile() {
     //If selected file is a directory move into directory
     changeDir();
   }
-  #ifndef SORT_DIRS
-  else if (!dirEmpty && entry.open(currentDir, currentFile, O_RDONLY))
-  #else
-  else if (!dirEmpty && entry.open(currentDir, dirEntries.get(currentFile)->index, O_RDONLY))
-  #endif
-  {
+  
+  else if (!dirEmpty && entry.open(currentDir, sdGetCurrentFileIndex(currentFile), O_RDONLY)) {
     filenameExt = strrchr(fileName,'.') + 1;
     #ifdef EEPROM_LOGO_BMP_LOADER
       if (!strcasecmp_P(filenameExt, PSTR("bmp")) && EEPROM_bmp_load_file())
@@ -1017,69 +946,29 @@ void playFile() {
   }
 }
 
-#ifdef SORT_DIRS
-void insertSorted(DoubleLinkedList<dirEntry> *list, dirEntry *newentry)
-// inserts directory entry into the list, keeping the list sorted by filename
-{
-  for (int f = 0; f < list->size(); f++)
-  {
-    if (list->getElement(f) > *newentry)
-    {
-      list->insert(*newentry, f);
-      return;
-    }
-  }
-  list->append(*newentry);
-}
-#endif
 
 void getMaxFile() {    
   // gets the total files in the current directory and stores the number in maxFile
   // and also gets the file index of the last file found in this directory
 
-#ifdef SORT_DIRS
-  dirEntry newEntry;
-  dirEntries.clear();
-#endif
+  sdInitDirectory();
 
-  currentDir->rewind();
-  maxFile = 0;
-  dirEmpty=true;
+  while (entry.openNext(currentDir, O_RDONLY)) {
+     char namebuf[filenameLength+1];
+     entry.getName(namebuf, filenameLength);
+     maxFile = sdMaxFileIndex( currentDir->curPosition()/32-1);
+     sdInsertSorted( namebuf, currentDir->curPosition() / 32 - 1, entry.isDir() );
+     dirEmpty = false;
+     entry.close();
 
-#ifdef SORT_DIRS // directory sorting via double linked list 
-  while (entry.openNext(currentDir, O_RDONLY))
-    {
-      entry.getName(newEntry.name, 256);
-      newEntry.index = currentDir->curPosition() / 32 - 1;
-      newEntry.isdir = entry.isDir();
-      insertSorted(&dirEntries, &newEntry);
-      maxFile = dirEntries.size()-1;
-      dirEmpty = false;
-      entry.close();
-
-      #ifdef EXTRA_LEDS 
-      analogWrite(ledPower, ( 140+(maxFile<<2) )%256 ); // light up the LED to show progress of directory scan
-      #endif
-    }
-#else  // no directory sorting
-  while(entry.openNext(currentDir, O_RDONLY)) {
-    maxFile = currentDir->curPosition()/32-1;
-    dirEmpty=false;
-    entry.close();
-    #ifdef EXTRA_LEDS 
-    analogWrite(ledPower, ( 140+(maxFile<<2) )%256 ); // light up the LED to show progress of directory scan
-    #endif
+     powerLedDirectoryActivity( ( 140+(maxFile<<2) )%256 );
   }
-#endif  // SORT_DIRS
 
   currentDir->rewind(); // precautionary but I think might be unnecessary since we're using currentFile everywhere else now
   oldMinFile = 0;
   oldMaxFile = maxFile;
   currentFile = 0;
-
-#ifdef EXTRA_LEDS
-  analogWrite(ledPower, 255 ); // turn off the LED after directory scan is complete
-#endif
+  powerLedDirectoryActivity( 255 );
 }
 
 
@@ -1098,11 +987,7 @@ void changeDir() {
   else
   {
     if (subdir < nMaxPrevSubDirs) {
-#ifdef SORT_DIRS
-      DirFilePos[subdir] = dirEntries.get(currentFile)->index; // store index
-#else
-      DirFilePos[subdir] = currentFile;
-#endif
+      DirFilePos[subdir] = sdGetCurrentFileIndex(currentFile);
       subdir++;
       // but, also, stash the current filename as the parent (prevSubDir) for display
       // (but we only keep one prevSubDir, we no longer need to store them all)
@@ -1110,11 +995,8 @@ void changeDir() {
       strcpy(prevSubDir, fileName);
     }
 
-#ifdef SORT_DIRS   
-    _tmpdirs[_alt_tmp_dir].open(currentDir, dirEntries.get(currentFile)->index, O_RDONLY); // open subdirectory
-#else
-    _tmpdirs[_alt_tmp_dir].open(currentDir, currentFile, O_RDONLY);
-#endif 
+
+    _tmpdirs[_alt_tmp_dir].open(currentDir, sdGetCurrentFileIndex(currentFile), O_RDONLY); // open subdirectory
     // flip the dir pointers so currentDir is now the newly opened dir and tmpdir points to the spare
     currentDir = &_tmpdirs[_alt_tmp_dir];
     _alt_tmp_dir = 1-_alt_tmp_dir;
@@ -1152,17 +1034,7 @@ void changeDirParent()
   }
    
   getMaxFile();
-
-#ifdef SORT_DIRS
-  for (int f = 0; f < dirEntries.size(); f++) {
-    if (dirEntries.get(f)->index == this_directory) {
-      currentFile = f;
-      break;
-    }
-  }
-#else // no SORT_DIRS 
-  currentFile = this_directory; // select the directory we were in, as the current file in the parent
-#endif // SORT_DIRS
+  currentFile = sdGetDirectoryPositionByIndex( this_directory );
   seekFile(); // don't forget that this will put the real filename back into fileName 
 }
 
@@ -1449,18 +1321,10 @@ void GetFileName(uint16_t pos)
 {
   entry.close(); // precautionary, and seems harmless if entry is already closed
 
-#ifdef SORT_DIRS
-  if ( entry.open(currentDir, (dirEntries.get(pos))->index, O_RDONLY) ) {
+  if ( entry.open(currentDir, sdGetCurrentFileIndex( pos ), O_RDONLY) ) {
     entry.getName(fileName, filenameLength);
   }
   entry.close();
-#else
-  if (entry.open(currentDir, pos, O_RDONLY))
-  {
-    entry.getName(fileName,filenameLength);
-  }
-  entry.close();
-#endif
 }
 
 void block_mem_oled()

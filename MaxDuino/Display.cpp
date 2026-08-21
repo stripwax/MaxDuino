@@ -8,6 +8,7 @@
 #include "i2c.h"
 #include "current_settings.h"
 #include "EEPROM_wrappers.h"
+#include "pinSetup.h"
 
 // general text-printing buffer shared by most routines, it's long enough for one line of text plus one NUL terminator
 char fline[17];
@@ -1039,3 +1040,11 @@ void scrollTextReset()
   scrollPos=0;
 }
 #endif
+
+
+void powerLedDirectoryActivity( int value )
+{
+  #ifdef EXTRA_LEDS
+  analogWrite( ledPower , value ); // light up the LED to show progress of directory scan
+  #endif 
+}

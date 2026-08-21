@@ -92,4 +92,6 @@ extern const char TXT_PLAYING[];
 void sendIconXY(const char *string, int X, int Y, int first_col = 0, int last_col = 32);
 #endif // USE_ICONS
 
+void powerLedDirectoryActivity( int value );
+
 #endif // DISPLAY_H_INCLUDED

@@ -56,7 +56,7 @@ const unsigned char myFont[][_FONTHEIGHT] PROGMEM = {
 
 #ifdef USE_ICONS
 const unsigned char iconFont[][32] PROGMEM = {
-  #include FONT_header(_FONTPATH, icons)
+#include FONT_header(_FONTPATH, icons)
 };
 
 #endif //USE_ICONS

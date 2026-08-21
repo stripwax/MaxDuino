@@ -47,11 +47,5 @@ extern _readout_type readout;
   #define nMaxPrevSubDirs 10  
 #endif
 
-extern uint16_t currentFile;
-//File index (per filesystem) of current file, relative to current directory (pointed to by currentDir)
-
-#ifdef SORT_DIRS // controls how directories are sorted - if true, subdirectories are displayed before all regular files 
-extern bool putSubdirsFirst;
-#endif
 
 #endif // FILE_UTILS_H_INCLUDED
